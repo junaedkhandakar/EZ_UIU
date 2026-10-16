@@ -64,6 +64,49 @@
     --r-full: 9999px;
 
     --maxw: 1140px;
+
+    /* --ez-* aliases (legacy names used across HTML/JS) -> map to base tokens */
+    --ez-bg: var(--bg);
+    --ez-surface: var(--surface);
+    --ez-surface-subtle: var(--surface-2);
+    --ez-surface-hover: var(--surface-hover);
+    --ez-border: var(--border);
+    --ez-border-subtle: var(--border);
+    --ez-border-focus: var(--border-focus);
+    --ez-text: var(--text);
+    --ez-text-secondary: var(--text-2);
+    --ez-text-muted: var(--text-3);
+    --ez-text-3: var(--text-3);
+    --ez-text-2: var(--text-2);
+    --ez-text-4: var(--text-4);
+    --ez-text-subtle: var(--text-4);
+    --ez-primary: var(--primary);
+    --ez-primary-hover: var(--primary-hover);
+    --ez-primary-soft: var(--primary-soft);
+    --ez-primary-border: var(--primary-border);
+    --ez-accent: var(--info);
+    --ez-accent-soft: var(--info-soft);
+    --ez-accent-border: var(--info-border);
+    --ez-success: var(--success);
+    --ez-success-soft: var(--success-soft);
+    --ez-success-border: var(--success-border);
+    --ez-warning: var(--warning);
+    --ez-warning-soft: var(--warning-soft);
+    --ez-warning-border: var(--warning-border);
+    --ez-danger: var(--danger);
+    --ez-danger-soft: var(--danger-soft);
+    --ez-danger-border: var(--danger-border);
+    --ez-info: var(--info);
+    --ez-info-soft: var(--info-soft);
+    --ez-info-border: var(--info-border);
+    --ez-shadow-xs: var(--shadow-xs);
+    --ez-shadow-sm: var(--shadow-sm);
+    --ez-shadow-md: var(--shadow-md);
+    --ez-radius-sm: var(--r-sm);
+    --ez-radius-md: var(--r-md);
+    --ez-radius-lg: var(--r-lg);
+    --ez-radius-xl: var(--r-xl);
+    --ez-radius-full: var(--r-full);
 }
 
 /* Optional dark theme (kept subtle, not neon) */
@@ -465,6 +508,9 @@ a { color: var(--primary); }
 
 /* ---------------- Chart wrap ---------------- */
 .ez-chart-wrap { width: 100%; overflow-x: auto; }
+.ez-chart-empty { padding: 44px 20px; text-align: center; color: var(--text-3); }
+.ez-chart-empty i { font-size: 1.8rem; color: var(--text-4); display: block; margin-bottom: 8px; }
+.ez-chart-empty p { margin: 0; font-size: 0.85rem; }
 
 /* ---------------- Filter chips ---------------- */
 .ez-filter-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 5px; margin-bottom: 14px; }

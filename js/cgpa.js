@@ -470,6 +470,26 @@
         const offset = circumference * (1 - progress);
         gaugeArc.style.strokeDashoffset = offset;
 
+        // Draw gauge tick marks (0..4 in 0.5 steps) as a static overlay
+        const ticksGroup = document.getElementById('gaugeTicks');
+        if (ticksGroup) {
+            const cx = 80, cy = 80, rOuter = 57, lenMinor = 4, lenMajor = 7;
+            let ticksSvg = '';
+            for (let t = 0; t <= 4; t += 0.5) {
+                const frac = t / 4;
+                const ang = frac * 2 * Math.PI; // 0 at top (svg unrotated)
+                const isMajor = Number.isInteger(t);
+                const r1 = rOuter;
+                const r2 = rOuter - (isMajor ? lenMajor : lenMinor);
+                const x1 = cx + r1 * Math.cos(ang - Math.PI / 2);
+                const y1 = cy + r1 * Math.sin(ang - Math.PI / 2);
+                const x2 = cx + r2 * Math.cos(ang - Math.PI / 2);
+                const y2 = cy + r2 * Math.sin(ang - Math.PI / 2);
+                ticksSvg += `<line x1="${x1.toFixed(2)}" y1="${y1.toFixed(2)}" x2="${x2.toFixed(2)}" y2="${y2.toFixed(2)}" stroke="var(--ez-text-4)" stroke-width="${isMajor ? 1.6 : 1}" stroke-linecap="round" opacity="${isMajor ? 0.75 : 0.4}"/>`;
+            }
+            ticksGroup.innerHTML = ticksSvg;
+        }
+
         const standingBadge = document.getElementById('dashStandingBadge');
         const honorsGap = document.getElementById('dashHonorsGap');
 
@@ -571,72 +591,94 @@
         const wrap = document.getElementById('chartSvgWrap');
         if (!history || history.length === 0) {
             wrap.innerHTML = `
-                <div style="padding: 36px; text-align: center; color: var(--ez-text-muted);">
-                    <i class="fas fa-chart-line" style="font-size: 2rem; margin-bottom: 8px; display: block; opacity: 0.5;"></i>
-                    Add courses across trimesters to view your trajectory graph.
+                <div class="ez-chart-empty">
+                    <i class="fas fa-chart-line"></i>
+                    <p>Add courses across trimesters to see your trajectory.</p>
                 </div>`;
             return;
         }
 
-        const width = Math.max(540, history.length * 85);
-        const height = 210;
-        const padLeft = 40;
-        const padRight = 30;
-        const padTop = 15;
-        const padBottom = 35;
-
+        const uid = 'cg' + Math.random().toString(36).slice(2, 7);
+        const width = Math.max(560, history.length * 92);
+        const height = 250;
+        const padLeft = 34;
+        const padRight = 22;
+        const padTop = 20;
+        const padBottom = 34;
         const chartWidth = width - padLeft - padRight;
         const chartHeight = height - padTop - padBottom;
 
-        const getY = val => padTop + chartHeight - (val / 4.0) * chartHeight;
+        const yMin = 0, yMax = 4.0;
+        const getY = val => padTop + chartHeight - ((val - yMin) / (yMax - yMin)) * chartHeight;
         const getX = idx => history.length === 1 ? padLeft + chartWidth / 2 : padLeft + (idx / (history.length - 1)) * chartWidth;
 
-        let termPoints = '';
-        let cgpaPoints = '';
-        history.forEach((h, i) => {
-            const x = getX(i);
-            termPoints += `${x},${getY(h.gpa)} `;
-            cgpaPoints += `${x},${getY(h.cumulativeCGPA)} `;
-        });
+        // Build smooth path (Catmull-Rom -> cubic bezier) for a designed curve, not a jagged polyline
+        function smoothPath(getVal) {
+            const pts = history.map((h, i) => [getX(i), getY(getVal(h))]);
+            if (pts.length === 1) return { line: `M ${pts[0][0]} ${pts[0][1]}`, pts };
+            let d = `M ${pts[0][0]} ${pts[0][1]}`;
+            for (let i = 0; i < pts.length - 1; i++) {
+                const p0 = pts[i - 1] || pts[i];
+                const p1 = pts[i];
+                const p2 = pts[i + 1];
+                const p3 = pts[i + 2] || p2;
+                const t = 0.18;
+                const c1x = p1[0] + (p2[0] - p0[0]) * t;
+                const c1y = p1[1] + (p2[1] - p0[1]) * t;
+                const c2x = p2[0] - (p3[0] - p1[0]) * t;
+                const c2y = p2[1] - (p3[1] - p1[1]) * t;
+                d += ` C ${c1x} ${c1y}, ${c2x} ${c2y}, ${p2[0]} ${p2[1]}`;
+            }
+            return { line: d, pts };
+        }
+
+        const cgpa = smoothPath(h => h.cumulativeCGPA);
+        const term = smoothPath(h => h.gpa);
+        const baseline = getY(yMin);
+        const areaPath = cgpa.line + ` L ${cgpa.pts[cgpa.pts.length - 1][0]} ${baseline} L ${cgpa.pts[0][0]} ${baseline} Z`;
 
         const yThreshold = getY(minCgpa);
 
-        let svg = `<svg viewBox="0 0 ${width} ${height}" style="width: 100%; min-width: ${width}px; height: ${height}px; display: block;">
-            <!-- Grid Lines -->
-            <line x1="${padLeft}" y1="${getY(4.0)}" x2="${width - padRight}" y2="${getY(4.0)}" stroke="var(--ez-border)" stroke-dasharray="3,3" />
-            <line x1="${padLeft}" y1="${getY(3.0)}" x2="${width - padRight}" y2="${getY(3.0)}" stroke="var(--ez-border)" stroke-dasharray="3,3" />
-            <line x1="${padLeft}" y1="${getY(2.0)}" x2="${width - padRight}" y2="${getY(2.0)}" stroke="var(--ez-border)" stroke-dasharray="3,3" />
+        let svg = `<svg viewBox="0 0 ${width} ${height}" preserveAspectRatio="none" style="width:100%; min-width:${width}px; height:${height}px; display:block;">
+            <defs>
+                <linearGradient id="${uid}-area" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stop-color="var(--ez-primary)" stop-opacity="0.16"/>
+                    <stop offset="100%" stop-color="var(--ez-primary)" stop-opacity="0"/>
+                </linearGradient>
+                <filter id="${uid}-dot" x="-40%" y="-40%" width="180%" height="180%">
+                    <feDropShadow dx="0" dy="1" stdDeviation="1.4" flood-opacity="0.18"/>
+                </filter>
+            </defs>`;
 
-            <text x="${padLeft - 8}" y="${getY(4.0) + 4}" fill="var(--ez-text-muted)" font-size="10" text-anchor="end">4.0</text>
-            <text x="${padLeft - 8}" y="${getY(3.0) + 4}" fill="var(--ez-text-muted)" font-size="10" text-anchor="end">3.0</text>
-            <text x="${padLeft - 8}" y="${getY(2.0) + 4}" fill="var(--ez-text-muted)" font-size="10" text-anchor="end">2.0</text>
+        // Horizontal gridlines + y labels (0..4)
+        for (let g = 0; g <= 4; g++) {
+            const y = getY(g);
+            svg += `<line x1="${padLeft}" y1="${y}" x2="${width - padRight}" y2="${y}" stroke="var(--ez-border)" stroke-width="1"/>`;
+            svg += `<text x="${padLeft - 9}" y="${y + 3.5}" fill="var(--ez-text-4)" font-size="10" font-weight="500" text-anchor="end">${g}.0</text>`;
+        }
 
-            <!-- Min Threshold -->
-            <line x1="${padLeft}" y1="${yThreshold}" x2="${width - padRight}" y2="${yThreshold}" stroke="var(--ez-danger)" stroke-width="1.5" stroke-dasharray="4,4" opacity="0.6" />
-            <text x="${width - padRight}" y="${yThreshold - 4}" fill="var(--ez-danger)" font-size="9" text-anchor="end">Min ${minCgpa.toFixed(2)}</text>
+        // Probation threshold band
+        svg += `<line x1="${padLeft}" y1="${yThreshold}" x2="${width - padRight}" y2="${yThreshold}" stroke="var(--ez-danger)" stroke-width="1.5" stroke-dasharray="5 4" opacity="0.7"/>`;
+        svg += `<text x="${width - padRight}" y="${yThreshold - 6}" fill="var(--ez-danger)" font-size="9.5" font-weight="600" text-anchor="end">Probation ${minCgpa.toFixed(2)}</text>`;
 
-            <!-- Cumulative CGPA Curve -->
-            <polyline fill="none" stroke="var(--ez-primary)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" points="${cgpaPoints}" />
+        // Area fill under cumulative line
+        svg += `<path d="${areaPath}" fill="url(#${uid}-area)"/>`;
 
-            <!-- Term GPA Curve -->
-            <polyline fill="none" stroke="var(--ez-accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="5,3" points="${termPoints}" />
-        `;
+        // Cumulative CGPA line (solid, primary)
+        svg += `<path d="${cgpa.line}" fill="none" stroke="var(--ez-primary)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>`;
 
-        // Dots & Labels
+        // Term GPA line (dashed, muted accent)
+        svg += `<path d="${term.line}" fill="none" stroke="var(--ez-accent)" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="4 4" opacity="0.85"/>`;
+
+        // X labels + points
         history.forEach((h, i) => {
             const x = getX(i);
-            const yTerm = getY(h.gpa);
-            const yCgpa = getY(h.cumulativeCGPA);
+            svg += `<text x="${x}" y="${height - 12}" fill="var(--ez-text-3)" font-size="10.5" font-weight="600" text-anchor="middle">${h.trimester}</text>`;
 
-            svg += `<text x="${x}" y="${height - 10}" fill="var(--ez-text-muted)" font-size="10.5" font-weight="600" text-anchor="middle">${h.trimester}</text>`;
-
-            svg += `<circle cx="${x}" cy="${yTerm}" r="3.5" fill="var(--ez-accent)" stroke="var(--ez-surface)" stroke-width="2">
-                <title>${h.trimester} Term GPA: ${h.gpa.toFixed(2)}</title>
-            </circle>`;
-
-            svg += `<circle cx="${x}" cy="${yCgpa}" r="4.5" fill="var(--ez-primary)" stroke="var(--ez-surface)" stroke-width="2">
-                <title>${h.trimester} Cumulative CGPA: ${h.cumulativeCGPA.toFixed(2)}</title>
-            </circle>`;
+            svg += `<circle cx="${x}" cy="${getY(h.gpa)}" r="3" fill="var(--ez-surface)" stroke="var(--ez-accent)" stroke-width="2"><title>${h.trimester} term GPA ${h.gpa.toFixed(2)}</title></circle>`;
+            svg += `<circle cx="${x}" cy="${getY(h.cumulativeCGPA)}" r="4.5" fill="var(--ez-primary)" stroke="var(--ez-surface)" stroke-width="2" filter="url(#${uid}-dot)"><title>${h.trimester} cumulative CGPA ${h.cumulativeCGPA.toFixed(2)}</title></circle>`;
+            // value callout on cumulative point
+            svg += `<text x="${x}" y="${getY(h.cumulativeCGPA) - 10}" fill="var(--ez-text-2)" font-size="10" font-weight="700" text-anchor="middle">${h.cumulativeCGPA.toFixed(2)}</text>`;
         });
 
         svg += `</svg>`;
