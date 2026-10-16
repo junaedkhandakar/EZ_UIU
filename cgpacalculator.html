@@ -4,432 +4,753 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CGPA Calculator | EZ_UIU</title>
+    <title>UIU CGPA Calculator & Academic Intelligence | EZ_UIU</title>
+    <meta name="description" content="Next-generation retake-aware CGPA calculator, honors target planner, probation recovery, running course projections, and tuition fee engine for UIU students.">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    <link rel="stylesheet" href="css/variables.css">
-    <link rel="stylesheet" href="css/base.css">
-    <link rel="stylesheet" href="css/navbar.css">
-    <link rel="stylesheet" href="css/cards.css">
-    <link rel="stylesheet" href="css/forms.css">
-    <link rel="stylesheet" href="css/buttons.css">
-    <link rel="stylesheet" href="css/animations.css">
-    <link rel="stylesheet" href="css/responsive.css">
-    <link rel="stylesheet" href="css/tabs.css">
-    <link rel="stylesheet" href="css/tables.css">
+    <link rel="stylesheet" href="css/ez-uiu.css">
 </head>
 
 <body>
-    <nav class="navbar">
-        <div class="navbar-container">
-            <a href="index.html" class="navbar-brand">
-                <i class="fas fa-graduation-cap"></i>
-                EZ_UIU
+    <!-- Top Navigation Bar -->
+    <nav class="ez-navbar">
+        <div class="ez-nav-container">
+            <a href="index.html" class="ez-brand">
+                <div class="ez-brand-icon">
+                    <i class="fas fa-graduation-cap"></i>
+                </div>
+                <span>EZ_UIU</span>
             </a>
-            <div class="navbar-links" id="navLinks">
-                <a href="cgpacalculator.html" class="nav-link active">
+            <div class="ez-nav-links" id="navLinks">
+                <a href="cgpacalculator.html" class="ez-nav-link active">
                     <i class="fas fa-calculator"></i>
-                    CGPA Calculator
+                    <span>CGPA Calculator</span>
                 </a>
-                <a href="tuition.html" class="nav-link">
-                    <i class="fas fa-money-bill-wave"></i>
-                    Tuition Fee
+                <a href="tuition.html" class="ez-nav-link">
+                    <i class="fas fa-wallet"></i>
+                    <span>Tuition Fee</span>
                 </a>
-                <a href="advisor.html" class="nav-link">
+                <!-- AI Advisor hidden as requested -->
+                <a href="advisor.html" class="ez-nav-link" style="display: none;">
                     <i class="fas fa-robot"></i>
-                    AI Advisor
+                    <span>AI Advisor</span>
                 </a>
             </div>
-            <div class="navbar-actions">
-                <button class="theme-toggle" id="themeToggle">
+            <div class="ez-nav-actions">
+                <button class="ez-icon-btn" id="themeToggle" aria-label="Toggle theme">
                     <i class="fas fa-moon"></i>
                 </button>
-                <button class="mobile-menu-btn" id="mobileMenuBtn">
+                <button class="ez-icon-btn ez-mobile-toggle" id="mobileMenuBtn" aria-label="Toggle menu">
                     <i class="fas fa-bars"></i>
                 </button>
             </div>
         </div>
     </nav>
 
-    <main class="main-content">
-        <div class="container">
-            <div class="page-header">
-                <div class="page-icon">
-                    <i class="fas fa-chart-line"></i>
-                </div>
-                <h1>CGPA Calculator</h1>
+    <!-- Main Application Layout -->
+    <div class="ez-app-layout">
+        <!-- Top Header & Action Deck -->
+        <header class="ez-header">
+            <div class="ez-header-title-box">
+                <h1>UIU CGPA Calculator</h1>
+                <p>Retake-aware grading, target planner, probation recovery, and tuition fee engine</p>
             </div>
-
-            <!-- Tabs Navigation -->
-            <div class="tabs-nav">
-                <button class="tab-btn active" data-tab="cgpa">CGPA Calculator</button>
-                <button class="tab-btn" data-tab="grade">Course Grade</button>
-                <button class="tab-btn" data-tab="credit">Credit Tracker</button>
-                <button class="tab-btn" data-tab="policy">Grading Policy</button>
-            </div>
-
-            <!-- Tab 1: CGPA Calculator -->
-            <div id="cgpa-tab" class="tab-content active">
-                <div class="section-card">
-                    <div class="section-header">
-                        <h2>Current Academic Standing</h2>
-                        <span class="optional-tag">Optional</span>
-                    </div>
-                    <div class="inline-form three-col">
-                        <div class="form-group">
-                            <label>CGPA</label>
-                            <input type="number" id="currentCgpa" min="0" max="4" step="0.01" placeholder="3.53">
-                        </div>
-                        <div class="form-group">
-                            <label>Total Att. Credits</label>
-                            <input type="number" id="attemptedCredits" min="0" step="0.5" placeholder="82">
-                        </div>
-                        <div class="form-group">
-                            <label>Completed Credits</label>
-                            <input type="number" id="earnedCredits" min="0" step="0.5" placeholder="82">
-                        </div>
-                    </div>
-                </div>
-
-                <div class="section-card">
-                    <div class="section-header">
-                        <h2>Fresh Courses (New Credits)</h2>
-                    </div>
-                    <div class="alert-box"
-                        style="background: rgba(59, 130, 246, 0.1); border-left: 3px solid var(--primary); padding: 10px; margin-bottom: 15px; font-size: 0.9rem;">
-                        <i class="fas fa-info-circle"></i> Only add courses you are taking for the <strong>first
-                            time</strong> here. For retakes, use the section below.
-                    </div>
-                    <div class="inline-form with-button">
-                        <div class="form-group">
-                            <label>Credit Hours</label>
-                            <select id="newCourseCredit">
-                                <option value="" disabled selected>Select Credit</option>
-                                <option value="3">3 Credits</option>
-                                <option value="2">2 Credits</option>
-                                <option value="1.5">1.5 Credits</option>
-                                <option value="1">1 Credit</option>
-                            </select>
-                        </div>
-                        <div class="form-group">
-                            <label>Expected Grade</label>
-                            <select id="newCourseGrade">
-                                <option value="" disabled selected>Select Grade</option>
-                                <option value="4.00">A (4.00)</option>
-                                <option value="3.67">A- (3.67)</option>
-                                <option value="3.33">B+ (3.33)</option>
-                                <option value="3.00">B (3.00)</option>
-                                <option value="2.67">B- (2.67)</option>
-                                <option value="2.33">C+ (2.33)</option>
-                                <option value="2.00">C (2.00)</option>
-                                <option value="1.67">C- (1.67)</option>
-                                <option value="1.33">D+ (1.33)</option>
-                                <option value="1.00">D (1.00)</option>
-                                <option value="0.00">F (0.00)</option>
-                            </select>
-                        </div>
-                        <button id="addCourse" class="btn btn-primary btn-block">
-                            <i class="fas fa-plus"></i> Add Course
-                        </button>
-                    </div>
-                    <div id="coursesList" class="added-items"></div>
-                </div>
-
-                <div class="section-card">
-                    <div class="section-header">
-                        <h2>Retake Courses (Grade Replacement)</h2>
-                        <span class="optional-tag">Optional</span>
-                    </div>
-                    <div class="inline-form with-button four-col">
-                        <div class="form-group">
-                            <label>Credits</label>
-                            <select id="retakeCredit">
-                                <option value="" disabled selected>Select Credit</option>
-                                <option value="3">3 Credits</option>
-                                <option value="2">2 Credits</option>
-                                <option value="1.5">1.5 Credits</option>
-                                <option value="1">1 Credit</option>
-                            </select>
-                        </div>
-                        <div class="form-group">
-                            <label>Old Grade</label>
-                            <select id="retakeOldGrade">
-                                <option value="" disabled selected>Select Old Grade</option>
-                                <option value="3.67">A- (3.67)</option>
-                                <option value="3.33">B+ (3.33)</option>
-                                <option value="3.00">B (3.00)</option>
-                                <option value="2.67">B- (2.67)</option>
-                                <option value="2.33">C+ (2.33)</option>
-                                <option value="2.00">C (2.00)</option>
-                                <option value="1.67">C- (1.67)</option>
-                                <option value="1.33">D+ (1.33)</option>
-                                <option value="1.00">D (1.00)</option>
-                                <option value="0.00">F (0.00)</option>
-                            </select>
-                        </div>
-                        <div class="form-group">
-                            <label>New Grade</label>
-                            <select id="retakeNewGrade">
-                                <option value="" disabled selected>Select New Grade</option>
-                                <option value="4.00">A (4.00)</option>
-                                <option value="3.67">A- (3.67)</option>
-                                <option value="3.33">B+ (3.33)</option>
-                                <option value="3.00">B (3.00)</option>
-                                <option value="2.67">B- (2.67)</option>
-                                <option value="2.33">C+ (2.33)</option>
-                                <option value="2.00">C (2.00)</option>
-                                <option value="1.67">C- (1.67)</option>
-                                <option value="1.33">D+ (1.33)</option>
-                                <option value="1.00">D (1.00)</option>
-                            </select>
-                        </div>
-                        <button id="addRetake" class="btn btn-success btn-block">
-                            <i class="fas fa-sync"></i> Add Retake
-                        </button>
-                    </div>
-                    <div id="retakesList" class="added-items"></div>
-                </div>
-
-                <div class="calculator-grid single">
-                    <button id="resetAll" class="btn btn-secondary btn-block">
-                        <i class="fas fa-redo"></i> Reset All
-                    </button>
-                    <button id="calculateCgpa" class="btn btn-primary btn-block">
-                        <i class="fas fa-calculator"></i> Calculate CGPA
-                    </button>
-                </div>
-
-                <div class="glass-card result-card" id="cgpaResult" style="display: none;">
-                    <h2 class="text-center" id="standingMessage" style="margin-bottom: 20px; color: var(--primary);">
-                    </h2>
-
-                    <div class="results-grid">
-                        <div class="result-item highlight">
-                            <span class="result-label">New CGPA</span>
-                            <span class="result-value" id="newCgpa">0.00</span>
-                        </div>
-                        <div class="result-item">
-                            <span class="result-label">Trimester GPA</span>
-                            <span class="result-value" id="trimesterGpa">0.00</span>
-                        </div>
-                        <div class="result-item">
-                            <span class="result-label">Total Att. Credits</span>
-                            <span class="result-value" id="totalAttempted">0</span>
-                        </div>
-                        <div class="result-item">
-                            <span class="result-label">Total Earned</span>
-                            <span class="result-value" id="totalEarned">0</span>
-                        </div>
-                    </div>
-
-                    <div id="retakeImpact" class="retake-impact" style="display: none;">
-                        <i class="fas fa-arrow-up"></i>
-                        <span>Retake Adjustment: <strong id="pointsAdjusted">+0.00</strong> points</span>
-                    </div>
-
-                    <div class="section-card" style="margin-top: 24px; background: rgba(255,255,255,0.05);">
-                        <div class="section-header center">
-                            <h2>Target Planner</h2>
-                        </div>
-
-                        <div style="text-align: center; margin-bottom: 20px;">
-                            <p style="color: var(--text-secondary);">With a GPA of <input type="number" id="plannerGpa"
-                                    placeholder="3.5"
-                                    style="width: 70px; padding: 5px; border-radius: 4px; border: 1px solid var(--glass-border);">
-                                on <input type="number" id="plannerCredits" placeholder="9"
-                                    style="width: 60px; padding: 5px; border-radius: 4px; border: 1px solid var(--glass-border);">
-                                credits next trimester, my CGPA will be: <strong id="plannerResult"
-                                    style="color: var(--primary);">__</strong></p>
-                        </div>
-
-                        <div style="border-top: 1px solid var(--glass-border); padding-top: 20px;">
-                            <h3
-                                style="font-size: 1rem; margin-bottom: 12px; text-align: center; color: var(--text-primary);">
-                                Target CGPA Calculation</h3>
-                            <div class="inline-form"
-                                style="grid-template-columns: 1fr 1fr auto; align-items: end; gap: 10px; max-width: 500px; margin: 0 auto;">
-                                <div class="form-group">
-                                    <label>Target CGPA</label>
-                                    <input type="number" id="targetCgpa" placeholder="3.80" min="0" max="4" step="0.01">
-                                </div>
-                                <div class="form-group">
-                                    <label>Next Credits</label>
-                                    <input type="number" id="targetCredits" placeholder="12" min="1" step="0.5">
-                                </div>
-                                <button id="calcTarget" class="btn btn-secondary"
-                                    style="height: 52px; padding: 0 16px;">Calc</button>
-                            </div>
-                            <p id="targetResult"
-                                style="text-align: center; margin-top: 12px; font-weight: 500; display: none;">You need
-                                a GPA of: <strong style="color: var(--primary); font-size: 1.2rem;">0.00</strong></p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Tab 2: Course Grade Calculator -->
-            <div id="grade-tab" class="tab-content">
-                <div class="section-card">
-                    <div class="section-header">
-                        <h2>Marks Distribution</h2>
-                    </div>
-                    <div class="inline-form" style="grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));">
-                        <div class="form-group">
-                            <label>Assignment (5)</label>
-                            <input type="number" class="grade-input" id="marksAssignment" max="5" placeholder="5">
-                        </div>
-                        <div class="form-group">
-                            <label>Attendance (5)</label>
-                            <input type="number" class="grade-input" id="marksAttendance" max="5" placeholder="5">
-                        </div>
-                        <div class="form-group">
-                            <label>Midterm (30)</label>
-                            <input type="number" class="grade-input" id="marksMidterm" max="30" placeholder="25">
-                        </div>
-                        <div class="form-group">
-                            <label>Final Exam (40)</label>
-                            <input type="number" class="grade-input" id="marksFinal" max="40" placeholder="35">
-                        </div>
-                    </div>
-                </div>
-
-                <div class="section-card">
-                    <div class="section-header">
-                        <h2>Class Tests (Best 3 of 4)</h2>
-                    </div>
-                    <div id="ctInputs"
-                        style="display: grid; gap: 10px; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); margin-bottom: 16px;">
-                        <input type="number" class="form-group input ct-score" placeholder="CT 1 (20)" max="20">
-                        <input type="number" class="form-group input ct-score" placeholder="CT 2 (20)" max="20">
-                        <input type="number" class="form-group input ct-score" placeholder="CT 3 (20)" max="20">
-                    </div>
-                    <button id="addCt" class="btn btn-secondary btn-sm" style="width: auto; margin-bottom: 16px;">
-                        <i class="fas fa-plus"></i> Add CT
-                    </button>
-                    <p style="font-size: 0.9rem; color: var(--text-secondary);">Average of best 3 CTs will be added
-                        (Total 20).</p>
-                </div>
-
-                <button id="calcCourseGrade" class="btn btn-primary btn-block" style="margin-bottom: 24px;">
-                    <i class="fas fa-calculator"></i> Calculate Grade
+            <div class="ez-action-deck">
+                <button class="ez-btn" id="btnFromUcam">
+                    <i class="fas fa-paste"></i> From UCam
                 </button>
+                <label class="ez-btn" for="csvFileInput" style="cursor: pointer; margin: 0;">
+                    <i class="fas fa-arrow-up-from-bracket"></i> Import CSV
+                    <input type="file" id="csvFileInput" accept=".csv" style="display: none;">
+                </label>
+                <button class="ez-btn" id="btnDemoData">
+                    <i class="fas fa-wand-magic-sparkles"></i> Demo
+                </button>
+                <button class="ez-btn" id="btnExport">
+                    <i class="fas fa-arrow-down-to-bracket"></i> Export
+                </button>
+                <button class="ez-btn ez-btn-primary" id="btnShare">
+                    <i class="fas fa-share-nodes"></i> Share
+                </button>
+                <button class="ez-btn ez-btn-danger" id="btnResetData" title="Reset all data">
+                    <i class="fas fa-trash-can"></i>
+                </button>
+            </div>
+        </header>
 
-                <div class="glass-card result-card" id="courseGradeResult" style="display: none; text-align: center;">
-                    <div class="result-value" id="finalGradeLetter" style="font-size: 4rem; color: var(--primary);">A
-                    </div>
-                    <p style="font-size: 1.5rem; font-weight: 600; margin-bottom: 8px;" id="finalGradePoint">4.00 Points
-                    </p>
-                    <p style="color: var(--text-secondary);">Total Marks: <strong id="totalMarks">0</strong> / 100</p>
+        <!-- Segmented Navigation Dock -->
+        <div class="ez-dock-wrap">
+            <nav class="ez-dock" id="eqTabsNav">
+                <button class="ez-dock-btn active" data-tab="dashboard">
+                    <i class="fas fa-table-columns"></i>
+                    <span>Dashboard</span>
+                </button>
+                <button class="ez-dock-btn" data-tab="courses">
+                    <i class="fas fa-book-open"></i>
+                    <span>Courses</span>
+                    <span class="ez-dock-badge" id="coursesCountBadge">0</span>
+                </button>
+                <button class="ez-dock-btn" data-tab="target">
+                    <i class="fas fa-bullseye"></i>
+                    <span>Target Planner</span>
+                </button>
+                <button class="ez-dock-btn" data-tab="graduation">
+                    <i class="fas fa-user-graduate"></i>
+                    <span>Graduation</span>
+                </button>
+                <button class="ez-dock-btn" data-tab="retake">
+                    <i class="fas fa-arrows-rotate"></i>
+                    <span>Retake Optimizer</span>
+                </button>
+                <button class="ez-dock-btn" data-tab="projection">
+                    <i class="fas fa-wand-magic"></i>
+                    <span>Projections</span>
+                    <span class="ez-dock-badge" id="runningCountBadge" style="display: none;">0</span>
+                </button>
+                <button class="ez-dock-btn" data-tab="fees">
+                    <i class="fas fa-wallet"></i>
+                    <span>Fees & Waivers</span>
+                </button>
+                <button class="ez-dock-btn dock-recovery" id="tabRecoveryBtn" data-tab="recovery" style="display: none;">
+                    <i class="fas fa-triangle-exclamation"></i>
+                    <span>Probation Plan</span>
+                </button>
+                <button class="ez-dock-btn" data-tab="settings">
+                    <i class="fas fa-gear"></i>
+                    <span>Settings</span>
+                </button>
+            </nav>
+        </div>
+
+        <!-- Tab 1: Dashboard -->
+        <div id="tab-dashboard" class="tab-pane active">
+            <!-- Academic Probation Banner -->
+            <div class="ez-alert ez-alert-danger" id="dashboardProbationAlert" style="display: none;">
+                <i class="fas fa-triangle-exclamation" style="font-size: 1.25rem; margin-top: 2px;"></i>
+                <div style="flex: 1;">
+                    <h4 style="margin: 0 0 4px 0; font-size: 0.95rem;">Academic Probation Notice</h4>
+                    <p style="margin: 0;" id="dashboardProbationText">Your CGPA is currently below UIU's academic threshold. Plan retakes to recover good academic standing.</p>
+                    <button class="ez-btn ez-btn-danger" id="btnGoToRecovery" style="margin-top: 10px; height: 28px; font-size: 0.775rem;">
+                        <i class="fas fa-road"></i> Open Probation Recovery Roadmap
+                    </button>
                 </div>
             </div>
 
-            <!-- Tab 3: Credit Tracker -->
-            <div id="credit-tab" class="tab-content">
-                <div class="section-card">
-                    <div class="section-header">
-                        <h2>B.Sc in CSE Tracker</h2>
-                    </div>
-                    <div class="inline-form three-col">
-                        <div class="form-group">
-                            <label>Completed Credits</label>
-                            <input type="number" id="trackerCredits" placeholder="80">
+            <!-- Signature Hero Matrix: Radial Gauge + Key Performance Indicators -->
+            <div class="ez-hero-grid">
+                <!-- Radial CGPA Gauge -->
+                <div class="ez-gauge-card">
+                    <div class="ez-gauge-wrap">
+                        <svg viewBox="0 0 160 160" style="width: 100%; height: 100%; transform: rotate(-90deg);">
+                            <!-- Track Background -->
+                            <circle cx="80" cy="80" r="68" fill="none" stroke="var(--ez-border)" stroke-width="12" />
+                            <!-- Active Arc -->
+                            <circle id="cgpaGaugeArc" cx="80" cy="80" r="68" fill="none" stroke="var(--ez-primary)" stroke-width="12" stroke-linecap="round" stroke-dasharray="427.26" stroke-dashoffset="427.26" style="transition: stroke-dashoffset 0.8s ease, stroke 0.4s ease;" />
+                        </svg>
+                        <div class="ez-gauge-center">
+                            <span class="ez-gauge-num" id="dashCgpa">0.00</span>
+                            <span class="ez-gauge-scale">Max 4.00</span>
                         </div>
-                        <div class="form-group">
-                            <label>Trimesters Done</label>
-                            <input type="number" id="trackerTrimesters" placeholder="6">
-                        </div>
-                        <button id="calcTracker" class="btn btn-primary">Calculate</button>
                     </div>
-                    <div id="trackerResult" style="margin-top: 20px; display: none;">
-                        <p>Req. Credits: <strong>138</strong></p>
-                        <p>Remaining: <strong id="creditsRemaining">0</strong></p>
-                        <p>Avg Credits/Trimester: <strong id="avgCredits">0</strong></p>
-                        <p>Est. Trimesters Left: <strong id="estTimeLeft">0</strong></p>
+                    <span class="ez-gauge-tier-pill" id="dashStandingBadge">No Data</span>
+                    <div style="font-size: 0.775rem; color: var(--ez-text-muted);" id="dashHonorsGap">
+                        Add courses to calculate standing
+                    </div>
+                </div>
+
+                <!-- 3 Dynamic KPI Cards -->
+                <div class="ez-kpi-stack">
+                    <div class="ez-stat-card">
+                        <div class="ez-stat-top">
+                            <span class="ez-stat-label">Credits Completed</span>
+                            <div class="ez-stat-icon" style="color: var(--ez-accent); background: var(--ez-accent-soft);"><i class="fas fa-award"></i></div>
+                        </div>
+                        <div>
+                            <div class="ez-stat-value" id="dashEarnedCredits">0</div>
+                            <div class="ez-stat-sub" id="dashAttemptedSub">0 credits attempted</div>
+                        </div>
+                    </div>
+
+                    <div class="ez-stat-card">
+                        <div class="ez-stat-top">
+                            <span class="ez-stat-label">Latest Term GPA</span>
+                            <div class="ez-stat-icon" style="color: var(--ez-success); background: var(--ez-success-soft);"><i class="fas fa-arrow-trend-up"></i></div>
+                        </div>
+                        <div>
+                            <div class="ez-stat-value" id="dashLatestGpa">—</div>
+                            <div class="ez-stat-sub" id="dashTermDelta">No term history</div>
+                        </div>
+                    </div>
+
+                    <div class="ez-stat-card">
+                        <div class="ez-stat-top">
+                            <span class="ez-stat-label">Mandatory Retakes</span>
+                            <div class="ez-stat-icon" style="color: var(--ez-danger); background: var(--ez-danger-soft);"><i class="fas fa-circle-exclamation"></i></div>
+                        </div>
+                        <div>
+                            <div class="ez-stat-value" id="dashFailedCount">0</div>
+                            <div class="ez-stat-sub" id="dashFailedSub">F grades to clear</div>
+                        </div>
                     </div>
                 </div>
             </div>
 
-            <!-- Tab 4: Grading Policy -->
-            <div id="policy-tab" class="tab-content">
-                <div class="glass-card">
-                    <h2 style="margin-bottom: 20px;">UIU Grading Policy</h2>
-                    <div class="styled-table-container">
-                        <table class="styled-table">
+            <!-- Visual Trimester Trend Performance Chart -->
+            <div class="ez-card">
+                <div class="ez-card-header">
+                    <div>
+                        <h3><i class="fas fa-chart-line" style="color: var(--ez-primary);"></i> Trimester Performance Curve</h3>
+                        <p>Term GPA vs Cumulative CGPA trajectory across all completed trimesters</p>
+                    </div>
+                    <div style="display: flex; gap: 14px; font-size: 0.775rem; color: var(--ez-text-muted);">
+                        <span style="display: inline-flex; align-items: center; gap: 5px;">
+                            <span style="width: 10px; height: 10px; border-radius: 2px; background: var(--ez-accent);"></span> Term GPA
+                        </span>
+                        <span style="display: inline-flex; align-items: center; gap: 5px;">
+                            <span style="width: 10px; height: 10px; border-radius: 2px; background: var(--ez-primary);"></span> Cumulative CGPA
+                        </span>
+                    </div>
+                </div>
+                <div class="ez-chart-wrap" id="chartSvgWrap">
+                    <!-- SVG rendered by JS -->
+                </div>
+            </div>
+
+            <!-- Quick Jump to Courses -->
+            <div class="ez-card" style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 14px; margin-bottom: 0;">
+                <div>
+                    <h3 style="margin: 0; font-size: 0.975rem;">Transcript Records</h3>
+                    <p style="margin: 2px 0 0 0; font-size: 0.8rem; color: var(--ez-text-muted);" id="dashCoursesSummary">No courses loaded yet.</p>
+                </div>
+                <div style="display: flex; gap: 8px;">
+                    <button class="ez-btn" id="btnDashViewCourses">
+                        <i class="fas fa-list-check"></i> View All Courses
+                    </button>
+                    <button class="ez-btn ez-btn-primary" id="btnDashAddCourse">
+                        <i class="fas fa-plus"></i> Add Course
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab 2: Courses Management -->
+        <div id="tab-courses" class="tab-pane">
+            <div class="ez-card" style="padding: 16px 20px 10px 20px; margin-bottom: 14px;">
+                <div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 12px;">
+                    <!-- Filter Chips -->
+                    <div class="ez-filter-bar" id="courseFilterBar" style="margin-bottom: 0;">
+                        <!-- Populated by JS -->
+                    </div>
+                    <button class="ez-btn ez-btn-primary" id="btnOpenAddCourseModal">
+                        <i class="fas fa-plus"></i> Add Course
+                    </button>
+                </div>
+
+                <!-- Instant Search Input -->
+                <div style="position: relative; margin-bottom: 6px;">
+                    <i class="fas fa-magnifying-glass" style="position: absolute; left: 12px; top: 12px; color: var(--ez-text-muted); font-size: 0.85rem;"></i>
+                    <input type="text" id="courseTableSearch" class="ez-input" placeholder="Search transcript courses by code or title (e.g. CSE 1111, Algorithms)..." style="padding-left: 34px;">
+                </div>
+            </div>
+
+            <!-- Course Records Table -->
+            <div class="ez-table-card">
+                <div style="overflow-x: auto; width: 100%;">
+                    <table class="ez-table" id="coursesTable">
+                        <thead>
+                            <tr>
+                                <th>Trimester</th>
+                                <th>Course</th>
+                                <th style="text-align: right;">Cr</th>
+                                <th style="text-align: center;">Grade</th>
+                                <th>Status</th>
+                                <th style="text-align: center;">In CGPA</th>
+                                <th style="text-align: right;">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="coursesTableBody">
+                            <!-- Populated by JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="ez-alert ez-alert-info">
+                <i class="fas fa-circle-info" style="margin-top: 2px;"></i>
+                <div>
+                    <b>UIU Retake Policy:</b> CGPA uses strictly the <b>latest completed attempt</b> of each course. Earlier attempts are marked <i>Replaced</i>. W (Withdraw), Dp (Drop), and running courses are excluded from CGPA points.
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab 3: Target Planner -->
+        <div id="tab-target" class="tab-pane">
+            <div class="ez-card">
+                <div class="ez-card-header">
+                    <div>
+                        <h3><i class="fas fa-bullseye" style="color: var(--ez-primary);"></i> Target CGPA Planner</h3>
+                        <p>Calculate the exact average GPA you need next trimester to hit your target academic goal</p>
+                    </div>
+                </div>
+
+                <div class="ez-form-grid">
+                    <div class="ez-input-group">
+                        <label class="ez-label" for="targetCgpaInput">Target CGPA Goal</label>
+                        <input type="number" class="ez-input" id="targetCgpaInput" min="2.0" max="4.0" step="0.01" value="3.50">
+                    </div>
+                    <div class="ez-input-group">
+                        <label class="ez-label" for="targetCreditsInput">Next Trimester Credits</label>
+                        <input type="number" class="ez-input" id="targetCreditsInput" min="1" max="24" step="1" value="12">
+                    </div>
+                </div>
+
+                <!-- Result Card -->
+                <div class="ez-stat-card" style="border-left: 4px solid var(--ez-primary); margin-bottom: 24px;">
+                    <div class="ez-stat-top">
+                        <span class="ez-stat-label">Required Next Trimester GPA</span>
+                        <span class="ez-gauge-tier-pill tier-outstanding" id="targetFeasibilityBadge">—</span>
+                    </div>
+                    <div class="ez-stat-value" id="targetRequiredGpa" style="color: var(--ez-primary);">—</div>
+                    <div class="ez-stat-sub" id="targetDetailText">Enter your target to see required GPA.</div>
+                </div>
+
+                <div class="ez-card-header" style="margin-top: 20px;">
+                    <div>
+                        <h3><i class="fas fa-table-list" style="color: var(--ez-text-muted);"></i> Outcome Simulation Matrix</h3>
+                        <p>Resulting overall CGPA under different next-trimester performance levels</p>
+                    </div>
+                </div>
+                <div class="ez-table-card">
+                    <div style="overflow-x: auto; width: 100%;">
+                        <table class="ez-table">
                             <thead>
                                 <tr>
-                                    <th>Letter Grade</th>
-                                    <th>Grade Point</th>
-                                    <th>Marks (%)</th>
+                                    <th>Next Term GPA</th>
+                                    <th>New Overall CGPA</th>
+                                    <th>CGPA Change</th>
                                 </tr>
                             </thead>
-                            <tbody>
-                                <tr>
-                                    <td class="grade-A">A</td>
-                                    <td>4.00</td>
-                                    <td>90 – 100</td>
-                                </tr>
-                                <tr>
-                                    <td class="grade-A-">A-</td>
-                                    <td>3.67</td>
-                                    <td>86 – 89</td>
-                                </tr>
-                                <tr>
-                                    <td class="grade-B+">B+</td>
-                                    <td>3.33</td>
-                                    <td>82 – 85</td>
-                                </tr>
-                                <tr>
-                                    <td class="grade-B">B</td>
-                                    <td>3.00</td>
-                                    <td>78 – 81</td>
-                                </tr>
-                                <tr>
-                                    <td class="grade-B-">B-</td>
-                                    <td>2.67</td>
-                                    <td>74 – 77</td>
-                                </tr>
-                                <tr>
-                                    <td class="grade-C+">C+</td>
-                                    <td>2.33</td>
-                                    <td>70 – 73</td>
-                                </tr>
-                                <tr>
-                                    <td class="grade-C">C</td>
-                                    <td>2.00</td>
-                                    <td>66 – 69</td>
-                                </tr>
-                                <tr>
-                                    <td class="grade-C-">C-</td>
-                                    <td>1.67</td>
-                                    <td>62 – 65</td>
-                                </tr>
-                                <tr>
-                                    <td class="grade-D+">D+</td>
-                                    <td>1.33</td>
-                                    <td>58 – 61</td>
-                                </tr>
-                                <tr>
-                                    <td class="grade-D">D</td>
-                                    <td>1.00</td>
-                                    <td>55 – 57</td>
-                                </tr>
-                                <tr>
-                                    <td class="grade-F">F</td>
-                                    <td>0.00</td>
-                                    <td>00 – 54</td>
-                                </tr>
+                            <tbody id="targetMatrixBody">
+                                <!-- Populated by JS -->
                             </tbody>
                         </table>
                     </div>
                 </div>
             </div>
-
         </div>
-    </main>
 
-    <footer class="footer">
-        <p>Made by <a href="https://junaed93.github.io" target="_blank"
-                style="color: var(--primary); text-decoration: none; font-weight: 600;">Junaed</a></p>
-    </footer>
+        <!-- Tab 4: Graduation Planner -->
+        <div id="tab-graduation" class="tab-pane">
+            <div class="ez-card">
+                <div class="ez-card-header">
+                    <div>
+                        <h3><i class="fas fa-user-graduate" style="color: var(--ez-primary);"></i> Graduation Planner</h3>
+                        <p>Track your degree progression and project your final graduation CGPA</p>
+                    </div>
+                </div>
+
+                <!-- Degree Progress Bar -->
+                <div style="margin-bottom: 24px;">
+                    <div style="display: flex; justify-content: space-between; font-size: 0.85rem; font-weight: 700; margin-bottom: 5px;">
+                        <span>Program Degree Completion</span>
+                        <span id="gradPercentText" style="color: var(--ez-primary);">0%</span>
+                    </div>
+                    <div style="width: 100%; height: 10px; background: var(--ez-surface-subtle); border-radius: var(--ez-radius-full); overflow: hidden;">
+                        <div id="gradProgressBar" style="width: 0%; height: 100%; background: linear-gradient(90deg, var(--ez-primary), var(--ez-accent)); border-radius: var(--ez-radius-full); transition: width 0.6s ease;"></div>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; font-size: 0.775rem; color: var(--ez-text-muted); margin-top: 6px;">
+                        <span id="gradEarnedText">0 credits earned</span>
+                        <span id="gradTotalProgramText">Total: 138 credits</span>
+                    </div>
+                </div>
+
+                <div class="ez-kpi-stack" style="margin-bottom: 24px;">
+                    <div class="ez-stat-card">
+                        <div class="ez-stat-label">Remaining Credits</div>
+                        <div class="ez-stat-value" id="gradRemainingCredits">0</div>
+                        <div class="ez-stat-sub">credits left to graduate</div>
+                    </div>
+                    <div class="ez-stat-card">
+                        <div class="ez-stat-label">Pace (Credits / Term)</div>
+                        <input type="number" class="ez-input" id="gradPaceInput" min="3" max="24" value="12" style="font-size: 1.25rem; font-weight: 800; height: 34px; margin-top: 6px;">
+                        <div class="ez-stat-sub">adjust pace</div>
+                    </div>
+                    <div class="ez-stat-card">
+                        <div class="ez-stat-label">Trimesters Left</div>
+                        <div class="ez-stat-value" id="gradTermsLeft">0</div>
+                        <div class="ez-stat-sub" id="gradEstTerm">Est. Graduation: —</div>
+                    </div>
+                </div>
+
+                <div class="ez-card-header">
+                    <div>
+                        <h3><i class="fas fa-calculator" style="color: var(--ez-text-muted);"></i> Graduation CGPA Honors Scenarios</h3>
+                        <p>Project your final graduation standing if you maintain these averages across all remaining credits</p>
+                    </div>
+                </div>
+                <div class="ez-table-card">
+                    <div style="overflow-x: auto; width: 100%;">
+                        <table class="ez-table">
+                            <thead>
+                                <tr>
+                                    <th>Remaining Courses Avg Grade</th>
+                                    <th>Grade Point</th>
+                                    <th>Final Degree CGPA</th>
+                                </tr>
+                            </thead>
+                            <tbody id="gradWhatIfBody">
+                                <!-- Populated by JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab 5: Retake Optimizer -->
+        <div id="tab-retake" class="tab-pane">
+            <div class="ez-card">
+                <div class="ez-card-header">
+                    <div>
+                        <h3><i class="fas fa-arrows-rotate" style="color: var(--ez-primary);"></i> Smart Retake Impact Optimizer</h3>
+                        <p>Courses with grades below B ranked by potential CGPA boost if retaken</p>
+                    </div>
+                </div>
+
+                <div class="ez-alert ez-alert-info" style="margin-bottom: 20px;">
+                    <i class="fas fa-tag"></i>
+                    <div>
+                        <b>UIU 50% Retake Tuition Waiver:</b> UIU grants a <b>50% waiver</b> on tuition fees for retaken courses. Retaking replaces the earlier attempt in your CGPA calculation!
+                    </div>
+                </div>
+
+                <div id="retakeListContainer">
+                    <!-- Populated by JS -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab 6: Running Projections -->
+        <div id="tab-projection" class="tab-pane">
+            <div class="ez-card">
+                <div class="ez-card-header">
+                    <div>
+                        <h3><i class="fas fa-wand-magic" style="color: var(--ez-primary);"></i> Running Course Projections</h3>
+                        <p>Plug in expected grades for in-progress courses to see real-time shifts</p>
+                    </div>
+                </div>
+
+                <div class="ez-kpi-stack" style="margin-bottom: 20px;">
+                    <div class="ez-stat-card">
+                        <div class="ez-stat-label">Projected Term GPA</div>
+                        <div class="ez-stat-value" id="projTermGpa" style="color: var(--ez-accent);">0.00</div>
+                        <div class="ez-stat-sub" id="projRunningCreditsText">0 running credits</div>
+                    </div>
+                    <div class="ez-stat-card">
+                        <div class="ez-stat-label">Projected Cumulative CGPA</div>
+                        <div class="ez-stat-value" id="projCgpa" style="color: var(--ez-primary);">0.00</div>
+                        <div class="ez-stat-sub" id="projDeltaText">
+                            <span class="ez-gauge-tier-pill tier-outstanding">+0.00 shift</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div style="display: flex; gap: 8px; margin-bottom: 16px;">
+                    <button class="ez-btn" id="btnProjAllA"><i class="fas fa-check-double"></i> All A (4.00)</button>
+                    <button class="ez-btn" id="btnProjAllB"><i class="fas fa-check"></i> All B (3.00)</button>
+                    <button class="ez-btn" id="btnProjReset"><i class="fas fa-rotate-left"></i> Reset</button>
+                </div>
+
+                <div id="projectionRowsContainer" class="ez-card" style="padding: 0; overflow: hidden; margin-bottom: 0;">
+                    <!-- Populated by JS -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab 7: Tuition Fees & Waivers -->
+        <div id="tab-fees" class="tab-pane">
+            <div class="ez-card">
+                <div class="ez-card-header">
+                    <div>
+                        <h3><i class="fas fa-wallet" style="color: var(--ez-primary);"></i> UIU Tuition Fee & Waiver Engine</h3>
+                        <p>Net tuition breakdown according to official UIU scholarship waivers, thesis rules, and installment schedules</p>
+                    </div>
+                    <button class="ez-btn" id="btnPrintFeeSlip" type="button">
+                        <i class="fas fa-print"></i> Print Fee Slip
+                    </button>
+                </div>
+
+                <div class="ez-form-grid">
+                    <div class="ez-input-group">
+                        <label class="ez-label" for="feeCreditsInput">Registered Credits</label>
+                        <input type="number" class="ez-input" id="feeCreditsInput" min="1" max="25" value="12">
+                    </div>
+                    <div class="ez-input-group">
+                        <label class="ez-label" for="feeThesisCredits">
+                            <i class="fas fa-microscope"></i> Thesis / Project (0% Waiver)
+                        </label>
+                        <select class="ez-select" id="feeThesisCredits">
+                            <option value="0">No Thesis / Project (0 cr)</option>
+                            <option value="2">Thesis Part I/II/III (2 cr · 100% Full Fee)</option>
+                            <option value="4">Thesis / Project (4 cr · 100% Full Fee)</option>
+                            <option value="6">Full 6-Credit Thesis (6 cr · 100% Full Fee)</option>
+                        </select>
+                    </div>
+                    <div class="ez-input-group">
+                        <label class="ez-label" for="feePerCreditRate">Per Credit Fee (BDT)</label>
+                        <input type="number" class="ez-input" id="feePerCreditRate" min="1000" step="100" value="5000">
+                    </div>
+                    <div class="ez-input-group">
+                        <label class="ez-label" for="feeTrimesterRate">Trimester Fee (BDT)</label>
+                        <input type="number" class="ez-input" id="feeTrimesterRate" min="0" step="100" value="6500">
+                    </div>
+                </div>
+
+                <div class="ez-form-grid" style="margin-bottom: 16px;">
+                    <div class="ez-input-group">
+                        <label class="ez-label" for="feeScholarshipSelect"><i class="fas fa-percent"></i> Scholarship / Waiver Tier</label>
+                        <select class="ez-select" id="feeScholarshipSelect">
+                            <option value="0">No Scholarship (0%)</option>
+                            <option value="0.20">20% Sibling / Spouse Waiver</option>
+                            <option value="0.25">25% Merit / Admission (SSC 4.5 & HSC 5.0 / Trimester Top 10%)</option>
+                            <option value="0.50">50% Merit / Admission (SSC 5.0 & HSC 5.0 / Trimester Top 10%)</option>
+                            <option value="1.00">100% Full Tuition Waiver (Freedom Fighter / Top Meritorious)</option>
+                        </select>
+                    </div>
+                    <div class="ez-input-group">
+                        <label class="ez-label" for="feeRetakeCredits"><i class="fas fa-rotate"></i> Retake Credits (50% Waiver)</label>
+                        <input type="number" class="ez-input" id="feeRetakeCredits" min="0" max="15" value="0">
+                    </div>
+                </div>
+
+                <!-- 9-Credit Requirement Alert -->
+                <div id="feeCreditLoadAlert" class="ez-alert ez-alert-warning" style="display: none; margin-bottom: 16px;">
+                    <i class="fas fa-triangle-exclamation" style="margin-top: 2px;"></i>
+                    <div>
+                        <b>UIU Minimum 9-Credit Requirement:</b> Undergraduate students must register for at least <b>9 credits</b> (14 credits for Pharmacy) to be eligible for scholarships.
+                    </div>
+                </div>
+
+                <div class="ez-alert ez-alert-info" style="margin-bottom: 20px;">
+                    <i class="fas fa-circle-info" style="margin-top: 2px;"></i>
+                    <div>
+                        <b>UIU Thesis & Waiver Policy:</b> Scholarships and waivers <b>never apply to Thesis, Project, Internship, Retake, or Repeat courses</b>. For a 6-credit thesis (taken as 2 credits each trimester), full 100% tuition is charged for the 2 thesis credits with <b>0% waiver</b>. Retaken courses receive a <b>50% waiver</b>.
+                    </div>
+                </div>
+
+                <!-- Fee Summary Cards -->
+                <div class="ez-kpi-stack">
+                    <div class="ez-stat-card">
+                        <div class="ez-stat-label">Base Tuition</div>
+                        <div class="ez-stat-value" id="feeBaseTuition" style="font-size: 1.5rem;">৳0</div>
+                        <div class="ez-stat-sub">regular credits rate</div>
+                    </div>
+                    <div class="ez-stat-card">
+                        <div class="ez-stat-label">Waiver Discount</div>
+                        <div class="ez-stat-value" id="feeDiscountAmount" style="font-size: 1.5rem; color: var(--ez-success);">-৳0</div>
+                        <div class="ez-stat-sub">scholarships & retakes</div>
+                    </div>
+                    <div class="ez-stat-card">
+                        <div class="ez-stat-label">Trimester Fee</div>
+                        <div class="ez-stat-value" id="feeTrimesterAmount" style="font-size: 1.5rem;">৳6,500</div>
+                        <div class="ez-stat-sub">fixed university fee</div>
+                    </div>
+                    <div class="ez-stat-card" style="border-color: var(--ez-primary);">
+                        <div class="ez-stat-label">Total Payable</div>
+                        <div class="ez-stat-value" id="feeTotalPayable" style="font-size: 1.6rem; color: var(--ez-primary);">৳0</div>
+                        <div class="ez-stat-sub">net term amount</div>
+                    </div>
+                </div>
+
+                <div class="ez-card-header" style="margin-top: 18px;">
+                    <div>
+                        <h3><i class="fas fa-calendar-check" style="color: var(--ez-text-muted);"></i> Official UIU Installment Schedule</h3>
+                    </div>
+                </div>
+                <div class="ez-installments-grid" id="feeInstallmentsGrid">
+                    <!-- Populated by JS -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab 8: Probation Recovery -->
+        <div id="tab-recovery" class="tab-pane">
+            <div class="ez-card" style="border-color: var(--ez-danger-border);">
+                <div class="ez-card-header">
+                    <div>
+                        <h3><i class="fas fa-triangle-exclamation" style="color: var(--ez-danger);"></i> Academic Probation Recovery Roadmap</h3>
+                        <p>Strategic 3-term roadmap to raise your CGPA above the minimum threshold</p>
+                    </div>
+                </div>
+
+                <div class="ez-kpi-stack" style="margin-bottom: 20px;">
+                    <div class="ez-stat-card">
+                        <div class="ez-stat-label">CGPA Gap</div>
+                        <div class="ez-stat-value" id="recoveryGap" style="color: var(--ez-danger);">0.00</div>
+                        <div class="ez-stat-sub">points to escape</div>
+                    </div>
+                    <div class="ez-stat-card">
+                        <div class="ez-stat-label">Min Credits at 4.0</div>
+                        <div class="ez-stat-value" id="recoveryMinCredits">0</div>
+                        <div class="ez-stat-sub">credits of straight A's</div>
+                    </div>
+                    <div class="ez-stat-card">
+                        <div class="ez-stat-label">Required Avg GPA</div>
+                        <div class="ez-stat-value" id="recoveryRequiredGpa" style="color: var(--ez-warning);">0.00</div>
+                        <div class="ez-stat-sub">over next 12 credits</div>
+                    </div>
+                </div>
+
+                <div id="recoveryRoadmapContainer">
+                    <!-- Populated by JS -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab 9: Settings -->
+        <div id="tab-settings" class="tab-pane">
+            <div class="ez-card">
+                <div class="ez-card-header">
+                    <div>
+                        <h3><i class="fas fa-gear" style="color: var(--ez-primary);"></i> Program & Calculator Configuration</h3>
+                        <p>Configure academic program defaults and data backups</p>
+                    </div>
+                </div>
+
+                <div class="ez-form-grid">
+                    <div class="ez-input-group">
+                        <label class="ez-label" for="settingDept">Academic Program</label>
+                        <select class="ez-select" id="settingDept">
+                            <option value="regular">Regular Program (CSE, BBA, EEE, etc. · Min 2.00)</option>
+                            <option value="pharmacy">Pharmacy (B. Pharm. · Min 2.50)</option>
+                        </select>
+                    </div>
+                    <div class="ez-input-group">
+                        <label class="ez-label" for="settingProgramCredits">Total Degree Credits</label>
+                        <input type="number" class="ez-input" id="settingProgramCredits" value="138">
+                    </div>
+                    <div class="ez-input-group">
+                        <label class="ez-label" for="settingTuitionPerCredit">Tuition Per Credit (BDT)</label>
+                        <input type="number" class="ez-input" id="settingTuitionPerCredit" value="5000">
+                    </div>
+                    <div class="ez-input-group">
+                        <label class="ez-label" for="settingPerTrimesterFee">Trimester Fee (BDT)</label>
+                        <input type="number" class="ez-input" id="settingPerTrimesterFee" value="6500">
+                    </div>
+                </div>
+
+                <div class="ez-card-header" style="margin-top: 16px;">
+                    <div>
+                        <h3><i class="fas fa-database" style="color: var(--ez-text-muted);"></i> Backup & Restore</h3>
+                    </div>
+                </div>
+                <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                    <button class="ez-btn" id="btnSettingsDemo">
+                        <i class="fas fa-wand-magic-sparkles"></i> Load Demo Data
+                    </button>
+                    <button class="ez-btn" id="btnSettingsExportJson">
+                        <i class="fas fa-download"></i> Export JSON Backup
+                    </button>
+                    <button class="ez-btn ez-btn-danger" id="btnSettingsClear">
+                        <i class="fas fa-trash-can"></i> Clear All Records
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <footer style="margin-top: 40px; padding-top: 16px; border-top: 1px solid var(--ez-border); display: flex; justify-content: space-between; align-items: center; font-size: 0.775rem; color: var(--ez-text-muted);">
+            <div>United International University Student Academic Tools.</div>
+            <div>Crafted with <i class="fas fa-heart" style="color: var(--ez-danger);"></i> by <a href="https://junaed93.github.io" target="_blank" style="color: var(--ez-primary); text-decoration: none; font-weight: 600;">Junaed</a></div>
+        </footer>
+    </div>
+
+    <!-- Modal 1: Import From UCam -->
+    <div class="ez-modal-backdrop" id="ucamModal">
+        <div class="ez-modal-window">
+            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; padding-bottom: 10px; border-bottom: 1px solid var(--ez-border-subtle);">
+                <h3 style="margin: 0; font-size: 1.1rem; font-weight: 700; color: var(--ez-text);"><i class="fas fa-paste" style="color: var(--ez-primary); margin-right: 6px;"></i> Import From UIU UCam</h3>
+                <button class="ez-mini-btn" id="btnCloseUcamModal">&times;</button>
+            </div>
+            <p style="font-size: 0.825rem; color: var(--ez-text-muted); margin-bottom: 12px; line-height: 1.5;">
+                1. Open your <b>UIU UCam</b> portal &rarr; <b>Grade Sheet / Completed Courses</b>.<br>
+                2. Press <b>Ctrl + U</b> (or right click &rarr; <i>View Page Source</i>) and copy the HTML, or copy the course table.<br>
+                3. Paste below and click <b>Import</b>.
+            </p>
+            <div class="ez-input-group" style="margin-bottom: 16px;">
+                <textarea class="ez-textarea" id="ucamInputText" placeholder="Paste UCam HTML source code or table text here..." style="font-family: var(--font-mono); font-size: 0.8rem; min-height: 160px;"></textarea>
+            </div>
+            <div style="display: flex; justify-content: flex-end; gap: 8px;">
+                <button class="ez-btn" id="btnCancelUcamModal">Cancel</button>
+                <button class="ez-btn ez-btn-primary" id="btnParseUcam">
+                    <i class="fas fa-check"></i> Parse & Import
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal 2: Add / Edit Course Modal with Autocomplete from dataset/course.json -->
+    <div class="ez-modal-backdrop" id="courseModal">
+        <div class="ez-modal-window">
+            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; padding-bottom: 10px; border-bottom: 1px solid var(--ez-border-subtle);">
+                <h3 id="courseModalTitle" style="margin: 0; font-size: 1.1rem; font-weight: 700; color: var(--ez-text);"><i class="fas fa-book" style="color: var(--ez-primary); margin-right: 6px;"></i> Add Course</h3>
+                <button class="ez-mini-btn" id="btnCloseCourseModal">&times;</button>
+            </div>
+            <form id="courseForm">
+                <input type="hidden" id="editCourseId">
+                <div class="ez-input-group" style="margin-bottom: 12px;">
+                    <label class="ez-label" for="modalCourseTrimester">Trimester Code (e.g. 241, 242, 243)</label>
+                    <input type="text" class="ez-input" id="modalCourseTrimester" placeholder="e.g. 241" required>
+                </div>
+                <div class="ez-input-group" style="margin-bottom: 12px;">
+                    <label class="ez-label" for="modalCourseId">Course ID / Code (Type to search)</label>
+                    <div class="ez-search-box">
+                        <input type="text" class="ez-input" id="modalCourseId" placeholder="e.g. CSE 1111 or Discrete" autocomplete="off" required>
+                        <div class="ez-autocomplete-results" id="modalCourseAutocomplete"></div>
+                    </div>
+                </div>
+                <div class="ez-input-group" style="margin-bottom: 12px;">
+                    <label class="ez-label" for="modalCourseName">Course Title</label>
+                    <input type="text" class="ez-input" id="modalCourseName" placeholder="e.g. Structured Programming Language">
+                </div>
+                <div class="ez-input-group" style="margin-bottom: 12px;">
+                    <label class="ez-label" for="modalCourseCredit">Credit Hours</label>
+                    <select class="ez-select" id="modalCourseCredit" required>
+                        <option value="3">3 Credits</option>
+                        <option value="1">1 Credit</option>
+                        <option value="1.5">1.5 Credits</option>
+                        <option value="2">2 Credits (e.g. Thesis / Project Part)</option>
+                        <option value="4">4 Credits</option>
+                    </select>
+                </div>
+                <div class="ez-input-group" style="margin-bottom: 18px;">
+                    <label class="ez-label" for="modalCourseGrade">Grade / Status</label>
+                    <select class="ez-select" id="modalCourseGrade" required>
+                        <option value="A">A (4.00)</option>
+                        <option value="A-">A- (3.67)</option>
+                        <option value="B+">B+ (3.33)</option>
+                        <option value="B">B (3.00)</option>
+                        <option value="B-">B- (2.67)</option>
+                        <option value="C+">C+ (2.33)</option>
+                        <option value="C">C (2.00)</option>
+                        <option value="C-">C- (1.67)</option>
+                        <option value="D+">D+ (1.33)</option>
+                        <option value="D">D (1.00)</option>
+                        <option value="F">F (0.00)</option>
+                        <option value="RUNNING">Running Course (In Progress)</option>
+                        <option value="W">W (Withdrawn)</option>
+                        <option value="Dp">Dp (Dropped)</option>
+                    </select>
+                </div>
+                <div style="display: flex; justify-content: flex-end; gap: 8px;">
+                    <button type="button" class="ez-btn" id="btnCancelCourseModal">Cancel</button>
+                    <button type="submit" class="ez-btn ez-btn-primary" id="btnSaveCourse">Save Course</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Toast Notifications Stack -->
+    <div class="ez-toast-stack" id="toastContainer"></div>
 
     <script src="js/theme.js"></script>
     <script src="js/nav.js"></script>

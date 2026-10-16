@@ -4,166 +4,236 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="EZ_UIU - Tuition Fee Calculator for UIU Students">
-    <title>Tuition Fee Calculator | EZ_UIU</title>
-
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <title>Tuition Fee & Waiver Engine | EZ_UIU</title>
+    <meta name="description" content="Official UIU Tuition Fee & Waiver Engine with 50% retake waiver, thesis policy calculations, official installment schedules, and program degree projections.">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-
-    <link rel="stylesheet" href="css/variables.css">
-    <link rel="stylesheet" href="css/base.css">
-    <link rel="stylesheet" href="css/navbar.css">
-    <link rel="stylesheet" href="css/cards.css">
-    <link rel="stylesheet" href="css/forms.css">
-    <link rel="stylesheet" href="css/buttons.css">
-    <link rel="stylesheet" href="css/animations.css">
-    <link rel="stylesheet" href="css/responsive.css">
+    <link rel="stylesheet" href="css/ez-uiu.css">
 </head>
 
 <body>
-    <div class="bg-gradient"></div>
-
-    <nav class="navbar">
-        <div class="navbar-container">
-            <a href="index.html" class="navbar-brand">
-                <i class="fas fa-graduation-cap"></i>
-                EZ_UIU
+    <!-- Top Navigation Bar -->
+    <nav class="ez-navbar">
+        <div class="ez-nav-container">
+            <a href="index.html" class="ez-brand">
+                <div class="ez-brand-icon">
+                    <i class="fas fa-graduation-cap"></i>
+                </div>
+                <span>EZ_UIU</span>
             </a>
-            <div class="navbar-links" id="navLinks">
-                <a href="cgpacalculator.html" class="nav-link">
+            <div class="ez-nav-links" id="navLinks">
+                <a href="cgpacalculator.html" class="ez-nav-link">
                     <i class="fas fa-calculator"></i>
-                    CGPA Calculator
+                    <span>CGPA Calculator</span>
                 </a>
-                <a href="tuition.html" class="nav-link active">
-                    <i class="fas fa-money-bill-wave"></i>
-                    Tuition Fee
+                <a href="tuition.html" class="ez-nav-link active">
+                    <i class="fas fa-wallet"></i>
+                    <span>Tuition Fee</span>
                 </a>
-                <a href="advisor.html" class="nav-link">
+                <!-- AI Advisor hidden as requested -->
+                <a href="advisor.html" class="ez-nav-link" style="display: none;">
                     <i class="fas fa-robot"></i>
-                    AI Advisor
+                    <span>AI Advisor</span>
                 </a>
             </div>
-            <div class="navbar-actions">
-                <button class="theme-toggle" id="themeToggle" aria-label="Toggle theme">
-                    <i class="fas fa-sun sun-icon"></i>
-                    <i class="fas fa-moon moon-icon"></i>
+            <div class="ez-nav-actions">
+                <button class="ez-icon-btn" id="themeToggle" aria-label="Toggle theme">
+                    <i class="fas fa-moon"></i>
                 </button>
-                <button class="mobile-menu-btn" id="mobileMenuBtn" aria-label="Toggle menu">
+                <button class="ez-icon-btn ez-mobile-toggle" id="mobileMenuBtn" aria-label="Toggle menu">
                     <i class="fas fa-bars"></i>
                 </button>
             </div>
         </div>
     </nav>
 
-    <main class="main-content">
-        <div class="container">
-            <div class="page-header">
-                <div class="page-icon">
-                    <i class="fas fa-money-check-alt"></i>
+    <!-- Main Container -->
+    <div class="ez-app-layout" style="max-width: 980px;">
+        <header class="ez-header">
+            <div class="ez-header-title-box">
+                <h1>UIU Tuition Fee & Waiver Engine</h1>
+                <p>Official UIU tuition policy, scholarship waivers, 50% retake waiver & installment schedule</p>
+            </div>
+            <div class="ez-action-deck">
+                <button class="ez-btn" id="btnSyncFromCgpa">
+                    <i class="fas fa-arrows-rotate"></i> Sync from CGPA Running Courses
+                </button>
+                <button class="ez-btn ez-btn-primary" id="btnPrintTuitionReceipt">
+                    <i class="fas fa-print"></i> Print Fee Statement
+                </button>
+            </div>
+        </header>
+
+        <!-- Configuration Card -->
+        <div class="ez-card">
+            <div class="ez-card-header">
+                <div>
+                    <h3><i class="fas fa-sliders" style="color: var(--ez-primary);"></i> Trimester Registration & Rates</h3>
+                    <p>Select your program, enrolled credits, and university tuition rates</p>
                 </div>
-                <h1>Tuition Fee Calculator</h1>
-                <p>Calculate your tuition with UIU scholarship discounts</p>
             </div>
 
-            <div class="calculator-grid single">
-                <div class="glass-card">
-                    <div class="card-icon">
-                        <i class="fas fa-receipt"></i>
+            <div class="ez-form-grid">
+                <div class="ez-input-group">
+                    <label class="ez-label" for="tuitionDept"><i class="fas fa-graduation-cap"></i> Program Schedule</label>
+                    <select class="ez-select" id="tuitionDept">
+                        <option value="regular">Regular Program (Trimester: 40% / 30% / 30%)</option>
+                        <option value="pharmacy">Pharmacy (Semester: 4 equal 25% installments)</option>
+                    </select>
+                </div>
+                <div class="ez-input-group">
+                    <label class="ez-label" for="tuitionCredits"><i class="fas fa-book"></i> Total Registered Credits</label>
+                    <input type="number" class="ez-input" id="tuitionCredits" min="1" max="25" step="0.5" value="12">
+                </div>
+                <div class="ez-input-group">
+                    <label class="ez-label" for="tuitionPerCredit"><i class="fas fa-bangladeshi-taka-sign"></i> Per Credit Fee (BDT)</label>
+                    <input type="number" class="ez-input" id="tuitionPerCredit" min="1000" step="100" value="5000">
+                </div>
+                <div class="ez-input-group">
+                    <label class="ez-label" for="tuitionTrimesterFee"><i class="fas fa-building"></i> Trimester Fee (BDT)</label>
+                    <input type="number" class="ez-input" id="tuitionTrimesterFee" min="0" step="100" value="6500">
+                </div>
+            </div>
+
+            <!-- Waivers & Thesis Configuration -->
+            <div class="ez-card" style="background: var(--ez-surface-subtle); margin-bottom: 0; padding: 16px 20px;">
+                <div class="ez-card-header" style="margin-bottom: 12px; padding-bottom: 8px;">
+                    <div>
+                        <h4 style="margin: 0; font-size: 0.95rem; font-weight: 700;"><i class="fas fa-award" style="color: var(--ez-accent);"></i> UIU Waivers, Thesis & Retake Policy</h4>
                     </div>
-                    <h2>Fee Details</h2>
-                    <div class="form-group">
-                        <label for="totalCreditsInput">
-                            <i class="fas fa-book"></i>
-                            Total Registered Credits
-                        </label>
-                        <input type="number" id="totalCreditsInput" min="1" step="1" placeholder="e.g., 12">
-                    </div>
-                    <div class="form-group">
-                        <label for="perCreditFee">
-                            <i class="fas fa-bangladeshi-taka-sign"></i>
-                            Per Credit Fee (BDT)
-                        </label>
-                        <input type="number" id="perCreditFee" min="0" step="100" placeholder="e.g., 5000">
-                    </div>
-                    <div class="form-group">
-                        <label for="scholarshipType">
-                            <i class="fas fa-award"></i>
-                            Scholarship Type
-                        </label>
-                        <select id="scholarshipType">
-                            <option value="none">No Scholarship</option>
-                            <option value="20">20% Scholarship</option>
-                            <option value="25">25% Scholarship</option>
-                            <option value="50">50% Scholarship</option>
-                            <option value="100">100% Scholarship</option>
+                </div>
+
+                <div class="ez-form-grid" style="margin-bottom: 12px;">
+                    <div class="ez-input-group">
+                        <label class="ez-label" for="tuitionScholarship"><i class="fas fa-percent"></i> Merit / Scholarship Waiver Tier</label>
+                        <select class="ez-select" id="tuitionScholarship">
+                            <option value="0">No Scholarship (0%)</option>
+                            <option value="0.20">20% Sibling / Spouse Waiver</option>
+                            <option value="0.25">25% Merit / Admission (SSC 4.5 & HSC 5.0 / Trimester Top 10%)</option>
+                            <option value="0.50">50% Merit / Admission (SSC 5.0 & HSC 5.0 / Trimester Top 10%)</option>
+                            <option value="1.00">100% Full Tuition Waiver (Freedom Fighter / Top Meritorious)</option>
                         </select>
                     </div>
-                    <button class="btn btn-primary btn-block" id="calculateTuition">
-                        <i class="fas fa-calculator"></i>
-                        Calculate Tuition Fee
-                    </button>
-                </div>
-            </div>
 
-            <div class="glass-card result-card" id="tuitionResult" style="display: none;">
-                <div class="card-icon success">
-                    <i class="fas fa-file-invoice-dollar"></i>
-                </div>
-                <h2>Fee Breakdown</h2>
+                    <div class="ez-input-group">
+                        <label class="ez-label" for="tuitionThesisCredits">
+                            <i class="fas fa-microscope"></i> Thesis / Project (0% Waiver)
+                        </label>
+                        <select class="ez-select" id="tuitionThesisCredits">
+                            <option value="0">No Thesis / Project (0 cr)</option>
+                            <option value="2">Thesis Part I/II/III (2 cr · 100% Full Fee)</option>
+                            <option value="4">Thesis / Project (4 cr · 100% Full Fee)</option>
+                            <option value="6">Full 6-Credit Thesis (6 cr · 100% Full Fee)</option>
+                        </select>
+                    </div>
 
-                <div class="fee-breakdown">
-                    <div class="fee-row">
-                        <span><i class="fas fa-coins"></i> Base Tuition Fee</span>
-                        <span id="baseTuition">-</span>
-                    </div>
-                    <div class="fee-row discount">
-                        <span><i class="fas fa-tags"></i> Scholarship Discount</span>
-                        <span id="scholarshipDiscount">-</span>
-                    </div>
-                    <div class="fee-row">
-                        <span><i class="fas fa-building"></i> Trimester Fee</span>
-                        <span id="trimesterFee">৳6,500</span>
-                    </div>
-                    <div class="fee-row total">
-                        <span><i class="fas fa-wallet"></i> Total Payable</span>
-                        <span id="totalPayable">-</span>
+                    <div class="ez-input-group">
+                        <label class="ez-label" for="tuitionRetakeCredits"><i class="fas fa-rotate"></i> Retake Credits (50% Waiver)</label>
+                        <input type="number" class="ez-input" id="tuitionRetakeCredits" min="0" max="15" step="0.5" value="0">
                     </div>
                 </div>
 
-                <h3><i class="fas fa-calendar-alt"></i> Installment Plan</h3>
-                <div class="installments-grid">
-                    <div class="installment-card first">
-                        <div class="installment-icon">
-                            <i class="fas fa-1"></i>
-                        </div>
-                        <span class="installment-label">1st Installment (40%)</span>
-                        <span class="installment-value" id="installment1">-</span>
+                <!-- 9-Credit Requirement Alert -->
+                <div id="creditLoadAlert" class="ez-alert ez-alert-warning" style="display: none; margin-bottom: 12px;">
+                    <i class="fas fa-triangle-exclamation" style="margin-top: 2px;"></i>
+                    <div>
+                        <b>UIU Minimum 9-Credit Requirement:</b> Undergraduate students must register for at least <b>9 credits</b> (14 credits for Pharmacy) to be eligible for scholarships.
                     </div>
-                    <div class="installment-card">
-                        <div class="installment-icon">
-                            <i class="fas fa-2"></i>
-                        </div>
-                        <span class="installment-label">2nd Installment (30%)</span>
-                        <span class="installment-value" id="installment2">-</span>
-                    </div>
-                    <div class="installment-card">
-                        <div class="installment-icon">
-                            <i class="fas fa-3"></i>
-                        </div>
-                        <span class="installment-label">3rd Installment (30%)</span>
-                        <span class="installment-value" id="installment3">-</span>
+                </div>
+
+                <div class="ez-alert ez-alert-info">
+                    <i class="fas fa-circle-info" style="margin-top: 2px;"></i>
+                    <div>
+                        <b>UIU Thesis & Waiver Policy:</b> Scholarships and waivers <b>never apply to Thesis, Project, Internship, Retake, or Repeat courses</b>. For a 6-credit thesis (taken as 2 credits each trimester), full 100% tuition is charged for the 2 thesis credits with <b>0% waiver</b>. Retaken courses receive a <b>50% waiver</b>.
                     </div>
                 </div>
             </div>
         </div>
-    </main>
 
-    <footer class="footer">
-        <p>Made by <a href="https://junaed93.github.io" target="_blank"
-                style="color: var(--primary); text-decoration: none; font-weight: 600;">Junaed</a></p>
-    </footer>
+        <!-- Net Fee Summary KPI Cards -->
+        <div class="ez-kpi-stack" style="margin-bottom: 24px;">
+            <div class="ez-stat-card">
+                <div class="ez-stat-label">Base Tuition</div>
+                <div class="ez-stat-value" id="dispBaseTuition" style="font-size: 1.6rem;">৳0</div>
+                <div class="ez-stat-sub" id="dispCreditsSub">12 credits registered</div>
+            </div>
+            <div class="ez-stat-card">
+                <div class="ez-stat-label">Waiver Discount</div>
+                <div class="ez-stat-value" id="dispTotalDiscount" style="font-size: 1.6rem; color: var(--ez-success);">-৳0</div>
+                <div class="ez-stat-sub" id="dispDiscountSub">0% scholarship applied</div>
+            </div>
+            <div class="ez-stat-card">
+                <div class="ez-stat-label">Trimester Fee</div>
+                <div class="ez-stat-value" id="dispTrimesterFee" style="font-size: 1.6rem;">৳6,500</div>
+                <div class="ez-stat-sub">fixed university fee</div>
+            </div>
+            <div class="ez-stat-card" style="border-color: var(--ez-primary);">
+                <div class="ez-stat-label">Total Payable</div>
+                <div class="ez-stat-value" id="dispTotalPayable" style="font-size: 1.7rem; color: var(--ez-primary);">৳0</div>
+                <div class="ez-stat-sub">net term payable</div>
+            </div>
+        </div>
+
+        <!-- Official Installment Schedule Card -->
+        <div class="ez-card">
+            <div class="ez-card-header">
+                <div>
+                    <h3><i class="fas fa-calendar-check" style="color: var(--ez-primary);"></i> Official UIU Installment Schedule</h3>
+                    <p id="installmentDesc">Tuition fees are split across official university installments as shown below.</p>
+                </div>
+            </div>
+            <div class="ez-installments-grid" id="installmentsContainer">
+                <!-- Populated by JS -->
+            </div>
+        </div>
+
+        <!-- Degree Tuition Projection Card -->
+        <div class="ez-card">
+            <div class="ez-card-header">
+                <div>
+                    <h3><i class="fas fa-chart-line" style="color: var(--ez-accent);"></i> Program Degree Tuition Projection</h3>
+                    <p>Estimated total program tuition expenses and remaining cost to complete your degree</p>
+                </div>
+            </div>
+
+            <div class="ez-form-grid">
+                <div class="ez-input-group">
+                    <label class="ez-label" for="degreeTotalCredits">Total Degree Credits</label>
+                    <input type="number" class="ez-input" id="degreeTotalCredits" value="138">
+                </div>
+                <div class="ez-input-group">
+                    <label class="ez-label" for="degreeCompletedCredits">Completed Credits</label>
+                    <input type="number" class="ez-input" id="degreeCompletedCredits" value="0">
+                </div>
+            </div>
+
+            <div class="ez-kpi-stack">
+                <div class="ez-stat-card">
+                    <div class="ez-stat-label">Total Program Cost</div>
+                    <div class="ez-stat-value" id="degreeTotalCost" style="font-size: 1.5rem;">৳0</div>
+                    <div class="ez-stat-sub">tuition + term fees</div>
+                </div>
+                <div class="ez-stat-card">
+                    <div class="ez-stat-label">Paid So Far</div>
+                    <div class="ez-stat-value" id="degreePaidCost" style="font-size: 1.5rem; color: var(--ez-success);">৳0</div>
+                    <div class="ez-stat-sub" id="degreePaidSub">0 credits done</div>
+                </div>
+                <div class="ez-stat-card">
+                    <div class="ez-stat-label">Remaining to Graduate</div>
+                    <div class="ez-stat-value" id="degreeRemainingCost" style="font-size: 1.5rem; color: var(--ez-primary);">৳0</div>
+                    <div class="ez-stat-sub" id="degreeRemainingSub">138 credits left</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <footer style="margin-top: 40px; padding-top: 16px; border-top: 1px solid var(--ez-border); display: flex; justify-content: space-between; align-items: center; font-size: 0.775rem; color: var(--ez-text-muted);">
+            <div>Based on official UIU Tuition & Payment Regulations.</div>
+            <div>Crafted with <i class="fas fa-heart" style="color: var(--ez-danger);"></i> by <a href="https://junaed93.github.io" target="_blank" style="color: var(--ez-primary); text-decoration: none; font-weight: 600;">Junaed</a></div>
+        </footer>
+    </div>
+
+    <!-- Toast Notifications Stack -->
+    <div class="ez-toast-stack" id="toastContainer"></div>
 
     <script src="js/theme.js"></script>
     <script src="js/nav.js"></script>

@@ -13,19 +13,27 @@
 
   function initTheme() {
     var storedTheme = getStoredTheme();
-    if (storedTheme) {
-      setTheme(storedTheme);
-    } else {
-      setTheme("dark");
-    }
+    setTheme(storedTheme || "light");
+  }
+
+  function updateToggleIcon(theme) {
+    if (!themeToggle) return;
+    var icon = themeToggle.querySelector("i");
+    if (icon) icon.className = theme === "dark" ? "fas fa-sun" : "fas fa-moon";
+  }
+
+  function setThemeAndIcon(theme) {
+    setTheme(theme);
+    updateToggleIcon(theme);
   }
 
   function toggleTheme() {
     var currentTheme = document.documentElement.getAttribute("data-theme");
     var newTheme = currentTheme === "dark" ? "light" : "dark";
-    setTheme(newTheme);
+    setThemeAndIcon(newTheme);
   }
 
-  themeToggle.addEventListener("click", toggleTheme);
+  if (themeToggle) themeToggle.addEventListener("click", toggleTheme);
   initTheme();
+  updateToggleIcon(document.documentElement.getAttribute("data-theme"));
 })();
