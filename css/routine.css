@@ -1,6 +1,6 @@
 /* ==========================================================================
    EZ_UIU - Routine Studio (Apple Calendar Interface)
-   Apple Calendar / macOS Studio design for class scheduling.
+   Principles: Apple Design + Better UI (Concentric radii, optical polish, springs)
    ========================================================================== */
 
 .rt-app {
@@ -17,11 +17,12 @@
     font-weight: 700;
     letter-spacing: -0.03em;
     color: var(--text);
+    line-height: 1.15;
 }
 .rt-studio-header p {
     font-size: 0.92rem;
     color: var(--text-3);
-    margin-top: 3px;
+    margin-top: 4px;
     font-weight: 400;
 }
 
@@ -31,8 +32,8 @@
     margin-bottom: 20px;
     border-radius: var(--r-lg);
     background: #ffffff;
-    border: 0.5px solid var(--border);
-    box-shadow: var(--shadow-xs);
+    border: 1px solid transparent;
+    box-shadow: var(--shadow-border);
 }
 .rt-cal-bar-summary {
     display: flex;
@@ -63,11 +64,11 @@
 }
 #calSelect {
     height: 34px;
-    min-width: 250px;
-    max-width: 320px;
+    min-width: 290px;
+    max-width: 360px;
     font-size: 0.86rem;
     font-weight: 600;
-    border-radius: 8px;
+    border-radius: var(--r-inner);
     background-color: var(--surface-2);
 }
 
@@ -80,7 +81,8 @@
 }
 .rt-cal-item {
     background: var(--surface-2);
-    border: 0.5px solid var(--border);
+    border: 1px solid transparent;
+    box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.05);
     border-radius: 6px;
     padding: 3px 8px;
     display: inline-flex;
@@ -108,7 +110,7 @@
 }
 
 .rt-cal-details {
-    animation: ezFade 0.15s ease;
+    animation: ezFade 150ms ease-out;
 }
 .rt-inline-row {
     display: flex;
@@ -145,7 +147,7 @@
 /* ---------------- 2-Column Studio Grid Layout ---------------- */
 .rt-studio-grid {
     display: grid;
-    grid-template-columns: 410px minmax(0, 1fr);
+    grid-template-columns: 390px minmax(0, 1fr);
     gap: 20px;
     align-items: start;
 }
@@ -163,7 +165,7 @@
 .rt-drawer-card {
     margin-bottom: 0;
     padding: 18px 20px;
-    border-radius: var(--r-lg);
+    border-radius: var(--r-xl);
 }
 
 .rt-studio-canvas {
@@ -172,7 +174,7 @@
 .rt-canvas-card {
     margin-bottom: 0;
     padding: 20px 22px;
-    border-radius: var(--r-lg);
+    border-radius: var(--r-xl);
 }
 
 .rt-canvas-header {
@@ -189,7 +191,7 @@
     height: 40px;
     padding-left: 38px;
     font-size: 0.88rem;
-    border-radius: 9px;
+    border-radius: var(--r-inner);
     background: var(--surface-2);
 }
 .rt-search-wrap .ez-input:focus {
@@ -210,17 +212,18 @@
     left: 0;
     right: 0;
     background: #ffffff;
-    border: 0.5px solid var(--border);
+    border: 1px solid transparent;
     border-radius: var(--r-md);
-    box-shadow: var(--shadow-md);
+    box-shadow: var(--shadow-elevated);
     max-height: 300px;
     overflow-y: auto;
+    overscroll-behavior: contain;
     z-index: 100;
     display: none;
 }
 .rt-search-results.open {
     display: block;
-    animation: ezFade 0.15s ease;
+    animation: ezFade 150ms ease-out;
 }
 .rt-search-item {
     display: flex;
@@ -229,13 +232,15 @@
     padding: 9px 12px;
     cursor: pointer;
     border-bottom: 0.5px solid var(--border-subtle);
-    transition: background-color 0.1s ease;
+    transition: background-color 100ms ease-out;
 }
 .rt-search-item:last-child {
     border-bottom: none;
 }
-.rt-search-item:hover, .rt-search-item.active {
-    background: var(--surface-hover);
+@media (hover: hover) {
+    .rt-search-item:hover, .rt-search-item.active {
+        background: var(--surface-hover);
+    }
 }
 .rt-search-item .code {
     font-family: var(--font-mono);
@@ -273,13 +278,14 @@
     margin-bottom: 12px;
 }
 
-/* Selected Courses Tray */
+/* Selected Courses Tray (Better UI: Concentric radii) */
 .rt-course-list {
     display: flex;
     flex-direction: column;
     gap: 8px;
     max-height: 420px;
     overflow-y: auto;
+    overscroll-behavior: contain;
     padding-right: 2px;
 }
 .rt-course {
@@ -288,19 +294,20 @@
     grid-template-rows: auto auto;
     gap: 6px 10px;
     align-items: center;
-    border: 0.5px solid var(--border);
+    border: 1px solid transparent;
     border-radius: var(--r-md);
     background: var(--surface);
     padding: 10px 12px;
-    box-shadow: var(--shadow-xs);
-    transition: transform 0.08s ease-out;
+    box-shadow: var(--shadow-border);
+    transition: transform 120ms ease-out;
 }
-.rt-course:active {
-    transform: scale(0.99);
+.rt-course:not(:disabled):active {
+    transform: scale(0.98);
 }
 .rt-course.is-custom {
     background: var(--surface-2);
     border-style: dashed;
+    border-color: var(--border-strong);
 }
 .rt-course-main {
     grid-column: 1 / 2;
@@ -364,13 +371,15 @@
     color: var(--text-3);
     cursor: pointer;
     font-size: 0.72rem;
-    transition: all 0.1s ease;
+    transition: transform 120ms ease-out, background-color 120ms ease-out;
 }
-.rt-remove:hover {
-    color: var(--danger);
-    background: var(--danger-soft);
+@media (hover: hover) {
+    .rt-remove:hover {
+        color: var(--danger);
+        background: var(--danger-soft);
+    }
 }
-.rt-remove:active {
+.rt-remove:not(:disabled):active {
     transform: scale(0.92);
 }
 
@@ -443,18 +452,19 @@
     justify-content: center;
     width: 36px;
     height: 30px;
-    border: 0.5px solid var(--border);
+    border: 1px solid transparent;
+    box-shadow: var(--shadow-border);
     border-radius: 6px;
     font-size: 0.74rem;
     font-weight: 600;
     color: var(--text-2);
     cursor: pointer;
     background: var(--surface-2);
-    transition: all 0.12s ease;
+    transition: transform 120ms ease-out;
 }
 .rt-day-check input:checked + span {
     background: #1d1d1f;
-    border-color: #1d1d1f;
+    box-shadow: none;
     color: #ffffff;
 }
 
@@ -484,7 +494,8 @@
     display: inline-flex;
     align-items: center;
     gap: 5px;
-    border: 0.5px solid var(--border);
+    border: 1px solid transparent;
+    box-shadow: var(--shadow-border);
     border-radius: var(--r-full);
     padding: 5px 10px;
     font-size: 0.76rem;
@@ -493,16 +504,19 @@
     background: #ffffff;
     cursor: pointer;
     user-select: none;
-    transition: all 0.1s ease;
+    transition: background-color 100ms ease-out;
 }
-.rt-check:hover {
-    background: var(--surface-hover);
-    color: var(--text);
+@media (hover: hover) {
+    .rt-check:hover {
+        background: var(--surface-hover);
+        color: var(--text);
+    }
 }
 .rt-check:has(input:checked) {
     border-color: var(--primary);
     background: var(--primary-soft);
     color: var(--primary);
+    box-shadow: none;
 }
 
 /* Solution Option Cards */
@@ -513,32 +527,37 @@
     margin-top: 12px;
     max-height: 480px;
     overflow-y: auto;
+    overscroll-behavior: contain;
     padding-right: 2px;
 }
 .rt-option {
-    border: 0.5px solid var(--border);
+    border: 1px solid transparent;
     border-radius: var(--r-md);
     background: var(--surface);
     padding: 12px 14px;
     cursor: pointer;
-    transition: all 0.12s ease;
+    transition-property: transform, box-shadow, background-color, border-color;
+    transition-duration: 120ms;
+    transition-timing-function: cubic-bezier(0.2, 0, 0, 1);
     text-align: left;
     font: inherit;
     color: inherit;
     width: 100%;
-    box-shadow: var(--shadow-xs);
+    box-shadow: var(--shadow-border);
 }
-.rt-option:hover {
-    border-color: var(--border-strong);
-    background: var(--surface-hover);
+@media (hover: hover) {
+    .rt-option:hover {
+        box-shadow: var(--shadow-border-hover);
+        background: var(--surface-hover);
+    }
 }
-.rt-option:active {
-    transform: scale(0.99);
+.rt-option:not(:disabled):active {
+    transform: scale(0.98);
 }
 .rt-option.active {
     border-color: var(--primary);
     background: #ffffff;
-    box-shadow: 0 0 0 2px var(--primary), var(--shadow-sm);
+    box-shadow: 0 0 0 2px var(--primary), var(--shadow-elevated);
 }
 .rt-option-head {
     display: flex;
@@ -593,11 +612,11 @@
     margin-bottom: 16px;
 }
 .rt-kpi {
-    border: 0.5px solid var(--border);
+    border: 1px solid transparent;
     border-radius: var(--r-md);
     padding: 10px 12px;
     background: var(--surface);
-    box-shadow: var(--shadow-xs);
+    box-shadow: var(--shadow-border);
 }
 .rt-kpi .n {
     font-size: 1.45rem;
@@ -618,10 +637,11 @@
 
 .rt-timetable-wrap {
     overflow-x: auto;
-    border: 0.5px solid var(--border);
+    overflow-y: hidden;
+    border: 1px solid transparent;
     border-radius: var(--r-lg);
     background: #ffffff;
-    box-shadow: var(--shadow-xs);
+    box-shadow: var(--shadow-border);
     position: relative;
 }
 .rt-tt-relative-wrap {
@@ -716,12 +736,12 @@
     pointer-events: auto;
     padding: 24px 28px;
     text-align: center;
-    border: 0.5px solid var(--border);
+    border: 1px solid transparent;
     border-radius: var(--r-xl);
-    background: rgba(255, 255, 255, 0.95);
+    background: rgba(255, 255, 255, 0.96);
     backdrop-filter: var(--material-blur);
     -webkit-backdrop-filter: var(--material-blur);
-    box-shadow: var(--shadow-md);
+    box-shadow: var(--shadow-modal);
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -750,7 +770,8 @@
     left: 4px;
     right: 4px;
     border-radius: 6px;
-    border: 0.5px solid var(--c-border, rgba(0, 0, 0, 0.1));
+    border: 1px solid transparent;
+    box-shadow: var(--shadow-border);
     border-left: 3px solid var(--c, var(--primary));
     background: var(--c-soft, var(--primary-soft));
     padding: 5px 7px;
@@ -759,13 +780,14 @@
     line-height: 1.35;
     color: var(--text);
     min-height: 28px;
-    box-shadow: var(--shadow-xs);
-    transition: transform 0.08s ease-out, box-shadow 0.08s ease-out;
+    transition: transform 120ms ease-out, box-shadow 120ms ease-out;
 }
-.rt-tt-block:hover {
-    transform: scale(1.02);
-    box-shadow: var(--shadow-md);
-    z-index: 10;
+@media (hover: hover) {
+    .rt-tt-block:hover {
+        transform: scale(1.02);
+        box-shadow: var(--shadow-border-hover);
+        z-index: 10;
+    }
 }
 .rt-tt-block b {
     display: block;
@@ -833,20 +855,22 @@
     flex-direction: column;
     gap: 8px;
     max-width: 340px;
+    pointer-events: none;
 }
 .rt-toast {
-    background: rgba(255, 255, 255, 0.95);
+    background: rgba(255, 255, 255, 0.96);
     backdrop-filter: var(--material-blur);
     -webkit-backdrop-filter: var(--material-blur);
     color: var(--text);
-    border: 0.5px solid rgba(0, 0, 0, 0.12);
+    border: 1px solid transparent;
     border-radius: var(--r-md);
     padding: 10px 14px;
     font-size: 0.82rem;
     font-weight: 500;
     line-height: 1.45;
-    box-shadow: var(--shadow-md);
-    animation: rt-toast-in 0.18s cubic-bezier(0.25, 1, 0.5, 1);
+    box-shadow: var(--shadow-elevated);
+    animation: rt-toast-in 180ms cubic-bezier(0.2, 0, 0, 1);
+    pointer-events: auto;
 }
 .rt-toast.ok {
     border-left: 3.5px solid var(--success);

@@ -1,16 +1,17 @@
 /* ==========================================================================
-   EZ_UIU Design System — Apple Interface Design
-   Clean typography, Apple system palette, physical feedback, and pure light canvas.
+   EZ_UIU Design System
+   Principles: Apple Design (WWDC) + Better UI (Jakub Krehel) + Refactoring UI
+   Pristine canvas, optical alignment, concentric radii, layered shadows.
    ========================================================================== */
 
 @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400;1,600&family=JetBrains+Mono:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap');
 
 :root {
-    /* Apple SF System Font stack with Plus Jakarta Sans fallback */
+    /* Optical Typography Stack */
     --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "SF Pro", "Plus Jakarta Sans", system-ui, sans-serif;
     --font-mono: "SF Mono", "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
 
-    /* Apple Light Canvas */
+    /* Base Canvas & Palette */
     --bg: #f5f5f7;
     --bg-base: #f5f5f7;
     --surface: #ffffff;
@@ -19,15 +20,9 @@
     --surface-3: #f0f0f4;
     --surface-hover: #f0f0f3;
     --surface-card: #ffffff;
-    --surface-floating: rgba(255, 255, 255, 0.85);
+    --surface-floating: rgba(255, 255, 255, 0.92);
 
-    /* Apple Precision Borders */
-    --border: rgba(0, 0, 0, 0.08);
-    --border-strong: rgba(0, 0, 0, 0.16);
-    --border-subtle: rgba(0, 0, 0, 0.05);
-    --border-focus: #0071e3;
-
-    /* Apple System Typography */
+    /* Text Hierarchy (Refactoring UI: 3 text shades max for body) */
     --text: #1d1d1f;
     --text-2: #515154;
     --text-3: #86868b;
@@ -38,7 +33,7 @@
     --primary-hover: #0077ed;
     --primary-active: #005bb5;
     --primary-soft: rgba(0, 113, 227, 0.08);
-    --primary-border: rgba(0, 113, 227, 0.2);
+    --primary-border: rgba(0, 113, 227, 0.22);
 
     --success: #34c759;
     --success-soft: rgba(52, 199, 89, 0.1);
@@ -56,25 +51,43 @@
     --info-soft: rgba(0, 113, 227, 0.08);
     --info-border: rgba(0, 113, 227, 0.2);
 
-    /* Apple Translucency */
-    --material-blur: blur(20px) saturate(180%);
-    --material-blur-sm: blur(12px) saturate(160%);
-
-    /* Apple Restrained Elevation */
-    --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.04);
-    --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.02);
-    --shadow-md: 0 6px 20px rgba(0, 0, 0, 0.06), 0 2px 6px rgba(0, 0, 0, 0.03);
-    --shadow-lg: 0 16px 36px rgba(0, 0, 0, 0.08), 0 4px 12px rgba(0, 0, 0, 0.04);
-
-    /* Apple Radii */
+    /* Concentric Border Radii (outerRadius = innerRadius + padding + borderWidth) */
+    --r-inner: 8px;
     --r-xs: 6px;
     --r-sm: 8px;
     --r-md: 12px;
     --r-lg: 16px;
-    --r-xl: 20px;
+    --r-xl: 22px;
     --r-full: 980px;
 
-    --maxw: 1200px;
+    /* Layered Shadow System (Better UI exact recipes + forced-colors support) */
+    --shadow-border:
+        0px 0px 0px 1px rgba(0, 0, 0, 0.06),
+        0px 1px 2px -1px rgba(0, 0, 0, 0.06),
+        0px 2px 4px 0px rgba(0, 0, 0, 0.04);
+    --shadow-border-hover:
+        0px 0px 0px 1px rgba(0, 0, 0, 0.08),
+        0px 3px 8px -1px rgba(0, 0, 0, 0.08),
+        0px 6px 16px 0px rgba(0, 0, 0, 0.05);
+    --shadow-elevated:
+        0px 0px 0px 1px rgba(0, 0, 0, 0.08),
+        0px 8px 24px -4px rgba(0, 0, 0, 0.1),
+        0px 4px 10px -2px rgba(0, 0, 0, 0.04);
+    --shadow-modal:
+        0px 0px 0px 1px rgba(0, 0, 0, 0.08),
+        0px 16px 36px -4px rgba(0, 0, 0, 0.12),
+        0px 6px 16px -2px rgba(0, 0, 0, 0.06);
+
+    /* Dividers & Borders */
+    --border: rgba(0, 0, 0, 0.08);
+    --border-strong: rgba(0, 0, 0, 0.16);
+    --border-subtle: rgba(0, 0, 0, 0.05);
+    --border-focus: #0071e3;
+
+    /* Translucent Material */
+    --material-blur: blur(20px) saturate(180%);
+
+    --maxw: 1360px;
 
     /* Legacy Token Mappings for Existing Scripts */
     --ez-bg: var(--bg);
@@ -82,7 +95,7 @@
     --ez-surface-subtle: var(--surface-2);
     --ez-surface-hover: var(--surface-hover);
     --ez-border: var(--border);
-    --ez-border-subtle: var(--border);
+    --ez-border-subtle: var(--border-subtle);
     --ez-border-focus: var(--border-focus);
     --ez-text: var(--text);
     --ez-text-secondary: var(--text-2);
@@ -110,9 +123,9 @@
     --ez-info: var(--info);
     --ez-info-soft: var(--info-soft);
     --ez-info-border: var(--info-border);
-    --ez-shadow-xs: var(--shadow-xs);
-    --ez-shadow-sm: var(--shadow-sm);
-    --ez-shadow-md: var(--shadow-md);
+    --ez-shadow-xs: var(--shadow-border);
+    --ez-shadow-sm: var(--shadow-border);
+    --ez-shadow-md: var(--shadow-border-hover);
     --ez-radius-sm: var(--r-sm);
     --ez-radius-md: var(--r-md);
     --ez-radius-lg: var(--r-lg);
@@ -125,6 +138,7 @@
    ========================================================================== */
 *, *::before, *::after {
     box-sizing: border-box;
+    -webkit-tap-highlight-color: transparent;
 }
 
 html {
@@ -149,10 +163,12 @@ body {
 a {
     color: var(--primary);
     text-decoration: none;
-    transition: opacity 0.15s ease;
+    transition: opacity 120ms ease-out;
 }
-a:hover {
-    opacity: 0.82;
+@media (hover: hover) {
+    a:hover {
+        opacity: 0.8;
+    }
 }
 
 ::selection {
@@ -167,7 +183,7 @@ a:hover {
     position: sticky;
     top: 0;
     z-index: 100;
-    background: rgba(255, 255, 255, 0.8);
+    background: rgba(255, 255, 255, 0.82);
     backdrop-filter: var(--material-blur);
     -webkit-backdrop-filter: var(--material-blur);
     border-bottom: 0.5px solid rgba(0, 0, 0, 0.12);
@@ -194,18 +210,20 @@ a:hover {
     font-weight: 700;
     font-size: 1.05rem;
     letter-spacing: -0.025em;
-    transition: opacity 0.15s ease;
+    transition: opacity 120ms ease-out;
 }
-.ez-brand:hover {
-    opacity: 0.85;
+@media (hover: hover) {
+    .ez-brand:hover {
+        opacity: 0.82;
+    }
 }
 
 .ez-brand-icon {
     width: 28px;
     height: 28px;
     border-radius: 7px;
-    background: #1d1d1f;
-    color: #ffffff;
+    background: rgba(0, 113, 227, 0.1);
+    color: var(--primary);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -222,17 +240,21 @@ a:hover {
     display: inline-flex;
     align-items: center;
     gap: 7px;
-    padding: 6px 12px;
+    padding: 6px 13px;
     font-size: 0.84rem;
     font-weight: 500;
     color: var(--text-2);
     text-decoration: none;
     border-radius: var(--r-full);
-    transition: all 0.15s ease;
+    transition-property: background-color, color;
+    transition-duration: 120ms;
+    transition-timing-function: ease-out;
 }
-.ez-nav-link:hover {
-    color: var(--text);
-    background: rgba(0, 0, 0, 0.04);
+@media (hover: hover) {
+    .ez-nav-link:hover {
+        color: var(--text);
+        background: rgba(0, 0, 0, 0.04);
+    }
 }
 .ez-nav-link.active {
     color: var(--text);
@@ -250,22 +272,27 @@ a:hover {
     width: 32px;
     height: 32px;
     border-radius: var(--r-full);
-    border: 0.5px solid var(--border);
+    border: 1px solid transparent;
+    box-shadow: var(--shadow-border);
     background: #ffffff;
     color: var(--text-2);
     display: inline-flex;
     align-items: center;
     justify-content: center;
     cursor: pointer;
-    box-shadow: var(--shadow-xs);
-    transition: transform 0.1s ease-out, background-color 0.15s ease;
+    transition-property: transform, background-color;
+    transition-duration: 120ms;
+    transition-timing-function: ease-out;
 }
-.ez-icon-btn:hover {
-    background: var(--surface-hover);
-    color: var(--text);
+@media (hover: hover) {
+    .ez-icon-btn:hover {
+        background: var(--surface-hover);
+        color: var(--text);
+    }
 }
-.ez-icon-btn:active {
-    transform: scale(0.95);
+.ez-icon-btn:not(:disabled):active {
+    transform: scale(0.96);
+    transition: transform 150ms ease-out;
 }
 
 .ez-mobile-toggle {
@@ -282,11 +309,11 @@ a:hover {
         top: 52px;
         left: 0;
         right: 0;
-        background: rgba(255, 255, 255, 0.95);
+        background: rgba(255, 255, 255, 0.96);
         backdrop-filter: var(--material-blur);
         -webkit-backdrop-filter: var(--material-blur);
         border-bottom: 0.5px solid rgba(0, 0, 0, 0.12);
-        box-shadow: var(--shadow-md);
+        box-shadow: var(--shadow-elevated);
         padding: 12px 16px;
         flex-direction: column;
         align-items: stretch;
@@ -303,14 +330,14 @@ a:hover {
 .ez-app-layout {
     max-width: var(--maxw);
     margin: 0 auto;
-    padding: 36px 20px 80px;
+    padding: 32px 20px 80px;
 }
 
 .ez-header {
     display: flex;
     flex-direction: column;
     gap: 14px;
-    margin-bottom: 24px;
+    margin-bottom: 22px;
 }
 @media (min-width: 720px) {
     .ez-header {
@@ -343,7 +370,7 @@ a:hover {
 }
 
 /* ==========================================================================
-   Apple Buttons
+   Buttons (Better UI: Scale on press 0.96 over 150ms)
    ========================================================================== */
 .ez-btn {
     display: inline-flex;
@@ -351,67 +378,80 @@ a:hover {
     justify-content: center;
     gap: 6px;
     height: 34px;
-    padding: 0 14px;
+    padding-inline-start: 14px;
+    padding-inline-end: 14px;
     font-size: 0.84rem;
     font-weight: 500;
     font-family: inherit;
     border-radius: var(--r-full);
-    border: 0.5px solid rgba(0, 0, 0, 0.1);
+    border: 1px solid transparent;
+    box-shadow: var(--shadow-border);
     background: #ffffff;
     color: var(--text);
     cursor: pointer;
     text-decoration: none;
     white-space: nowrap;
-    box-shadow: var(--shadow-xs);
-    transition: transform 0.08s ease-out, background-color 0.15s ease, opacity 0.15s ease;
+    transition-property: transform, background-color, box-shadow, color;
+    transition-duration: 120ms;
+    transition-timing-function: cubic-bezier(0.2, 0, 0, 1);
     user-select: none;
 }
-.ez-btn:hover {
-    background: var(--surface-hover);
-    color: var(--text);
+@media (hover: hover) {
+    .ez-btn:hover {
+        background: var(--surface-hover);
+        box-shadow: var(--shadow-border-hover);
+        color: var(--text);
+    }
 }
-.ez-btn:active {
-    transform: scale(0.97);
+.ez-btn:not(:disabled):active {
+    transform: scale(0.96);
+    transition: transform 150ms ease-out;
 }
 
 .ez-btn-primary {
     background: var(--primary);
     color: #ffffff !important;
-    border: none;
+    border: 1px solid transparent;
     font-weight: 600;
-    box-shadow: 0 1px 3px rgba(0, 113, 227, 0.25);
+    box-shadow: 0 1px 3px rgba(0, 113, 227, 0.3);
 }
-.ez-btn-primary:hover {
-    background: var(--primary-hover);
-    color: #ffffff !important;
+@media (hover: hover) {
+    .ez-btn-primary:hover {
+        background: var(--primary-hover);
+        box-shadow: 0 3px 8px rgba(0, 113, 227, 0.4);
+        color: #ffffff !important;
+    }
 }
-.ez-btn-primary:active {
+.ez-btn-primary:not(:disabled):active {
     background: var(--primary-active);
-    transform: scale(0.97);
+    transform: scale(0.96);
 }
 
 .ez-btn-danger {
     color: var(--danger);
-    border: 0.5px solid var(--danger-border);
     background: var(--danger-soft);
+    border: 1px solid transparent;
+    box-shadow: none;
 }
-.ez-btn-danger:hover {
-    background: var(--danger);
-    color: #ffffff;
-    border-color: var(--danger);
+@media (hover: hover) {
+    .ez-btn-danger:hover {
+        background: var(--danger);
+        color: #ffffff;
+    }
 }
-.ez-btn-danger:active {
-    transform: scale(0.97);
+.ez-btn-danger:not(:disabled):active {
+    transform: scale(0.96);
 }
 
 .ez-btn-sm {
     height: 28px;
     font-size: 0.78rem;
-    padding: 0 11px;
+    padding-inline-start: 11px;
+    padding-inline-end: 11px;
 }
 
 /* ==========================================================================
-   Apple Segmented Control (Pill Dock)
+   Segmented Control (Apple Pill Dock)
    ========================================================================== */
 .ez-dock-wrap {
     margin-bottom: 22px;
@@ -445,11 +485,15 @@ a:hover {
     border-radius: 7px;
     cursor: pointer;
     white-space: nowrap;
-    transition: all 0.14s ease;
+    transition-property: background-color, color, transform;
+    transition-duration: 120ms;
+    transition-timing-function: ease-out;
     user-select: none;
 }
-.ez-dock-btn:hover {
-    color: var(--text);
+@media (hover: hover) {
+    .ez-dock-btn:hover {
+        color: var(--text);
+    }
 }
 .ez-dock-btn.active {
     background: #ffffff;
@@ -457,8 +501,9 @@ a:hover {
     font-weight: 600;
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.08), 0 0 1px rgba(0, 0, 0, 0.12);
 }
-.ez-dock-btn:active {
-    transform: scale(0.97);
+.ez-dock-btn:not(:disabled):active {
+    transform: scale(0.96);
+    transition: transform 150ms ease-out;
 }
 .ez-dock-btn.dock-recovery {
     color: var(--danger);
@@ -482,14 +527,14 @@ a:hover {
 }
 
 /* ==========================================================================
-   Cards (Apple Inset Grouped Surface)
+   Cards (Concentric Radii + Layered Elevation)
    ========================================================================== */
 .ez-card {
     background: var(--surface);
-    border: 0.5px solid var(--border);
+    border: 1px solid transparent;
     border-radius: var(--r-xl);
     padding: 22px 24px;
-    box-shadow: var(--shadow-sm);
+    box-shadow: var(--shadow-border);
     margin-bottom: 20px;
 }
 
@@ -536,7 +581,7 @@ a:hover {
 
 .ez-gauge-card {
     background: var(--surface);
-    border: 0.5px solid var(--border);
+    border: 1px solid transparent;
     border-radius: var(--r-xl);
     padding: 24px 18px;
     display: flex;
@@ -544,7 +589,7 @@ a:hover {
     align-items: center;
     justify-content: center;
     text-align: center;
-    box-shadow: var(--shadow-sm);
+    box-shadow: var(--shadow-border);
 }
 
 .ez-gauge-wrap {
@@ -624,16 +669,16 @@ a:hover {
 
 .ez-stat-card {
     background: var(--surface);
-    border: 0.5px solid var(--border);
+    border: 1px solid transparent;
     border-radius: var(--r-lg);
     padding: 16px 18px;
-    box-shadow: var(--shadow-xs);
+    box-shadow: var(--shadow-border);
     display: flex;
     flex-direction: column;
     justify-content: space-between;
-    transition: transform 0.08s ease-out;
+    transition: transform 120ms ease-out;
 }
-.ez-stat-card:active {
+.ez-stat-card:not(:disabled):active {
     transform: scale(0.98);
 }
 
@@ -727,35 +772,39 @@ a:hover {
     border-radius: var(--r-full);
     font-size: 0.78rem;
     font-weight: 500;
-    border: 0.5px solid var(--border);
+    border: 1px solid transparent;
+    box-shadow: var(--shadow-border);
     background: #ffffff;
     color: var(--text-2);
     cursor: pointer;
-    transition: all 0.12s ease;
+    transition: all 120ms ease-out;
     user-select: none;
 }
-.ez-filter-btn:hover {
-    color: var(--text);
-    background: var(--surface-hover);
+@media (hover: hover) {
+    .ez-filter-btn:hover {
+        color: var(--text);
+        background: var(--surface-hover);
+    }
 }
 .ez-filter-btn.active {
     background: #1d1d1f;
     color: #ffffff;
-    border-color: #1d1d1f;
+    box-shadow: none;
 }
-.ez-filter-btn:active {
+.ez-filter-btn:not(:disabled):active {
     transform: scale(0.96);
+    transition: transform 150ms ease-out;
 }
 
 /* ==========================================================================
-   Tables (Apple Inset Style)
+   Tables
    ========================================================================== */
 .ez-table-card {
-    border: 0.5px solid var(--border);
+    border: 1px solid transparent;
     border-radius: var(--r-xl);
     overflow: hidden;
     background: var(--surface);
-    box-shadow: var(--shadow-sm);
+    box-shadow: var(--shadow-border);
     margin-bottom: 20px;
 }
 .ez-table {
@@ -865,30 +914,32 @@ a:hover {
     width: 28px;
     height: 28px;
     border-radius: 6px;
-    border: 0.5px solid var(--border);
+    border: 1px solid transparent;
+    box-shadow: var(--shadow-border);
     background: #ffffff;
     color: var(--text-3);
     display: inline-flex;
     align-items: center;
     justify-content: center;
     cursor: pointer;
-    transition: all 0.12s ease;
+    transition: transform 120ms ease-out;
 }
-.ez-mini-btn:hover {
-    background: var(--surface-hover);
-    color: var(--text);
+@media (hover: hover) {
+    .ez-mini-btn:hover {
+        background: var(--surface-hover);
+        color: var(--text);
+    }
 }
-.ez-mini-btn:active {
+.ez-mini-btn:not(:disabled):active {
     transform: scale(0.94);
 }
 .ez-mini-btn.del-btn:hover {
     color: var(--danger);
     background: var(--danger-soft);
-    border-color: var(--danger-border);
 }
 
 /* ==========================================================================
-   Apple Form Controls
+   Form Controls (WCAG 3:1 Non-Text Contrast Border)
    ========================================================================== */
 .ez-form-grid {
     display: grid;
@@ -917,12 +968,14 @@ a:hover {
     font-size: 0.86rem;
     font-family: inherit;
     font-weight: 400;
-    border: 1px solid rgba(0, 0, 0, 0.15);
-    border-radius: 9px;
+    border: 1px solid rgba(0, 0, 0, 0.16);
+    border-radius: var(--r-inner);
     background: #ffffff;
     color: var(--text);
     width: 100%;
-    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+    transition-property: border-color, box-shadow;
+    transition-duration: 150ms;
+    transition-timing-function: cubic-bezier(0.2, 0, 0, 1);
 }
 .ez-textarea {
     height: auto;
@@ -955,12 +1008,13 @@ a:hover {
     left: 0;
     right: 0;
     background: #ffffff;
-    border: 0.5px solid var(--border);
+    border: 1px solid transparent;
     border-radius: var(--r-md);
-    box-shadow: var(--shadow-md);
+    box-shadow: var(--shadow-elevated);
     z-index: 1000;
     max-height: 240px;
     overflow-y: auto;
+    overscroll-behavior: contain;
     display: none;
 }
 .ez-autocomplete-item {
@@ -972,29 +1026,31 @@ a:hover {
     justify-content: space-between;
     align-items: center;
     gap: 8px;
-    transition: background-color 0.12s ease;
+    transition: background-color 100ms ease-out;
 }
 .ez-autocomplete-item:last-child {
     border-bottom: none;
 }
-.ez-autocomplete-item:hover {
-    background: var(--surface-hover);
+@media (hover: hover) {
+    .ez-autocomplete-item:hover {
+        background: var(--surface-hover);
+    }
 }
 
 /* ==========================================================================
    Retake & Boost List
    ========================================================================== */
 .ez-retake-item {
-    border: 0.5px solid var(--border);
+    border: 1px solid transparent;
     border-radius: var(--r-md);
     background: var(--surface);
     padding: 14px 16px;
     margin-bottom: 10px;
-    box-shadow: var(--shadow-xs);
+    box-shadow: var(--shadow-border);
     display: flex;
     flex-direction: column;
     gap: 10px;
-    transition: transform 0.08s ease-out;
+    transition: transform 120ms ease-out;
 }
 @media (min-width: 640px) {
     .ez-retake-item {
@@ -1028,11 +1084,11 @@ a:hover {
 }
 .ez-inst-card {
     background: var(--surface);
-    border: 0.5px solid var(--border);
+    border: 1px solid transparent;
     border-radius: var(--r-lg);
     padding: 14px;
     text-align: center;
-    box-shadow: var(--shadow-xs);
+    box-shadow: var(--shadow-border);
 }
 .ez-inst-card.first-due {
     border-color: var(--primary);
@@ -1069,7 +1125,7 @@ a:hover {
     padding: 20px;
     opacity: 0;
     pointer-events: none;
-    transition: opacity 0.2s cubic-bezier(0.25, 1, 0.5, 1);
+    transition: opacity 180ms cubic-bezier(0.2, 0, 0, 1);
 }
 .ez-modal-backdrop.open {
     opacity: 1;
@@ -1077,16 +1133,17 @@ a:hover {
 }
 .ez-modal-window {
     background: #ffffff;
-    border: 0.5px solid rgba(0, 0, 0, 0.12);
+    border: 1px solid transparent;
     border-radius: var(--r-xl);
     width: 100%;
     max-width: 520px;
     max-height: 90vh;
     overflow-y: auto;
+    overscroll-behavior: contain;
     padding: 24px;
-    box-shadow: var(--shadow-lg);
+    box-shadow: var(--shadow-modal);
     transform: scale(0.96);
-    transition: transform 0.2s cubic-bezier(0.25, 1, 0.5, 1);
+    transition: transform 180ms cubic-bezier(0.2, 0, 0, 1);
 }
 .ez-modal-backdrop.open .ez-modal-window {
     transform: scale(1);
@@ -1100,23 +1157,25 @@ a:hover {
     display: flex;
     flex-direction: column;
     gap: 8px;
+    pointer-events: none;
 }
 .ez-toast {
-    background: rgba(255, 255, 255, 0.95);
+    background: rgba(255, 255, 255, 0.96);
     backdrop-filter: var(--material-blur);
     -webkit-backdrop-filter: var(--material-blur);
-    border: 0.5px solid rgba(0, 0, 0, 0.12);
+    border: 1px solid transparent;
     border-radius: var(--r-md);
     padding: 11px 16px;
     font-size: 0.84rem;
     font-weight: 500;
-    box-shadow: var(--shadow-md);
+    box-shadow: var(--shadow-elevated);
     display: flex;
     align-items: center;
     gap: 10px;
     color: var(--text);
-    animation: ezToastIn 0.2s cubic-bezier(0.25, 1, 0.5, 1);
+    animation: ezToastIn 180ms cubic-bezier(0.2, 0, 0, 1);
     max-width: 360px;
+    pointer-events: auto;
 }
 .ez-toast.toast-success {
     border-left: 3.5px solid var(--success);
@@ -1133,14 +1192,14 @@ a:hover {
 }
 
 /* ==========================================================================
-   Tabs & Animation
+   Tabs & Transitions
    ========================================================================== */
 .tab-pane {
     display: none;
 }
 .tab-pane.active {
     display: block;
-    animation: ezFade 0.18s ease;
+    animation: ezFade 150ms ease-out;
 }
 @keyframes ezFade {
     from { opacity: 0; transform: translateY(3px); }
@@ -1158,7 +1217,7 @@ a:hover {
     height: 100%;
     background: var(--primary);
     border-radius: var(--r-full);
-    transition: width 0.4s cubic-bezier(0.25, 1, 0.5, 1);
+    transition: width 400ms cubic-bezier(0.2, 0, 0, 1);
 }
 
 .ez-divider {
@@ -1220,12 +1279,32 @@ a:hover {
     text-decoration: none;
     font-weight: 500;
 }
-.ez-footer a:hover {
-    color: var(--primary);
+@media (hover: hover) {
+    .ez-footer a:hover {
+        color: var(--primary);
+    }
 }
 
 /* ==========================================================================
-   Print Overrides
+   Reduced Motion Accessibility (Better UI + Apple Design)
+   ========================================================================== */
+@media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
+    }
+    .ez-btn:not(:disabled):active,
+    .ez-stat-card:not(:disabled):active,
+    .ez-filter-btn:not(:disabled):active,
+    .ez-dock-btn:not(:disabled):active {
+        transform: none !important;
+    }
+}
+
+/* ==========================================================================
+   Print Stylesheet
    ========================================================================== */
 @media print {
     .ez-navbar, .ez-action-deck, .ez-dock-wrap, .ez-footer, .ez-toast-stack, .ez-modal-backdrop {
