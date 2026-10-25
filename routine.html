@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Routine Builder &amp; .ics Export | EZ_UIU</title>
+    <meta name="description" content="Build a clash-free UIU class routine from the Fall 2026 CSE &amp; BSDS section list, apply the official academic calendar, and download it as a calendar-ready .ics file.">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="css/ez-uiu.css">
+    <link rel="stylesheet" href="css/routine.css">
+</head>
+
+<body>
+    <!-- Top Navigation Bar -->
+    <nav class="ez-navbar">
+        <div class="ez-nav-container">
+            <a href="index.html" class="ez-brand">
+                <div class="ez-brand-icon"><i class="fas fa-graduation-cap"></i></div>
+                <span>EZ_UIU</span>
+            </a>
+            <div class="ez-nav-links" id="navLinks">
+                <a href="cgpacalculator.html" class="ez-nav-link">
+                    <i class="fas fa-calculator"></i><span>CGPA Calculator</span>
+                </a>
+                <a href="tuition.html" class="ez-nav-link">
+                    <i class="fas fa-wallet"></i><span>Tuition Fee</span>
+                </a>
+                <a href="routine.html" class="ez-nav-link active">
+                    <i class="fas fa-calendar-days"></i><span>Routine Builder</span>
+                </a>
+                <a href="advisor.html" class="ez-nav-link" style="display: none;">
+                    <i class="fas fa-robot"></i><span>AI Advisor</span>
+                </a>
+            </div>
+            <div class="ez-nav-actions">
+                <button class="ez-icon-btn" id="themeToggle" aria-label="Toggle theme">
+                    <i class="fas fa-moon"></i>
+                </button>
+                <button class="ez-icon-btn ez-mobile-toggle" id="mobileMenuBtn" aria-label="Toggle menu">
+                    <i class="fas fa-bars"></i>
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <div class="ez-app-layout rt-app">
+        <header class="ez-header">
+            <div class="ez-header-title-box">
+                <h1>UIU Routine Builder</h1>
+                <p>Build a clash-free routine, apply the official academic calendar, and export a calendar-ready .ics</p>
+            </div>
+            <div class="ez-action-deck">
+                <button class="ez-btn" id="btnSolveTop">
+                    <i class="fas fa-wand-magic-sparkles"></i> Auto-generate
+                </button>
+                <button class="ez-btn ez-btn-primary" id="btnDownload">
+                    <i class="fas fa-download"></i> Download .ics
+                </button>
+            </div>
+        </header>
+
+        <!-- ============ 1. Academic calendar ============ -->
+        <section class="ez-card">
+            <div class="ez-card-header">
+                <div>
+                    <h3><i class="fas fa-calendar-check" style="color: var(--ez-primary);"></i> Academic calendar</h3>
+                    <p>Every class is placed inside the official term and skips holidays, suspensions and exam blocks.</p>
+                </div>
+                <div class="ez-action-deck rt-noprint">
+                    <select class="ez-select" id="calSelect" aria-label="Academic calendar" style="width: auto; min-width: 230px;"></select>
+                    <button class="ez-btn ez-btn-sm" id="btnFetchCal">
+                        <i class="fas fa-cloud-arrow-down"></i> Refresh from UIU
+                    </button>
+                    <button class="ez-btn ez-btn-sm" id="btnPasteCal">
+                        <i class="fas fa-paste"></i> Paste
+                    </button>
+                </div>
+            </div>
+
+            <div class="rt-cal-meta" id="calMeta"></div>
+
+            <div class="rt-inline-row rt-noprint">
+                <div class="ez-input-group rt-date-input">
+                    <label class="ez-label" for="calFirst"><i class="fas fa-play"></i> First class day</label>
+                    <input type="date" class="ez-input" id="calFirst">
+                </div>
+                <div class="ez-input-group rt-date-input">
+                    <label class="ez-label" for="calLast"><i class="fas fa-flag-checkered"></i> Last class day</label>
+                    <input type="date" class="ez-input" id="calLast">
+                </div>
+                <div class="ez-input-group" style="flex: 1 1 240px;">
+                    <label class="ez-label"><i class="fas fa-circle-info"></i> Calendar effects</label>
+                    <div class="rt-msg" id="calEffects" style="margin-top: 0;"></div>
+                </div>
+            </div>
+            <div class="rt-msg" id="calMsg"></div>
+
+            <div class="rt-paste" id="calPasteWrap" hidden>
+                <p class="rt-msg" style="margin-top: 0;">
+                    Fetch blocked by CORS? Open the UIU calendar page, copy the text and paste it below. You can also load a
+                    saved <b>.ics</b>, <b>.html</b> or <b>.txt</b> file.
+                </p>
+                <textarea class="ez-textarea" id="pasteArea" placeholder="Paste the UIU academic calendar text here…"></textarea>
+                <div class="ez-action-deck" style="margin-top: 10px;">
+                    <button class="ez-btn ez-btn-primary ez-btn-sm" id="btnParsePaste">
+                        <i class="fas fa-check"></i> Parse pasted text
+                    </button>
+                    <label class="ez-btn ez-btn-sm" style="margin: 0;">
+                        <i class="fas fa-upload"></i> Load file
+                        <input type="file" id="calFile" accept=".ics,.html,.htm,.txt" hidden>
+                    </label>
+                </div>
+            </div>
+        </section>
+
+        <!-- ============ 2. Courses ============ -->
+        <section class="ez-card">
+            <div class="ez-card-header">
+                <div>
+                    <h3><i class="fas fa-book-open" style="color: var(--ez-primary);"></i> Your courses</h3>
+                    <p>Add courses, lock a section when you have one, or let the solver choose everything.</p>
+                </div>
+                <div class="ez-action-deck rt-noprint">
+                    <span class="ez-filter-btn" id="courseCount" style="cursor: default;">0 courses</span>
+                    <button class="ez-btn ez-btn-sm" id="btnClearCourses">
+                        <i class="fas fa-broom"></i> Clear
+                    </button>
+                </div>
+            </div>
+
+            <div class="rt-search-wrap rt-noprint">
+                <i class="fas fa-magnifying-glass rt-search-icon"></i>
+                <input type="text" class="ez-input" id="courseSearch" autocomplete="off"
+                    placeholder="Search a course code, title or acronym — e.g. CSE 4509, DSA, OOP, DBMS">
+                <div class="rt-search-results" id="searchResults"></div>
+            </div>
+
+            <div class="ez-filter-bar rt-filter-bar rt-noprint" id="programFilters">
+                <button class="ez-filter-btn active" data-program="all">All programs</button>
+                <button class="ez-filter-btn" data-program="BSCSE">BSCSE</button>
+                <button class="ez-filter-btn" data-program="BSDS">BSDS</button>
+                <span class="rt-source-note" style="margin-left: auto;">
+                    Fall 2026 section list · CSE &amp; BSDS
+                </span>
+            </div>
+
+            <div class="rt-course-list" id="courseList"></div>
+
+            <details class="rt-details rt-noprint" id="customDetails">
+                <summary>Add a custom class (FYDP, retake, other department)</summary>
+                <div class="rt-custom-grid">
+                    <div class="ez-input-group" style="grid-column: 1 / -1;">
+                        <label class="ez-label" for="customTitle">Class title</label>
+                        <input type="text" class="ez-input" id="customTitle" placeholder="CSE 4999 (A) - Final Year Design Project">
+                    </div>
+                    <div class="ez-input-group">
+                        <label class="ez-label">Days</label>
+                        <div class="rt-days" id="customDays">
+                            <label class="rt-day-check"><input type="checkbox" value="Sat"><span>Sat</span></label>
+                            <label class="rt-day-check"><input type="checkbox" value="Sun"><span>Sun</span></label>
+                            <label class="rt-day-check"><input type="checkbox" value="Mon"><span>Mon</span></label>
+                            <label class="rt-day-check"><input type="checkbox" value="Tue"><span>Tue</span></label>
+                            <label class="rt-day-check"><input type="checkbox" value="Wed"><span>Wed</span></label>
+                        </div>
+                    </div>
+                    <div class="ez-input-group">
+                        <label class="ez-label" for="customStart">Start</label>
+                        <input type="time" class="ez-input" id="customStart" value="08:30">
+                    </div>
+                    <div class="ez-input-group">
+                        <label class="ez-label" for="customEnd">End</label>
+                        <input type="time" class="ez-input" id="customEnd" value="09:50">
+                    </div>
+                    <div class="ez-input-group">
+                        <label class="ez-label" for="customRoom">Room</label>
+                        <input type="text" class="ez-input" id="customRoom" placeholder="328">
+                    </div>
+                    <div class="ez-input-group">
+                        <label class="ez-label" for="customCredit">Credits</label>
+                        <input type="number" class="ez-input" id="customCredit" min="0" max="12" step="0.5" value="0">
+                    </div>
+                    <div class="ez-input-group">
+                        <label class="ez-label" for="customFaculty">Faculty (optional)</label>
+                        <input type="text" class="ez-input" id="customFaculty" placeholder="Faculty name">
+                    </div>
+                </div>
+                <div class="ez-action-deck" style="margin-top: 12px;">
+                    <button class="ez-btn ez-btn-primary ez-btn-sm" id="btnAddCustom">
+                        <i class="fas fa-plus"></i> Add custom class
+                    </button>
+                    <span class="rt-msg" id="customMsg" style="margin: 0;"></span>
+                </div>
+            </details>
+        </section>
+
+        <!-- ============ 3. Solver ============ -->
+        <section class="ez-card rt-noprint">
+            <div class="ez-card-header">
+                <div>
+                    <h3><i class="fas fa-wand-magic-sparkles" style="color: var(--ez-accent);"></i> Generate a clash-free routine</h3>
+                    <p>The solver tries every section combination and ranks them by gaps, day compactness and start time.</p>
+                </div>
+                <div class="ez-action-deck">
+                    <button class="ez-btn ez-btn-primary" id="btnSolve">
+                        <i class="fas fa-bolt"></i> Generate options
+                    </button>
+                </div>
+            </div>
+
+            <div class="rt-options-config">
+                <div class="rt-option-group">
+                    <span class="rt-option-label">Keep free</span>
+                    <div class="rt-check-row" id="daysOff">
+                        <label class="rt-check"><input type="checkbox" value="Sat"> Sat</label>
+                        <label class="rt-check"><input type="checkbox" value="Sun"> Sun</label>
+                        <label class="rt-check"><input type="checkbox" value="Mon"> Mon</label>
+                        <label class="rt-check"><input type="checkbox" value="Tue"> Tue</label>
+                        <label class="rt-check"><input type="checkbox" value="Wed"> Wed</label>
+                    </div>
+                </div>
+                <div class="rt-option-group">
+                    <span class="rt-option-label">Time window</span>
+                    <div class="rt-inline-row" style="gap: 8px;">
+                        <input type="time" class="ez-input" id="optEarliest" style="width: 120px;" aria-label="Earliest start">
+                        <span class="rt-msg" style="margin: 0;">to</span>
+                        <input type="time" class="ez-input" id="optLatest" style="width: 120px;" aria-label="Latest end">
+                    </div>
+                </div>
+                <div class="rt-option-group" style="flex: 1 1 100%;">
+                    <span class="rt-option-label">Calendar export</span>
+                    <div class="rt-check-row">
+                        <label class="rt-check">
+                            <input type="checkbox" id="optInfo" checked> Include deadlines &amp; other calendar events
+                        </label>
+                        <label class="rt-check">
+                            <input type="checkbox" id="optAlarm" checked> Reminder
+                            <input type="number" id="alarmMin" value="15" min="0" max="120" step="5"
+                                style="width: 52px; height: 24px; padding: 0 4px; border: 1px solid var(--border); border-radius: 4px; background: var(--surface); color: var(--text); font-size: 0.75rem;">
+                            min before
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <div class="rt-msg" id="solverMsg"></div>
+            <div class="rt-schedule-list" id="optionList"></div>
+        </section>
+
+        <!-- ============ 4. Preview ============ -->
+        <section class="ez-card">
+            <div class="ez-card-header">
+                <div>
+                    <h3><i class="fas fa-table-cells-large" style="color: var(--ez-primary);"></i> Routine preview</h3>
+                    <p id="previewNote">Add at least one course to see your week.</p>
+                </div>
+                <div class="rt-preview-actions rt-noprint">
+                    <button class="ez-btn ez-btn-sm" id="btnCopy">
+                        <i class="fas fa-copy"></i> Copy
+                    </button>
+                    <button class="ez-btn ez-btn-sm" id="btnPrint">
+                        <i class="fas fa-print"></i> Print
+                    </button>
+                    <button class="ez-btn ez-btn-sm ez-btn-primary" id="btnDownload2">
+                        <i class="fas fa-calendar-plus"></i> Download .ics
+                    </button>
+                </div>
+            </div>
+
+            <div class="ez-alert ez-alert-warning rt-clash-alert" id="clashAlert" style="display: none;">
+                <i class="fas fa-triangle-exclamation" style="margin-top: 2px;"></i>
+                <div id="clashText"></div>
+            </div>
+
+            <div class="rt-kpis" id="previewStats"></div>
+            <div class="rt-timetable-wrap" id="timetable"></div>
+            <div class="rt-legend" id="legend"></div>
+            <div class="rt-source-note" style="margin-top: 14px;">
+                Section data from the official UIU Fall 2026 CSE &amp; BSDS class schedule. Academic calendar from
+                <a href="https://www.uiu.ac.bd/academics/calendar/" target="_blank" rel="noopener">uiu.ac.bd</a>.
+                Verify your own registration in UCAM before the advising deadline.
+            </div>
+        </section>
+
+        <footer class="ez-footer" style="margin-top: 34px;">
+            <div>Built for UIU students. Everything runs in your browser.</div>
+            <div>Crafted by <a href="https://junaed93.github.io" target="_blank" rel="noopener">Junaed</a></div>
+        </footer>
+    </div>
+
+    <div class="rt-toast-stack" id="toastStack"></div>
+
+    <script src="js/theme.js"></script>
+    <script src="js/nav.js"></script>
+    <script src="js/routine-data.js"></script>
+    <script src="js/routine-calendar.js"></script>
+    <script src="js/routine.js"></script>
+</body>
+
+</html>
