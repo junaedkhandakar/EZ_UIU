@@ -1053,12 +1053,51 @@
 
         if (!meetings.length) {
             note.textContent = totalCourses
-                ? 'Pick a section for each course (or press Auto-generate) to see the week.'
-                : 'Add at least one course to see your week.';
-            stats.innerHTML = '';
+                ? 'Pick a section for each course (or press Auto-generate) to see your week.'
+                : 'Select courses on the left to preview your schedule';
+            stats.innerHTML = [
+                ['Courses', totalCourses],
+                ['Credits', 0],
+                ['Class days', 0],
+                ['Weekly classes', 0]
+            ].map(function (s) {
+                return '<div class="rt-kpi"><div class="n">' + esc(s[1]) + '</div><div class="l">' + esc(s[0]) + '</div></div>';
+            }).join('');
             legend.innerHTML = '';
             clashAlert.style.display = 'none';
-            wrap.innerHTML = '<div class="rt-tt-empty"><i class="fas fa-calendar-xmark"></i><br>No classes placed yet. Search for a course above and pick a section.</div>';
+
+            var minStart = 8 * 60;
+            var maxEnd = 17 * 60;
+            var span = maxEnd - minStart;
+            var height = 480;
+            var hourLines = '';
+            for (var mins = minStart; mins <= maxEnd; mins += 30) {
+                var top = ((mins - minStart) / span) * 100;
+                hourLines += '<div class="rt-tt-line' + (mins % 60 ? ' half' : '') + '" style="top:' + top + '%"></div>';
+            }
+            var times = '';
+            for (var h = minStart; h <= maxEnd; h += 60) {
+                times += '<span class="rt-tt-hour" style="top:' + (((h - minStart) / span) * 100) + '%">' + fmtTime(h) + '</span>';
+            }
+            var head = '<div class="rt-tt-corner"></div>' + DAYS.map(function (d) {
+                return '<div class="rt-tt-head"><b>' + d + '</b></div>';
+            }).join('');
+            var cols = DAYS.map(function (d) {
+                return '<div class="rt-tt-day">' + hourLines + '</div>';
+            }).join('');
+
+            wrap.innerHTML = '<div class="rt-tt-relative-wrap">' +
+                '<div class="rt-tt rt-tt-is-empty" style="height:' + height + 'px">' +
+                head + '<div class="rt-tt-times">' + times + '</div>' + cols +
+                '</div>' +
+                '<div class="rt-tt-empty-overlay">' +
+                '<div class="rt-tt-empty-card">' +
+                '<i class="fas fa-calendar-week"></i>' +
+                '<b>Your Weekly Routine Canvas</b>' +
+                '<span>Search courses on the left and select sections, or click <b>Auto-generate</b> to find clash-free combinations.</span>' +
+                '</div>' +
+                '</div>' +
+                '</div>';
             return;
         }
 
@@ -1514,7 +1553,16 @@
             renderPreview();
         });
         $('#btnFetchCal').addEventListener('click', fetchCalendar);
+        var btnToggleDetails = $('#btnToggleCalDetails');
+        if (btnToggleDetails) {
+            btnToggleDetails.addEventListener('click', function () {
+                var wrap = $('#calDetailsWrap');
+                if (wrap) wrap.hidden = !wrap.hidden;
+            });
+        }
         $('#btnPasteCal').addEventListener('click', function () {
+            var details = $('#calDetailsWrap');
+            if (details) details.hidden = false;
             var box = $('#calPasteWrap');
             box.hidden = !box.hidden;
             if (!box.hidden) $('#pasteArea').focus();

@@ -12,7 +12,9 @@
   }
 
   function initTheme() {
-    var storedTheme = getStoredTheme();
+    var urlParams = new URLSearchParams(window.location.search);
+    var urlTheme = urlParams.get("theme");
+    var storedTheme = urlTheme || getStoredTheme();
     setTheme(storedTheme || "light");
   }
 

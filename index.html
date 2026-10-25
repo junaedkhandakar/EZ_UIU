@@ -6,49 +6,162 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>EZ_UIU | Student Academic Toolkit</title>
     <meta name="description" content="Retake-aware CGPA calculator and official UIU tuition waiver engine. Private, fast, and built for United International University students.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400;1,600&family=JetBrains+Mono:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link rel="stylesheet" href="css/ez-uiu.css">
     <style>
-        .ez-home-hero { text-align: center; padding: 44px 12px 40px; max-width: 680px; margin: 0 auto; }
-        .ez-hero-badge {
-            display: inline-flex; align-items: center; gap: 6px; padding: 4px 12px;
-            border-radius: var(--r-full); background: var(--primary-soft); color: var(--primary);
-            border: 1px solid var(--primary-border); font-size: 0.76rem; font-weight: 600; margin-bottom: 18px;
+        .ez-home-hero {
+            text-align: center;
+            padding: 56px 16px 48px;
+            max-width: 720px;
+            margin: 0 auto;
         }
-        .ez-home-hero h1 { font-size: 2rem; font-weight: 700; letter-spacing: -0.03em; color: var(--text); margin: 0 0 12px; line-height: 1.2; }
-        .ez-home-hero p { font-size: 0.98rem; color: var(--text-2); margin: 0; line-height: 1.6; }
+        .ez-hero-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+            padding: 5px 14px;
+            border-radius: var(--r-full);
+            background: var(--surface-card);
+            backdrop-filter: var(--glass-blur-sm);
+            -webkit-backdrop-filter: var(--glass-blur-sm);
+            color: var(--primary);
+            border: 1px solid var(--primary-border);
+            font-size: 0.78rem;
+            font-weight: 700;
+            margin-bottom: 22px;
+            box-shadow: 0 4px 14px var(--primary-soft), var(--glass-shine-subtle);
+        }
+        .ez-home-hero h1 {
+            font-size: 2.6rem;
+            font-weight: 800;
+            letter-spacing: -0.04em;
+            color: var(--text);
+            margin: 0 0 14px;
+            line-height: 1.15;
+            background: linear-gradient(135deg, var(--text) 40%, var(--primary) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .ez-home-hero p {
+            font-size: 1.05rem;
+            color: var(--text-2);
+            margin: 0;
+            line-height: 1.65;
+            font-weight: 500;
+        }
 
-        .ez-suite-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 18px; max-width: 860px; margin: 0 auto 44px; }
+        .ez-suite-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 22px;
+            max-width: 980px;
+            margin: 0 auto 52px;
+        }
 
         .ez-suite-card {
-            background: var(--surface); border: 1px solid var(--border); border-radius: var(--r-lg);
-            padding: 24px; text-decoration: none; color: var(--text); box-shadow: var(--shadow-xs);
-            transition: border-color 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease;
-            display: flex; flex-direction: column; justify-content: space-between; gap: 18px;
+            background: var(--surface-card);
+            backdrop-filter: var(--glass-blur);
+            -webkit-backdrop-filter: var(--glass-blur);
+            border: 1px solid var(--border-glass);
+            border-radius: var(--r-xl);
+            padding: 28px;
+            text-decoration: none;
+            color: var(--text);
+            box-shadow: var(--shadow-md), var(--glass-shine);
+            transition: all 0.22s cubic-bezier(0.4, 0, 0.2, 1);
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            gap: 20px;
+            position: relative;
+            overflow: hidden;
         }
-        .ez-suite-card:hover { border-color: var(--primary-border); box-shadow: var(--shadow-md); transform: translateY(-2px); }
+        .ez-suite-card:hover {
+            border-color: var(--primary-border);
+            box-shadow: var(--shadow-lg), 0 0 25px var(--primary-soft);
+            transform: translateY(-4px);
+        }
 
         .ez-suite-icon {
-            width: 42px; height: 42px; border-radius: var(--r-md); display: flex; align-items: center; justify-content: center;
-            font-size: 1.15rem; margin-bottom: 14px;
+            width: 48px;
+            height: 48px;
+            border-radius: var(--r-lg);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.25rem;
+            margin-bottom: 16px;
+            color: #fff;
+            transition: transform 0.2s ease;
         }
-        .suite-icon-cgpa { background: var(--primary); color: #fff; }
-        .suite-icon-tuition { background: var(--success); color: #fff; }
-        .suite-icon-routine { background: var(--info); color: #fff; }
+        .ez-suite-card:hover .ez-suite-icon {
+            transform: scale(1.08) rotate(-4deg);
+        }
+        .suite-icon-cgpa {
+            background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+            box-shadow: 0 6px 20px rgba(99, 102, 241, 0.4);
+        }
+        .suite-icon-tuition {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            box-shadow: 0 6px 20px rgba(16, 185, 129, 0.4);
+        }
+        .suite-icon-routine {
+            background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%);
+            box-shadow: 0 6px 20px rgba(14, 165, 233, 0.4);
+        }
 
         .ez-suite-title {
-            font-size: 1.15rem; font-weight: 700; letter-spacing: -0.015em; margin: 0 0 8px;
-            color: var(--text); display: flex; align-items: center; justify-content: space-between; gap: 8px;
+            font-size: 1.24rem;
+            font-weight: 800;
+            letter-spacing: -0.025em;
+            margin: 0 0 10px;
+            color: var(--text);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
         }
-        .ez-suite-title .fa-arrow-right { font-size: 0.85rem; color: var(--text-4); transition: transform 0.15s ease, color 0.15s ease; }
-        .ez-suite-card:hover .fa-arrow-right { color: var(--primary); transform: translateX(3px); }
+        .ez-suite-title .fa-arrow-right {
+            font-size: 0.9rem;
+            color: var(--text-4);
+            transition: transform 0.2s ease, color 0.2s ease;
+        }
+        .ez-suite-card:hover .fa-arrow-right {
+            color: var(--primary);
+            transform: translateX(4px);
+        }
 
-        .ez-suite-desc { font-size: 0.86rem; color: var(--text-2); margin: 0 0 16px; line-height: 1.55; }
+        .ez-suite-desc {
+            font-size: 0.88rem;
+            color: var(--text-3);
+            margin: 0 0 18px;
+            line-height: 1.6;
+            font-weight: 500;
+        }
 
-        .ez-feature-chips { display: flex; flex-wrap: wrap; gap: 5px; }
+        .ez-feature-chips {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+        }
         .ez-chip {
-            padding: 3px 8px; border-radius: var(--r-xs); font-size: 0.7rem; font-weight: 500;
-            background: var(--surface-3); color: var(--text-3); border: 1px solid var(--border);
+            padding: 4px 10px;
+            border-radius: var(--r-sm);
+            font-size: 0.73rem;
+            font-weight: 600;
+            background: var(--surface-2);
+            backdrop-filter: var(--glass-blur-sm);
+            -webkit-backdrop-filter: var(--glass-blur-sm);
+            color: var(--text-3);
+            border: 1px solid var(--border-glass);
+            transition: all 0.14s ease;
+        }
+        .ez-suite-card:hover .ez-chip {
+            border-color: var(--border-strong);
+            color: var(--text-2);
         }
     </style>
 </head>
