@@ -4,6 +4,9 @@ modelref.html
 # Dependencies
 node_modules/
 
+# Build
+dist/
+
 # OS generated files
 .DS_Store
 Thumbs.db
@@ -11,3 +14,4 @@ Thumbs.db
 # IDE/Editor
 .vscode/
 .idea/
+*.local
