@@ -1,95 +1,79 @@
 /* ==========================================================================
-   EZ_UIU Design System
-   Principles: Apple Design (WWDC) + Better UI (Jakub Krehel) + Refactoring UI
-   Pristine canvas, optical alignment, concentric radii, layered shadows.
+   EZ_UIU Design System — Compact High-Density Architecture
+   Engineered density, crisp 1px borders, tight rhythm, and unified palette.
    ========================================================================== */
 
 @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400;1,600&family=JetBrains+Mono:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap');
 
 :root {
-    /* Optical Typography Stack */
-    --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "SF Pro", "Plus Jakarta Sans", system-ui, sans-serif;
+    /* Precision Typography */
+    --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro", "Plus Jakarta Sans", "Inter", system-ui, sans-serif;
     --font-mono: "SF Mono", "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
 
-    /* Base Canvas & Palette */
-    --bg: #f5f5f7;
-    --bg-base: #f5f5f7;
+    /* Base Surfaces */
+    --bg: #f8f9fa;
+    --bg-base: #f8f9fa;
     --surface: #ffffff;
     --surface-solid: #ffffff;
-    --surface-2: #fbfbfd;
-    --surface-3: #f0f0f4;
-    --surface-hover: #f0f0f3;
+    --surface-2: #f1f3f5;
+    --surface-3: #e9ecef;
+    --surface-hover: #f1f3f5;
+    --surface-active: #e9ecef;
     --surface-card: #ffffff;
-    --surface-floating: rgba(255, 255, 255, 0.92);
+    --surface-floating: #ffffff;
 
-    /* Text Hierarchy (Refactoring UI: 3 text shades max for body) */
-    --text: #1d1d1f;
-    --text-2: #515154;
-    --text-3: #86868b;
-    --text-4: #aeaeb2;
+    /* Precision Borders */
+    --border: #e2e4e8;
+    --border-strong: #cbd0d6;
+    --border-subtle: #edf0f2;
+    --border-focus: #2563eb;
 
-    /* Apple System Palette */
-    --primary: #0071e3;
-    --primary-hover: #0077ed;
-    --primary-active: #005bb5;
-    --primary-soft: rgba(0, 113, 227, 0.08);
-    --primary-border: rgba(0, 113, 227, 0.22);
+    /* High-Contrast Text Hierarchy */
+    --text: #0f172a;
+    --text-2: #334155;
+    --text-3: #64748b;
+    --text-4: #94a3b8;
 
-    --success: #34c759;
-    --success-soft: rgba(52, 199, 89, 0.1);
-    --success-border: rgba(52, 199, 89, 0.25);
+    /* Unified Accent & Semantics */
+    --primary: #2563eb;
+    --primary-hover: #1d4ed8;
+    --primary-active: #1e40af;
+    --primary-soft: #eff6ff;
+    --primary-border: #bfdbfe;
 
-    --warning: #ff9500;
-    --warning-soft: rgba(255, 149, 0, 0.1);
-    --warning-border: rgba(255, 149, 0, 0.25);
+    --success: #16a34a;
+    --success-soft: #f0fdf4;
+    --success-border: #bbf7d0;
 
-    --danger: #ff3b30;
-    --danger-soft: rgba(255, 59, 48, 0.1);
-    --danger-border: rgba(255, 59, 48, 0.25);
+    --warning: #d97706;
+    --warning-soft: #fffbeb;
+    --warning-border: #fde68a;
 
-    --info: #0071e3;
-    --info-soft: rgba(0, 113, 227, 0.08);
-    --info-border: rgba(0, 113, 227, 0.2);
+    --danger: #dc2626;
+    --danger-soft: #fef2f2;
+    --danger-border: #fecaca;
 
-    /* Concentric Border Radii (outerRadius = innerRadius + padding + borderWidth) */
-    --r-inner: 8px;
-    --r-xs: 6px;
-    --r-sm: 8px;
-    --r-md: 12px;
-    --r-lg: 16px;
-    --r-xl: 22px;
+    --info: #0284c7;
+    --info-soft: #f0f9ff;
+    --info-border: #bae6fd;
+
+    /* Compact Radii (Crisp, not bloated) */
+    --r-xs: 4px;
+    --r-sm: 6px;
+    --r-md: 8px;
+    --r-lg: 10px;
+    --r-xl: 12px;
     --r-full: 980px;
 
-    /* Layered Shadow System (Better UI exact recipes + forced-colors support) */
-    --shadow-border:
-        0px 0px 0px 1px rgba(0, 0, 0, 0.06),
-        0px 1px 2px -1px rgba(0, 0, 0, 0.06),
-        0px 2px 4px 0px rgba(0, 0, 0, 0.04);
-    --shadow-border-hover:
-        0px 0px 0px 1px rgba(0, 0, 0, 0.08),
-        0px 3px 8px -1px rgba(0, 0, 0, 0.08),
-        0px 6px 16px 0px rgba(0, 0, 0, 0.05);
-    --shadow-elevated:
-        0px 0px 0px 1px rgba(0, 0, 0, 0.08),
-        0px 8px 24px -4px rgba(0, 0, 0, 0.1),
-        0px 4px 10px -2px rgba(0, 0, 0, 0.04);
-    --shadow-modal:
-        0px 0px 0px 1px rgba(0, 0, 0, 0.08),
-        0px 16px 36px -4px rgba(0, 0, 0, 0.12),
-        0px 6px 16px -2px rgba(0, 0, 0, 0.06);
+    /* Tight Elevation Shadows */
+    --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.04);
+    --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.06), 0 1px 2px rgba(0, 0, 0, 0.03);
+    --shadow-md: 0 4px 10px rgba(0, 0, 0, 0.06), 0 1px 3px rgba(0, 0, 0, 0.04);
+    --shadow-lg: 0 10px 24px -3px rgba(0, 0, 0, 0.08), 0 4px 8px -2px rgba(0, 0, 0, 0.04);
 
-    /* Dividers & Borders */
-    --border: rgba(0, 0, 0, 0.08);
-    --border-strong: rgba(0, 0, 0, 0.16);
-    --border-subtle: rgba(0, 0, 0, 0.05);
-    --border-focus: #0071e3;
+    --maxw: 1380px;
 
-    /* Translucent Material */
-    --material-blur: blur(20px) saturate(180%);
-
-    --maxw: 1360px;
-
-    /* Legacy Token Mappings for Existing Scripts */
+    /* Legacy Mappings for Existing Scripts */
     --ez-bg: var(--bg);
     --ez-surface: var(--surface);
     --ez-surface-subtle: var(--surface-2);
@@ -123,9 +107,9 @@
     --ez-info: var(--info);
     --ez-info-soft: var(--info-soft);
     --ez-info-border: var(--info-border);
-    --ez-shadow-xs: var(--shadow-border);
-    --ez-shadow-sm: var(--shadow-border);
-    --ez-shadow-md: var(--shadow-border-hover);
+    --ez-shadow-xs: var(--shadow-xs);
+    --ez-shadow-sm: var(--shadow-sm);
+    --ez-shadow-md: var(--shadow-md);
     --ez-radius-sm: var(--r-sm);
     --ez-radius-md: var(--r-md);
     --ez-radius-lg: var(--r-lg);
@@ -152,9 +136,9 @@ body {
     font-family: var(--font-sans);
     background-color: var(--bg);
     color: var(--text);
-    line-height: 1.47059;
-    font-size: 14px;
-    letter-spacing: -0.016em;
+    line-height: 1.45;
+    font-size: 13px;
+    letter-spacing: -0.011em;
     min-height: 100vh;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
@@ -163,136 +147,119 @@ body {
 a {
     color: var(--primary);
     text-decoration: none;
-    transition: opacity 120ms ease-out;
+    transition: color 120ms ease;
 }
-@media (hover: hover) {
-    a:hover {
-        opacity: 0.8;
-    }
+a:hover {
+    color: var(--primary-hover);
 }
 
 ::selection {
-    background: rgba(0, 113, 227, 0.18);
+    background: var(--primary-border);
     color: var(--text);
 }
 
 /* ==========================================================================
-   Navigation Bar (Apple Translucent Header)
+   Compact Navigation Bar (Height: 44px)
    ========================================================================== */
 .ez-navbar {
     position: sticky;
     top: 0;
     z-index: 100;
-    background: rgba(255, 255, 255, 0.82);
-    backdrop-filter: var(--material-blur);
-    -webkit-backdrop-filter: var(--material-blur);
-    border-bottom: 0.5px solid rgba(0, 0, 0, 0.12);
-    height: 52px;
+    background: #ffffff;
+    border-bottom: 1px solid var(--border);
+    height: 44px;
 }
 
 .ez-nav-container {
     max-width: var(--maxw);
     margin: 0 auto;
-    padding: 0 20px;
+    padding: 0 16px;
     height: 100%;
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 16px;
+    gap: 12px;
 }
 
 .ez-brand {
     display: inline-flex;
     align-items: center;
-    gap: 8px;
+    gap: 7px;
     text-decoration: none;
     color: var(--text);
     font-weight: 700;
-    font-size: 1.05rem;
-    letter-spacing: -0.025em;
-    transition: opacity 120ms ease-out;
-}
-@media (hover: hover) {
-    .ez-brand:hover {
-        opacity: 0.82;
-    }
+    font-size: 0.95rem;
+    letter-spacing: -0.02em;
 }
 
 .ez-brand-icon {
-    width: 28px;
-    height: 28px;
-    border-radius: 7px;
-    background: rgba(0, 113, 227, 0.1);
-    color: var(--primary);
+    width: 24px;
+    height: 24px;
+    border-radius: var(--r-sm);
+    background: var(--primary);
+    color: #ffffff;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 0.85rem;
+    font-size: 0.75rem;
 }
 
 .ez-nav-links {
     display: flex;
     align-items: center;
-    gap: 4px;
+    gap: 3px;
+    background: var(--surface-2);
+    padding: 2px;
+    border-radius: var(--r-md);
+    border: 1px solid var(--border-subtle);
 }
 
 .ez-nav-link {
     display: inline-flex;
     align-items: center;
-    gap: 7px;
-    padding: 6px 13px;
-    font-size: 0.84rem;
+    gap: 6px;
+    padding: 4px 10px;
+    font-size: 0.78rem;
     font-weight: 500;
-    color: var(--text-2);
+    color: var(--text-3);
     text-decoration: none;
-    border-radius: var(--r-full);
-    transition-property: background-color, color;
-    transition-duration: 120ms;
-    transition-timing-function: ease-out;
+    border-radius: var(--r-sm);
+    transition: background-color 100ms ease, color 100ms ease;
 }
-@media (hover: hover) {
-    .ez-nav-link:hover {
-        color: var(--text);
-        background: rgba(0, 0, 0, 0.04);
-    }
+.ez-nav-link:hover {
+    color: var(--text);
 }
 .ez-nav-link.active {
     color: var(--text);
-    background: rgba(0, 0, 0, 0.06);
+    background: #ffffff;
     font-weight: 600;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
 }
 
 .ez-nav-actions {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 6px;
 }
 
 .ez-icon-btn {
-    width: 32px;
-    height: 32px;
-    border-radius: var(--r-full);
-    border: 1px solid transparent;
-    box-shadow: var(--shadow-border);
+    width: 28px;
+    height: 28px;
+    border-radius: var(--r-sm);
+    border: 1px solid var(--border);
     background: #ffffff;
     color: var(--text-2);
     display: inline-flex;
     align-items: center;
     justify-content: center;
     cursor: pointer;
-    transition-property: transform, background-color;
-    transition-duration: 120ms;
-    transition-timing-function: ease-out;
+    font-size: 0.78rem;
+    box-shadow: var(--shadow-xs);
+    transition: background-color 100ms ease;
 }
-@media (hover: hover) {
-    .ez-icon-btn:hover {
-        background: var(--surface-hover);
-        color: var(--text);
-    }
-}
-.ez-icon-btn:not(:disabled):active {
-    transform: scale(0.96);
-    transition: transform 150ms ease-out;
+.ez-icon-btn:hover {
+    background: var(--surface-hover);
+    color: var(--text);
 }
 
 .ez-mobile-toggle {
@@ -306,18 +273,17 @@ a {
     .ez-nav-links {
         display: none;
         position: absolute;
-        top: 52px;
+        top: 44px;
         left: 0;
         right: 0;
-        background: rgba(255, 255, 255, 0.96);
-        backdrop-filter: var(--material-blur);
-        -webkit-backdrop-filter: var(--material-blur);
-        border-bottom: 0.5px solid rgba(0, 0, 0, 0.12);
-        box-shadow: var(--shadow-elevated);
-        padding: 12px 16px;
+        background: #ffffff;
+        border-bottom: 1px solid var(--border);
+        box-shadow: var(--shadow-md);
+        padding: 8px 14px;
         flex-direction: column;
         align-items: stretch;
-        gap: 4px;
+        gap: 2px;
+        border-radius: 0;
     }
     body.mobile-menu-open .ez-nav-links {
         display: flex;
@@ -325,19 +291,19 @@ a {
 }
 
 /* ==========================================================================
-   Layout & Typography
+   Layout & Headers
    ========================================================================== */
 .ez-app-layout {
     max-width: var(--maxw);
     margin: 0 auto;
-    padding: 32px 20px 80px;
+    padding: 20px 16px 60px;
 }
 
 .ez-header {
     display: flex;
     flex-direction: column;
-    gap: 14px;
-    margin-bottom: 22px;
+    gap: 10px;
+    margin-bottom: 16px;
 }
 @media (min-width: 720px) {
     .ez-header {
@@ -348,17 +314,17 @@ a {
 }
 
 .ez-header-title-box h1 {
-    font-size: 1.85rem;
+    font-size: 1.45rem;
     font-weight: 700;
-    letter-spacing: -0.03em;
+    letter-spacing: -0.025em;
     margin: 0;
     color: var(--text);
-    line-height: 1.15;
+    line-height: 1.2;
 }
 .ez-header-title-box p {
-    font-size: 0.92rem;
+    font-size: 0.84rem;
     color: var(--text-3);
-    margin: 4px 0 0 0;
+    margin: 2px 0 0 0;
     font-weight: 400;
 }
 
@@ -366,95 +332,81 @@ a {
     display: flex;
     flex-wrap: wrap;
     align-items: center;
-    gap: 8px;
+    gap: 6px;
 }
 
 /* ==========================================================================
-   Buttons (Better UI: Scale on press 0.96 over 150ms)
+   Buttons (Compact 28px / 32px)
    ========================================================================== */
 .ez-btn {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    gap: 6px;
-    height: 34px;
-    padding-inline-start: 14px;
-    padding-inline-end: 14px;
-    font-size: 0.84rem;
+    gap: 5px;
+    height: 30px;
+    padding: 0 11px;
+    font-size: 0.8rem;
     font-weight: 500;
     font-family: inherit;
-    border-radius: var(--r-full);
-    border: 1px solid transparent;
-    box-shadow: var(--shadow-border);
+    border-radius: var(--r-sm);
+    border: 1px solid var(--border);
     background: #ffffff;
     color: var(--text);
     cursor: pointer;
     text-decoration: none;
     white-space: nowrap;
-    transition-property: transform, background-color, box-shadow, color;
-    transition-duration: 120ms;
-    transition-timing-function: cubic-bezier(0.2, 0, 0, 1);
+    box-shadow: var(--shadow-xs);
+    transition: background-color 100ms ease, border-color 100ms ease, transform 80ms ease;
     user-select: none;
 }
-@media (hover: hover) {
-    .ez-btn:hover {
-        background: var(--surface-hover);
-        box-shadow: var(--shadow-border-hover);
-        color: var(--text);
-    }
+.ez-btn:hover {
+    background: var(--surface-hover);
+    border-color: var(--border-strong);
+    color: var(--text);
 }
-.ez-btn:not(:disabled):active {
-    transform: scale(0.96);
-    transition: transform 150ms ease-out;
+.ez-btn:active {
+    transform: scale(0.97);
 }
 
 .ez-btn-primary {
     background: var(--primary);
     color: #ffffff !important;
-    border: 1px solid transparent;
+    border-color: var(--primary);
     font-weight: 600;
-    box-shadow: 0 1px 3px rgba(0, 113, 227, 0.3);
 }
-@media (hover: hover) {
-    .ez-btn-primary:hover {
-        background: var(--primary-hover);
-        box-shadow: 0 3px 8px rgba(0, 113, 227, 0.4);
-        color: #ffffff !important;
-    }
+.ez-btn-primary:hover {
+    background: var(--primary-hover);
+    border-color: var(--primary-hover);
+    color: #ffffff !important;
 }
-.ez-btn-primary:not(:disabled):active {
+.ez-btn-primary:active {
     background: var(--primary-active);
-    transform: scale(0.96);
+    transform: scale(0.97);
 }
 
 .ez-btn-danger {
     color: var(--danger);
     background: var(--danger-soft);
-    border: 1px solid transparent;
-    box-shadow: none;
+    border-color: var(--danger-border);
 }
-@media (hover: hover) {
-    .ez-btn-danger:hover {
-        background: var(--danger);
-        color: #ffffff;
-    }
-}
-.ez-btn-danger:not(:disabled):active {
-    transform: scale(0.96);
+.ez-btn-danger:hover {
+    background: var(--danger);
+    color: #ffffff;
+    border-color: var(--danger);
 }
 
 .ez-btn-sm {
-    height: 28px;
-    font-size: 0.78rem;
-    padding-inline-start: 11px;
-    padding-inline-end: 11px;
+    height: 26px;
+    font-size: 0.74rem;
+    padding: 0 8px;
+    border-radius: var(--r-xs);
 }
 
 /* ==========================================================================
-   Segmented Control (Apple Pill Dock)
+   Segmented Dock (Tabs)
    ========================================================================== */
 .ez-dock-wrap {
-    margin-bottom: 22px;
+    margin-bottom: 16px;
     overflow-x: auto;
     padding-bottom: 2px;
     scrollbar-width: none;
@@ -468,42 +420,35 @@ a {
     align-items: center;
     gap: 2px;
     padding: 3px;
-    background: rgba(118, 118, 128, 0.12);
-    border-radius: 10px;
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: var(--r-md);
 }
 
 .ez-dock-btn {
     display: inline-flex;
     align-items: center;
-    gap: 6px;
-    padding: 6px 13px;
-    font-size: 0.82rem;
+    gap: 5px;
+    padding: 5px 10px;
+    font-size: 0.78rem;
     font-weight: 500;
     color: var(--text-2);
     background: transparent;
     border: none;
-    border-radius: 7px;
+    border-radius: var(--r-sm);
     cursor: pointer;
     white-space: nowrap;
-    transition-property: background-color, color, transform;
-    transition-duration: 120ms;
-    transition-timing-function: ease-out;
+    transition: background-color 100ms ease, color 100ms ease;
     user-select: none;
 }
-@media (hover: hover) {
-    .ez-dock-btn:hover {
-        color: var(--text);
-    }
+.ez-dock-btn:hover {
+    color: var(--text);
 }
 .ez-dock-btn.active {
     background: #ffffff;
     color: var(--text);
     font-weight: 600;
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.08), 0 0 1px rgba(0, 0, 0, 0.12);
-}
-.ez-dock-btn:not(:disabled):active {
-    transform: scale(0.96);
-    transition: transform 150ms ease-out;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
 }
 .ez-dock-btn.dock-recovery {
     color: var(--danger);
@@ -514,11 +459,11 @@ a {
 }
 
 .ez-dock-badge {
-    padding: 1px 6px;
+    padding: 1px 5px;
     border-radius: var(--r-full);
-    font-size: 0.68rem;
+    font-size: 0.65rem;
     font-weight: 600;
-    background: rgba(0, 0, 0, 0.06);
+    background: var(--surface-3);
     color: var(--text-2);
 }
 .ez-dock-btn.active .ez-dock-badge {
@@ -527,40 +472,40 @@ a {
 }
 
 /* ==========================================================================
-   Cards (Concentric Radii + Layered Elevation)
+   Compact Cards
    ========================================================================== */
 .ez-card {
     background: var(--surface);
-    border: 1px solid transparent;
-    border-radius: var(--r-xl);
-    padding: 22px 24px;
-    box-shadow: var(--shadow-border);
-    margin-bottom: 20px;
+    border: 1px solid var(--border);
+    border-radius: var(--r-lg);
+    padding: 16px 18px;
+    box-shadow: var(--shadow-xs);
+    margin-bottom: 16px;
 }
 
 .ez-card-header {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 12px;
-    margin-bottom: 18px;
-    padding-bottom: 12px;
-    border-bottom: 0.5px solid var(--border-subtle);
+    gap: 10px;
+    margin-bottom: 14px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--border-subtle);
 }
 .ez-card-header h2, .ez-card-header h3, .ez-card-header h4 {
     margin: 0;
-    font-size: 1.05rem;
+    font-size: 0.95rem;
     font-weight: 700;
-    letter-spacing: -0.02em;
+    letter-spacing: -0.015em;
     color: var(--text);
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 7px;
 }
 .ez-card-header p {
-    font-size: 0.82rem;
+    font-size: 0.78rem;
     color: var(--text-3);
-    margin: 3px 0 0 0;
+    margin: 2px 0 0 0;
     font-weight: 400;
 }
 
@@ -570,33 +515,33 @@ a {
 .ez-hero-grid {
     display: grid;
     grid-template-columns: 1fr;
-    gap: 16px;
-    margin-bottom: 22px;
+    gap: 14px;
+    margin-bottom: 16px;
 }
 @media (min-width: 860px) {
     .ez-hero-grid {
-        grid-template-columns: 290px 1fr;
+        grid-template-columns: 260px 1fr;
     }
 }
 
 .ez-gauge-card {
     background: var(--surface);
-    border: 1px solid transparent;
-    border-radius: var(--r-xl);
-    padding: 24px 18px;
+    border: 1px solid var(--border);
+    border-radius: var(--r-lg);
+    padding: 18px 14px;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
     text-align: center;
-    box-shadow: var(--shadow-border);
+    box-shadow: var(--shadow-xs);
 }
 
 .ez-gauge-wrap {
     position: relative;
-    width: 156px;
-    height: 156px;
-    margin-bottom: 12px;
+    width: 130px;
+    height: 130px;
+    margin-bottom: 8px;
 }
 .ez-gauge-center {
     position: absolute;
@@ -607,155 +552,116 @@ a {
     justify-content: center;
 }
 .ez-gauge-num {
-    font-size: 2.3rem;
+    font-size: 1.95rem;
     font-weight: 700;
-    letter-spacing: -0.04em;
+    letter-spacing: -0.03em;
     line-height: 1;
     font-variant-numeric: tabular-nums;
     color: var(--text);
 }
 .ez-gauge-scale {
-    font-size: 0.68rem;
+    font-size: 0.65rem;
     font-weight: 600;
     color: var(--text-4);
     text-transform: uppercase;
-    letter-spacing: 0.08em;
-    margin-top: 4px;
+    letter-spacing: 0.06em;
+    margin-top: 3px;
 }
 .ez-gauge-tier-pill {
     display: inline-flex;
     align-items: center;
-    gap: 5px;
-    padding: 3px 12px;
+    gap: 4px;
+    padding: 2px 9px;
     border-radius: var(--r-full);
-    font-size: 0.76rem;
+    font-size: 0.72rem;
     font-weight: 600;
-    margin-bottom: 6px;
-    border: 0.5px solid transparent;
+    margin-bottom: 4px;
+    border: 1px solid transparent;
 }
 
-.tier-outstanding {
-    background: var(--success-soft);
-    color: var(--success);
-    border-color: var(--success-border);
-}
-.tier-first-class {
-    background: var(--info-soft);
-    color: var(--info);
-    border-color: var(--info-border);
-}
-.tier-good {
-    background: var(--primary-soft);
-    color: var(--primary);
-    border-color: var(--primary-border);
-}
-.tier-pass {
-    background: var(--warning-soft);
-    color: var(--warning);
-    border-color: var(--warning-border);
-}
-.tier-probation {
-    background: var(--danger-soft);
-    color: var(--danger);
-    border-color: var(--danger-border);
-}
+.tier-outstanding { background: var(--success-soft); color: var(--success); border-color: var(--success-border); }
+.tier-first-class { background: var(--info-soft); color: var(--info); border-color: var(--info-border); }
+.tier-good { background: var(--primary-soft); color: var(--primary); border-color: var(--primary-border); }
+.tier-pass { background: var(--warning-soft); color: var(--warning); border-color: var(--warning-border); }
+.tier-probation { background: var(--danger-soft); color: var(--danger); border-color: var(--danger-border); }
 
 /* ---------------- KPI Stat Cards ---------------- */
 .ez-kpi-stack {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(185px, 1fr));
-    gap: 14px;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 10px;
 }
 
 .ez-stat-card {
     background: var(--surface);
-    border: 1px solid transparent;
-    border-radius: var(--r-lg);
-    padding: 16px 18px;
-    box-shadow: var(--shadow-border);
+    border: 1px solid var(--border);
+    border-radius: var(--r-md);
+    padding: 12px 14px;
+    box-shadow: var(--shadow-xs);
     display: flex;
     flex-direction: column;
     justify-content: space-between;
-    transition: transform 120ms ease-out;
-}
-.ez-stat-card:not(:disabled):active {
-    transform: scale(0.98);
 }
 
 .ez-stat-top {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    margin-bottom: 10px;
-    gap: 8px;
+    margin-bottom: 6px;
+    gap: 6px;
 }
 .ez-stat-label {
-    font-size: 0.72rem;
+    font-size: 0.68rem;
     font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.05em;
     color: var(--text-3);
 }
 .ez-stat-icon {
-    width: 28px;
-    height: 28px;
-    border-radius: 7px;
-    background: var(--surface-3);
+    width: 24px;
+    height: 24px;
+    border-radius: var(--r-xs);
+    background: var(--surface-2);
     color: var(--text-2);
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 0.82rem;
+    font-size: 0.75rem;
 }
 .ez-stat-value {
-    font-size: 1.75rem;
+    font-size: 1.45rem;
     font-weight: 700;
-    letter-spacing: -0.03em;
+    letter-spacing: -0.025em;
     color: var(--text);
     font-variant-numeric: tabular-nums;
     line-height: 1.15;
-    margin-bottom: 3px;
+    margin-bottom: 2px;
 }
 .ez-stat-sub {
-    font-size: 0.76rem;
+    font-size: 0.72rem;
     color: var(--text-3);
     font-weight: 400;
 }
 
 /* ==========================================================================
-   Alerts & Notifications
+   Alerts
    ========================================================================== */
 .ez-alert {
     display: flex;
     align-items: flex-start;
-    gap: 11px;
-    padding: 12px 16px;
+    gap: 9px;
+    padding: 10px 14px;
     border-radius: var(--r-md);
     background: var(--surface-2);
-    border: 0.5px solid var(--border);
-    font-size: 0.85rem;
-    line-height: 1.5;
-    margin-bottom: 18px;
+    border: 1px solid var(--border);
+    font-size: 0.82rem;
+    line-height: 1.45;
+    margin-bottom: 14px;
 }
-.ez-alert-danger {
-    background: var(--danger-soft);
-    border-color: var(--danger-border);
-    color: var(--danger);
-}
-.ez-alert-warning {
-    background: var(--warning-soft);
-    border-color: var(--warning-border);
-    color: var(--warning);
-}
-.ez-alert-info {
-    background: var(--info-soft);
-    border-color: var(--info-border);
-    color: var(--text);
-}
-.ez-alert b {
-    color: inherit;
-    font-weight: 600;
-}
+.ez-alert-danger { background: var(--danger-soft); border-color: var(--danger-border); color: var(--danger); }
+.ez-alert-warning { background: var(--warning-soft); border-color: var(--warning-border); color: var(--warning); }
+.ez-alert-info { background: var(--info-soft); border-color: var(--info-border); color: var(--text); }
+.ez-alert b { color: inherit; font-weight: 600; }
 
 /* ==========================================================================
    Filter Chips
@@ -764,61 +670,54 @@ a {
     display: flex;
     flex-wrap: wrap;
     align-items: center;
-    gap: 5px;
-    margin-bottom: 14px;
+    gap: 4px;
+    margin-bottom: 10px;
 }
 .ez-filter-btn {
-    padding: 5px 12px;
-    border-radius: var(--r-full);
-    font-size: 0.78rem;
+    padding: 3px 9px;
+    border-radius: var(--r-sm);
+    font-size: 0.74rem;
     font-weight: 500;
-    border: 1px solid transparent;
-    box-shadow: var(--shadow-border);
+    border: 1px solid var(--border);
     background: #ffffff;
     color: var(--text-2);
     cursor: pointer;
-    transition: all 120ms ease-out;
+    transition: background-color 100ms ease;
     user-select: none;
 }
-@media (hover: hover) {
-    .ez-filter-btn:hover {
-        color: var(--text);
-        background: var(--surface-hover);
-    }
+.ez-filter-btn:hover {
+    color: var(--text);
+    background: var(--surface-hover);
 }
 .ez-filter-btn.active {
-    background: #1d1d1f;
+    background: #0f172a;
     color: #ffffff;
-    box-shadow: none;
-}
-.ez-filter-btn:not(:disabled):active {
-    transform: scale(0.96);
-    transition: transform 150ms ease-out;
+    border-color: #0f172a;
 }
 
 /* ==========================================================================
    Tables
    ========================================================================== */
 .ez-table-card {
-    border: 1px solid transparent;
-    border-radius: var(--r-xl);
+    border: 1px solid var(--border);
+    border-radius: var(--r-lg);
     overflow: hidden;
     background: var(--surface);
-    box-shadow: var(--shadow-border);
-    margin-bottom: 20px;
+    box-shadow: var(--shadow-xs);
+    margin-bottom: 16px;
 }
 .ez-table {
     width: 100%;
     border-collapse: collapse;
-    font-size: 0.84rem;
+    font-size: 0.8rem;
     text-align: left;
-    min-width: 660px;
+    min-width: 600px;
 }
 .ez-table th {
-    padding: 10px 14px;
+    padding: 8px 12px;
     background: var(--surface-2);
-    border-bottom: 0.5px solid var(--border);
-    font-size: 0.7rem;
+    border-bottom: 1px solid var(--border);
+    font-size: 0.68rem;
     font-weight: 600;
     color: var(--text-3);
     text-transform: uppercase;
@@ -826,8 +725,8 @@ a {
     white-space: nowrap;
 }
 .ez-table td {
-    padding: 11px 14px;
-    border-bottom: 0.5px solid var(--border-subtle);
+    padding: 8px 12px;
+    border-bottom: 1px solid var(--border-subtle);
     color: var(--text);
     vertical-align: middle;
 }
@@ -835,7 +734,7 @@ a {
     border-bottom: none;
 }
 .ez-table tbody tr:hover td {
-    background: rgba(0, 0, 0, 0.015);
+    background: var(--surface-hover);
 }
 
 /* Grade Badges */
@@ -843,157 +742,104 @@ a {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    padding: 2px 7px;
-    border-radius: 5px;
-    font-size: 0.74rem;
-    font-weight: 600;
-    font-variant-numeric: tabular-nums;
-    border: 0.5px solid transparent;
-    min-width: 26px;
-}
-.grade-A, .grade-A_minus {
-    background: var(--success-soft);
-    color: var(--success);
-    border-color: var(--success-border);
-}
-.grade-B_plus {
-    background: rgba(0, 113, 227, 0.08);
-    color: #0071e3;
-    border-color: rgba(0, 113, 227, 0.2);
-}
-.grade-B, .grade-B_minus {
-    background: var(--info-soft);
-    color: var(--info);
-    border-color: var(--info-border);
-}
-.grade-C_plus, .grade-C {
-    background: var(--warning-soft);
-    color: var(--warning);
-    border-color: var(--warning-border);
-}
-.grade-C_minus, .grade-D_plus, .grade-D {
-    background: rgba(255, 149, 0, 0.1);
-    color: #c77700;
-    border-color: rgba(255, 149, 0, 0.25);
-}
-.grade-F {
-    background: var(--danger-soft);
-    color: var(--danger);
-    border-color: var(--danger-border);
-    font-weight: 700;
-}
-.grade-running {
-    background: var(--primary-soft);
-    color: var(--primary);
-    border-color: var(--primary-border);
-}
-
-.ez-incgpa-yes {
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
-    color: var(--success);
-    font-size: 0.76rem;
-    font-weight: 600;
-}
-.ez-incgpa-replaced {
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
-    padding: 2px 7px;
-    border-radius: 5px;
-    background: var(--warning-soft);
-    border: 0.5px solid var(--warning-border);
-    color: var(--warning);
+    padding: 2px 6px;
+    border-radius: var(--r-xs);
     font-size: 0.72rem;
     font-weight: 600;
+    font-variant-numeric: tabular-nums;
+    border: 1px solid transparent;
+    min-width: 24px;
 }
+.grade-A, .grade-A_minus { background: var(--success-soft); color: var(--success); border-color: var(--success-border); }
+.grade-B_plus { background: #eff6ff; color: #1d4ed8; border-color: #bfdbfe; }
+.grade-B, .grade-B_minus { background: var(--info-soft); color: var(--info); border-color: var(--info-border); }
+.grade-C_plus, .grade-C { background: var(--warning-soft); color: var(--warning); border-color: var(--warning-border); }
+.grade-C_minus, .grade-D_plus, .grade-D { background: #fff7ed; color: #c2410c; border-color: #ffedd5; }
+.grade-F { background: var(--danger-soft); color: var(--danger); border-color: var(--danger-border); font-weight: 700; }
+.grade-running { background: var(--primary-soft); color: var(--primary); border-color: var(--primary-border); }
+
+.ez-incgpa-yes { display: inline-flex; align-items: center; gap: 3px; color: var(--success); font-size: 0.74rem; font-weight: 600; }
+.ez-incgpa-replaced { display: inline-flex; align-items: center; gap: 3px; padding: 1px 5px; border-radius: var(--r-xs); background: var(--warning-soft); border: 1px solid var(--warning-border); color: var(--warning); font-size: 0.7rem; font-weight: 600; }
 
 /* Mini Buttons */
 .ez-mini-btn {
-    width: 28px;
-    height: 28px;
-    border-radius: 6px;
-    border: 1px solid transparent;
-    box-shadow: var(--shadow-border);
+    width: 24px;
+    height: 24px;
+    border-radius: var(--r-xs);
+    border: 1px solid var(--border);
     background: #ffffff;
     color: var(--text-3);
     display: inline-flex;
     align-items: center;
     justify-content: center;
     cursor: pointer;
-    transition: transform 120ms ease-out;
+    font-size: 0.75rem;
+    transition: background-color 100ms ease;
 }
-@media (hover: hover) {
-    .ez-mini-btn:hover {
-        background: var(--surface-hover);
-        color: var(--text);
-    }
-}
-.ez-mini-btn:not(:disabled):active {
-    transform: scale(0.94);
+.ez-mini-btn:hover {
+    background: var(--surface-hover);
+    color: var(--text);
 }
 .ez-mini-btn.del-btn:hover {
     color: var(--danger);
     background: var(--danger-soft);
+    border-color: var(--danger-border);
 }
 
 /* ==========================================================================
-   Form Controls (WCAG 3:1 Non-Text Contrast Border)
+   Form Controls (Compact 30px / 32px)
    ========================================================================== */
 .ez-form-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    gap: 14px;
-    margin-bottom: 18px;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 10px;
+    margin-bottom: 14px;
 }
 .ez-input-group {
     display: flex;
     flex-direction: column;
-    gap: 6px;
+    gap: 4px;
     min-width: 0;
 }
 .ez-label {
-    font-size: 0.78rem;
+    font-size: 0.74rem;
     font-weight: 600;
     color: var(--text-2);
     display: flex;
     align-items: center;
-    gap: 6px;
+    gap: 5px;
 }
 
 .ez-input, .ez-select, .ez-textarea {
-    height: 38px;
-    padding: 0 12px;
-    font-size: 0.86rem;
+    height: 32px;
+    padding: 0 10px;
+    font-size: 0.82rem;
     font-family: inherit;
     font-weight: 400;
-    border: 1px solid rgba(0, 0, 0, 0.16);
-    border-radius: var(--r-inner);
+    border: 1px solid var(--border-strong);
+    border-radius: var(--r-sm);
     background: #ffffff;
     color: var(--text);
     width: 100%;
-    transition-property: border-color, box-shadow;
-    transition-duration: 150ms;
-    transition-timing-function: cubic-bezier(0.2, 0, 0, 1);
+    transition: border-color 120ms ease, box-shadow 120ms ease;
 }
 .ez-textarea {
     height: auto;
-    padding: 10px 12px;
-    line-height: 1.5;
+    padding: 8px 10px;
+    line-height: 1.45;
     resize: vertical;
 }
 .ez-input:focus, .ez-select:focus, .ez-textarea:focus {
     outline: none;
     border-color: var(--primary);
-    box-shadow: 0 0 0 3px rgba(0, 113, 227, 0.22);
+    box-shadow: 0 0 0 2px var(--primary-border);
 }
 .ez-select {
     appearance: none;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2386868b' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
     background-repeat: no-repeat;
-    background-position: right 11px center;
-    padding-right: 32px;
+    background-position: right 8px center;
+    padding-right: 26px;
     cursor: pointer;
 }
 
@@ -1004,53 +850,50 @@ a {
 }
 .ez-autocomplete-results {
     position: absolute;
-    top: calc(100% + 4px);
+    top: calc(100% + 3px);
     left: 0;
     right: 0;
     background: #ffffff;
-    border: 1px solid transparent;
-    border-radius: var(--r-md);
-    box-shadow: var(--shadow-elevated);
+    border: 1px solid var(--border);
+    border-radius: var(--r-sm);
+    box-shadow: var(--shadow-md);
     z-index: 1000;
-    max-height: 240px;
+    max-height: 220px;
     overflow-y: auto;
     overscroll-behavior: contain;
     display: none;
 }
 .ez-autocomplete-item {
-    padding: 9px 13px;
-    font-size: 0.82rem;
+    padding: 7px 10px;
+    font-size: 0.78rem;
     cursor: pointer;
-    border-bottom: 0.5px solid var(--border-subtle);
+    border-bottom: 1px solid var(--border-subtle);
     display: flex;
     justify-content: space-between;
     align-items: center;
-    gap: 8px;
-    transition: background-color 100ms ease-out;
+    gap: 6px;
+    transition: background-color 80ms ease;
 }
 .ez-autocomplete-item:last-child {
     border-bottom: none;
 }
-@media (hover: hover) {
-    .ez-autocomplete-item:hover {
-        background: var(--surface-hover);
-    }
+.ez-autocomplete-item:hover {
+    background: var(--surface-hover);
 }
 
 /* ==========================================================================
    Retake & Boost List
    ========================================================================== */
 .ez-retake-item {
-    border: 1px solid transparent;
+    border: 1px solid var(--border);
     border-radius: var(--r-md);
     background: var(--surface);
-    padding: 14px 16px;
-    margin-bottom: 10px;
-    box-shadow: var(--shadow-border);
+    padding: 10px 12px;
+    margin-bottom: 8px;
+    box-shadow: var(--shadow-xs);
     display: flex;
     flex-direction: column;
-    gap: 10px;
-    transition: transform 120ms ease-out;
+    gap: 8px;
 }
 @media (min-width: 640px) {
     .ez-retake-item {
@@ -1062,14 +905,14 @@ a {
 .ez-boost-badge {
     display: inline-flex;
     align-items: center;
-    gap: 5px;
-    padding: 4px 10px;
-    border-radius: var(--r-full);
+    gap: 4px;
+    padding: 3px 8px;
+    border-radius: var(--r-sm);
     background: var(--success-soft);
-    border: 0.5px solid var(--success-border);
+    border: 1px solid var(--success-border);
     color: var(--success);
     font-weight: 600;
-    font-size: 0.78rem;
+    font-size: 0.74rem;
     font-variant-numeric: tabular-nums;
 }
 
@@ -1078,32 +921,32 @@ a {
    ========================================================================== */
 .ez-installments-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-    gap: 12px;
-    margin-top: 14px;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 8px;
+    margin-top: 12px;
 }
 .ez-inst-card {
     background: var(--surface);
-    border: 1px solid transparent;
-    border-radius: var(--r-lg);
-    padding: 14px;
+    border: 1px solid var(--border);
+    border-radius: var(--r-md);
+    padding: 10px 12px;
     text-align: center;
-    box-shadow: var(--shadow-border);
+    box-shadow: var(--shadow-xs);
 }
 .ez-inst-card.first-due {
     border-color: var(--primary);
     background: var(--primary-soft);
 }
 .ez-inst-label {
-    font-size: 0.7rem;
+    font-size: 0.66rem;
     font-weight: 600;
     color: var(--text-3);
     text-transform: uppercase;
-    letter-spacing: 0.05em;
-    margin-bottom: 4px;
+    letter-spacing: 0.04em;
+    margin-bottom: 3px;
 }
 .ez-inst-val {
-    font-size: 1.3rem;
+    font-size: 1.15rem;
     font-weight: 700;
     color: var(--text);
     font-variant-numeric: tabular-nums;
@@ -1116,16 +959,16 @@ a {
     position: fixed;
     inset: 0;
     z-index: 1000;
-    background: rgba(0, 0, 0, 0.35);
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
+    background: rgba(15, 23, 42, 0.4);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: 20px;
+    padding: 16px;
     opacity: 0;
     pointer-events: none;
-    transition: opacity 180ms cubic-bezier(0.2, 0, 0, 1);
+    transition: opacity 140ms ease;
 }
 .ez-modal-backdrop.open {
     opacity: 1;
@@ -1133,17 +976,17 @@ a {
 }
 .ez-modal-window {
     background: #ffffff;
-    border: 1px solid transparent;
-    border-radius: var(--r-xl);
+    border: 1px solid var(--border);
+    border-radius: var(--r-lg);
     width: 100%;
-    max-width: 520px;
-    max-height: 90vh;
+    max-width: 480px;
+    max-height: 88vh;
     overflow-y: auto;
     overscroll-behavior: contain;
-    padding: 24px;
-    box-shadow: var(--shadow-modal);
-    transform: scale(0.96);
-    transition: transform 180ms cubic-bezier(0.2, 0, 0, 1);
+    padding: 18px 20px;
+    box-shadow: var(--shadow-lg);
+    transform: scale(0.97);
+    transition: transform 140ms ease;
 }
 .ez-modal-backdrop.open .ez-modal-window {
     transform: scale(1);
@@ -1151,44 +994,36 @@ a {
 
 .ez-toast-stack {
     position: fixed;
-    bottom: 24px;
-    right: 24px;
+    bottom: 16px;
+    right: 16px;
     z-index: 2000;
     display: flex;
     flex-direction: column;
-    gap: 8px;
+    gap: 6px;
     pointer-events: none;
 }
 .ez-toast {
-    background: rgba(255, 255, 255, 0.96);
-    backdrop-filter: var(--material-blur);
-    -webkit-backdrop-filter: var(--material-blur);
-    border: 1px solid transparent;
+    background: #ffffff;
+    border: 1px solid var(--border);
     border-radius: var(--r-md);
-    padding: 11px 16px;
-    font-size: 0.84rem;
+    padding: 9px 13px;
+    font-size: 0.8rem;
     font-weight: 500;
-    box-shadow: var(--shadow-elevated);
+    box-shadow: var(--shadow-md);
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 8px;
     color: var(--text);
-    animation: ezToastIn 180ms cubic-bezier(0.2, 0, 0, 1);
-    max-width: 360px;
+    animation: ezToastIn 150ms ease-out;
+    max-width: 320px;
     pointer-events: auto;
 }
-.ez-toast.toast-success {
-    border-left: 3.5px solid var(--success);
-}
-.ez-toast.toast-error {
-    border-left: 3.5px solid var(--danger);
-}
-.ez-toast.toast-info {
-    border-left: 3.5px solid var(--primary);
-}
+.ez-toast.toast-success { border-left: 3px solid var(--success); }
+.ez-toast.toast-error { border-left: 3px solid var(--danger); }
+.ez-toast.toast-info { border-left: 3px solid var(--primary); }
 @keyframes ezToastIn {
-    from { opacity: 0; transform: translateY(10px) scale(0.96); }
-    to { opacity: 1; transform: translateY(0) scale(1); }
+    from { opacity: 0; transform: translateY(6px); }
+    to { opacity: 1; transform: translateY(0); }
 }
 
 /* ==========================================================================
@@ -1199,17 +1034,17 @@ a {
 }
 .tab-pane.active {
     display: block;
-    animation: ezFade 150ms ease-out;
+    animation: ezFade 120ms ease;
 }
 @keyframes ezFade {
-    from { opacity: 0; transform: translateY(3px); }
+    from { opacity: 0; transform: translateY(2px); }
     to { opacity: 1; transform: translateY(0); }
 }
 
 .ez-progress {
     width: 100%;
-    height: 6px;
-    background: rgba(0, 0, 0, 0.06);
+    height: 5px;
+    background: var(--surface-3);
     border-radius: var(--r-full);
     overflow: hidden;
 }
@@ -1217,14 +1052,14 @@ a {
     height: 100%;
     background: var(--primary);
     border-radius: var(--r-full);
-    transition: width 400ms cubic-bezier(0.2, 0, 0, 1);
+    transition: width 300ms ease;
 }
 
 .ez-divider {
-    height: 0.5px;
+    height: 1px;
     background: var(--border);
     border: none;
-    margin: 20px 0;
+    margin: 16px 0;
 }
 .ez-mono {
     font-family: var(--font-mono);
@@ -1235,43 +1070,43 @@ a {
 }
 
 .ez-empty {
-    padding: 38px 20px;
+    padding: 28px 16px;
     text-align: center;
     color: var(--text-3);
-    background: var(--surface);
-    border: 0.5px dashed var(--border-strong);
-    border-radius: var(--r-xl);
+    background: var(--surface-2);
+    border: 1px dashed var(--border-strong);
+    border-radius: var(--r-md);
 }
 .ez-empty i {
-    font-size: 1.8rem;
+    font-size: 1.4rem;
     color: var(--text-4);
-    margin-bottom: 8px;
+    margin-bottom: 6px;
     display: block;
 }
 .ez-empty h3 {
-    margin: 0 0 4px 0;
+    margin: 0 0 2px 0;
     color: var(--text);
-    font-size: 1rem;
+    font-size: 0.92rem;
     font-weight: 600;
 }
 .ez-empty p {
     margin: 0;
-    font-size: 0.84rem;
+    font-size: 0.78rem;
 }
 
 /* ==========================================================================
    Footer
    ========================================================================== */
 .ez-footer {
-    margin-top: 48px;
-    padding-top: 18px;
-    border-top: 0.5px solid var(--border);
+    margin-top: 36px;
+    padding-top: 14px;
+    border-top: 1px solid var(--border);
     display: flex;
     justify-content: space-between;
     align-items: center;
     flex-wrap: wrap;
-    gap: 10px;
-    font-size: 0.78rem;
+    gap: 8px;
+    font-size: 0.74rem;
     color: var(--text-3);
 }
 .ez-footer a {
@@ -1279,27 +1114,18 @@ a {
     text-decoration: none;
     font-weight: 500;
 }
-@media (hover: hover) {
-    .ez-footer a:hover {
-        color: var(--primary);
-    }
+.ez-footer a:hover {
+    color: var(--primary);
 }
 
 /* ==========================================================================
-   Reduced Motion Accessibility (Better UI + Apple Design)
+   Reduced Motion
    ========================================================================== */
 @media (prefers-reduced-motion: reduce) {
     *, *::before, *::after {
         animation-duration: 0.01ms !important;
-        animation-iteration-count: 1 !important;
         transition-duration: 0.01ms !important;
         scroll-behavior: auto !important;
-    }
-    .ez-btn:not(:disabled):active,
-    .ez-stat-card:not(:disabled):active,
-    .ez-filter-btn:not(:disabled):active,
-    .ez-dock-btn:not(:disabled):active {
-        transform: none !important;
     }
 }
 
@@ -1311,7 +1137,7 @@ a {
         display: none !important;
     }
     .ez-card, .ez-table-card, .ez-stat-card {
-        border: 0.5px solid #ccc !important;
+        border: 1px solid #ccc !important;
         box-shadow: none !important;
         background: #fff !important;
         break-inside: avoid;

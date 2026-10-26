@@ -548,13 +548,11 @@
         var fEnd = finals.length ? new Date(Math.max.apply(null, finals.map(function (e) { return +e.end; }))) : null;
 
         var items = [
-            ['Term', cal ? (cal.term ? cal.term.charAt(0).toUpperCase() + cal.term.slice(1) : '') + ' ' + cal.year +
-                (cal.program ? ' · ' + cal.program : '') : '—'],
-            ['Classes begin', begin ? fmtDate(begin.start) : 'not found'],
-            ['Last class day', fromKey(state.last) ? fmtDate(fromKey(state.last)) : 'set manually'],
-            ['Makeup days', makeup.length ? makeup.length + ' online day(s)' : 'none'],
-            ['Closures', (holidays.length + suspended.length) + ' block(s)'],
-            ['Final exam', fStart ? fmtRange(fStart, fEnd) : 'not listed']
+            ['Classes begin', begin ? fmtShort(begin.start) : '—'],
+            ['Last class', fromKey(state.last) ? fmtShort(fromKey(state.last)) : '—'],
+            ['Makeups', makeup.length ? makeup.length + ' online' : '0'],
+            ['Closures', (holidays.length + suspended.length) + ' blocks'],
+            ['Finals', fStart ? fmtShort(fStart) + '–' + fmtShort(fEnd) : '—']
         ];
         $('#calMeta').innerHTML = items.map(function (it) {
             return '<div class="rt-cal-item"><span class="k">' + esc(it[0]) + '</span>' +

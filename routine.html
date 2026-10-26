@@ -4,18 +4,18 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Routine Studio &amp; .ics Export | EZ_UIU</title>
+    <title>Routine Studio | EZ_UIU</title>
     <meta name="description" content="Build a clash-free UIU class routine from the Fall 2026 CSE &amp; BSDS section list, apply the official academic calendar, and download it as a calendar-ready .ics file.">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400;1,600&family=JetBrains+Mono:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400;1,600&family=JetBrains+Mono:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link rel="stylesheet" href="css/ez-uiu.css">
     <link rel="stylesheet" href="css/routine.css">
 </head>
 
 <body>
-    <!-- Top Navigation Bar -->
+    <!-- Top Navigation Bar (Compact 44px) -->
     <nav class="ez-navbar">
         <div class="ez-nav-container">
             <a href="index.html" class="ez-brand">
@@ -27,15 +27,15 @@
             <div class="ez-nav-links" id="navLinks">
                 <a href="cgpacalculator.html" class="ez-nav-link">
                     <i class="fas fa-calculator"></i>
-                    <span>CGPA Calculator</span>
+                    <span>CGPA</span>
                 </a>
                 <a href="tuition.html" class="ez-nav-link">
                     <i class="fas fa-wallet"></i>
-                    <span>Tuition Fee</span>
+                    <span>Tuition</span>
                 </a>
                 <a href="routine.html" class="ez-nav-link active">
                     <i class="fas fa-calendar-days"></i>
-                    <span>Routine Builder</span>
+                    <span>Routine</span>
                 </a>
             </div>
             <div class="ez-nav-actions">
@@ -46,94 +46,84 @@
         </div>
     </nav>
 
-    <!-- App Studio Layout -->
+    <!-- App Studio Layout (High-Density) -->
     <div class="ez-app-layout rt-app">
-        <!-- Studio Header -->
-        <header class="ez-header rt-studio-header">
-            <div class="ez-header-title-box">
-                <h1>UIU Routine Studio</h1>
-                <p>Clash-free schedule optimizer &amp; calendar-aware .ics exporter for UIU students</p>
+        <!-- Compact Academic Toolbar Header -->
+        <header class="ez-card rt-toolbar">
+            <div class="rt-toolbar-left">
+                <div class="rt-term-select-wrap">
+                    <i class="fas fa-calendar-check rt-term-icon"></i>
+                    <select class="ez-select rt-term-select" id="calSelect" aria-label="Academic calendar"></select>
+                </div>
+                <div class="rt-toolbar-chips" id="calMeta"></div>
             </div>
-            <div class="ez-action-deck">
-                <button class="ez-btn" id="btnSolveTop">
-                    <i class="fas fa-wand-magic-sparkles"></i> Auto-generate
+            <div class="rt-toolbar-right rt-noprint">
+                <button class="ez-btn ez-btn-sm" id="btnToggleCalDetails" type="button" title="Calendar dates & overrides">
+                    <i class="fas fa-sliders"></i> <span class="hide-mobile">Dates</span>
                 </button>
-                <button class="ez-btn ez-btn-primary" id="btnDownload">
-                    <i class="fas fa-calendar-arrow-down"></i> Export .ics
+                <button class="ez-btn ez-btn-sm" id="btnFetchCal" type="button" title="Refresh official term calendar from UIU">
+                    <i class="fas fa-arrows-rotate"></i> <span class="hide-mobile">Sync</span>
+                </button>
+                <button class="ez-btn ez-btn-sm" id="btnPasteCal" type="button" title="Paste or load custom calendar">
+                    <i class="fas fa-paste"></i> <span class="hide-mobile">Paste</span>
+                </button>
+                <button class="ez-btn ez-btn-sm" id="btnSolveTop" type="button">
+                    <i class="fas fa-bolt"></i> Auto-Solve
+                </button>
+                <button class="ez-btn ez-btn-sm ez-btn-primary" id="btnDownload" type="button">
+                    <i class="fas fa-download"></i> Export .ics
                 </button>
             </div>
         </header>
 
-        <!-- Academic Calendar Bar (Compact Top Dock) -->
-        <div class="ez-card rt-cal-bar">
-            <div class="rt-cal-bar-summary">
-                <div class="rt-cal-bar-left">
-                    <span class="rt-cal-badge"><i class="fas fa-calendar-check"></i> Term</span>
-                    <select class="ez-select" id="calSelect" aria-label="Academic calendar"></select>
+        <!-- Expandable Overrides Drawer -->
+        <div class="ez-card rt-cal-drawer rt-noprint" id="calDetailsWrap" hidden>
+            <div class="rt-inline-row">
+                <div class="ez-input-group rt-date-input">
+                    <label class="ez-label" for="calFirst"><i class="fas fa-play"></i> First class day</label>
+                    <input type="date" class="ez-input" id="calFirst">
                 </div>
-                <div class="rt-cal-bar-metrics" id="calMeta"></div>
-                <div class="rt-cal-bar-actions rt-noprint">
-                    <button class="ez-btn ez-btn-sm" id="btnToggleCalDetails" type="button" title="Calendar overrides & date tools">
-                        <i class="fas fa-sliders"></i> <span class="hide-mobile">Dates</span>
-                    </button>
-                    <button class="ez-btn ez-btn-sm" id="btnFetchCal" type="button" title="Refresh official term calendar from UIU">
-                        <i class="fas fa-cloud-arrow-down"></i> <span class="hide-mobile">Refresh</span>
-                    </button>
-                    <button class="ez-btn ez-btn-sm" id="btnPasteCal" type="button" title="Paste or load custom calendar">
-                        <i class="fas fa-paste"></i> <span class="hide-mobile">Paste</span>
-                    </button>
+                <div class="ez-input-group rt-date-input">
+                    <label class="ez-label" for="calLast"><i class="fas fa-flag-checkered"></i> Last class day</label>
+                    <input type="date" class="ez-input" id="calLast">
+                </div>
+                <div class="ez-input-group" style="flex: 1 1 260px;">
+                    <label class="ez-label"><i class="fas fa-circle-info"></i> Term rules &amp; makeup schedule</label>
+                    <div class="rt-msg" id="calEffects" style="margin-top: 0;"></div>
                 </div>
             </div>
+            <div class="rt-msg" id="calMsg"></div>
 
-            <!-- Expandable overrides & paste tools -->
-            <div class="rt-cal-details rt-noprint" id="calDetailsWrap" hidden>
-                <div class="rt-inline-row" style="margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--border-glass-subtle);">
-                    <div class="ez-input-group rt-date-input">
-                        <label class="ez-label" for="calFirst"><i class="fas fa-play"></i> First class day</label>
-                        <input type="date" class="ez-input" id="calFirst">
-                    </div>
-                    <div class="ez-input-group rt-date-input">
-                        <label class="ez-label" for="calLast"><i class="fas fa-flag-checkered"></i> Last class day</label>
-                        <input type="date" class="ez-input" id="calLast">
-                    </div>
-                    <div class="ez-input-group" style="flex: 1 1 240px;">
-                        <label class="ez-label"><i class="fas fa-circle-info"></i> Calendar effects</label>
-                        <div class="rt-msg" id="calEffects" style="margin-top: 0;"></div>
-                    </div>
-                </div>
-                <div class="rt-msg" id="calMsg"></div>
-
-                <div class="rt-paste" id="calPasteWrap" hidden>
-                    <p class="rt-msg" style="margin-top: 0;">
-                        Fetch blocked by CORS? Open the UIU calendar page, copy the text and paste it below. You can also load a saved <b>.ics</b>, <b>.html</b> or <b>.txt</b> file.
-                    </p>
-                    <textarea class="ez-textarea" id="pasteArea" placeholder="Paste the UIU academic calendar text here…"></textarea>
-                    <div class="ez-action-deck" style="margin-top: 10px;">
-                        <button class="ez-btn ez-btn-primary ez-btn-sm" id="btnParsePaste">
-                            <i class="fas fa-check"></i> Parse pasted text
-                        </button>
-                        <label class="ez-btn ez-btn-sm" style="margin: 0;">
-                            <i class="fas fa-upload"></i> Load file
-                            <input type="file" id="calFile" accept=".ics,.html,.htm,.txt" hidden>
-                        </label>
-                    </div>
+            <div class="rt-paste" id="calPasteWrap" hidden>
+                <p class="rt-msg" style="margin-top: 0;">
+                    Fetch blocked by CORS? Paste the UIU academic calendar text below or load a saved <b>.ics</b>, <b>.html</b>, or <b>.txt</b> file.
+                </p>
+                <textarea class="ez-textarea" id="pasteArea" placeholder="Paste UIU calendar text here…"></textarea>
+                <div class="ez-action-deck" style="margin-top: 8px;">
+                    <button class="ez-btn ez-btn-primary ez-btn-sm" id="btnParsePaste">
+                        <i class="fas fa-check"></i> Parse pasted text
+                    </button>
+                    <label class="ez-btn ez-btn-sm" style="margin: 0;">
+                        <i class="fas fa-upload"></i> Load file
+                        <input type="file" id="calFile" accept=".ics,.html,.htm,.txt" hidden>
+                    </label>
                 </div>
             </div>
         </div>
 
-        <!-- 2-Column Studio Grid -->
+        <!-- 2-Column Split Workspace -->
         <div class="rt-studio-grid">
-            <!-- Left Studio Drawer: Courses & Solver -->
+            <!-- Left Command Drawer: Courses & Solver (Width: 320px) -->
             <aside class="rt-studio-drawer">
-                <!-- Courses Selection Card -->
+                <!-- Course Selector Card -->
                 <section class="ez-card rt-drawer-card">
-                    <div class="ez-card-header">
-                        <div>
-                            <h3><i class="fas fa-book-bookmark" style="color: var(--primary);"></i> Enrolled Courses</h3>
-                            <p>Pick sections or let the solver match them</p>
+                    <div class="rt-drawer-header">
+                        <div class="rt-drawer-title">
+                            <i class="fas fa-book-bookmark"></i>
+                            <span>Courses</span>
                         </div>
-                        <div class="ez-action-deck rt-noprint">
-                            <span class="ez-filter-btn" id="courseCount" style="cursor: default;">0 courses</span>
+                        <div class="rt-drawer-actions rt-noprint">
+                            <span class="rt-count-pill" id="courseCount">0</span>
                             <button class="ez-btn ez-btn-sm" id="btnClearCourses" title="Clear all courses">
                                 <i class="fas fa-trash-can"></i>
                             </button>
@@ -144,28 +134,27 @@
                     <div class="rt-search-wrap rt-noprint">
                         <i class="fas fa-magnifying-glass rt-search-icon"></i>
                         <input type="text" class="ez-input" id="courseSearch" autocomplete="off"
-                            placeholder="Search code or title (e.g. CSE 4509, DBMS, OOP)">
+                            placeholder="Add course (e.g. CSE 4509, DBMS)">
                         <div class="rt-search-results" id="searchResults"></div>
                     </div>
 
                     <!-- Program Filter Pills -->
-                    <div class="ez-filter-bar rt-filter-bar rt-noprint" id="programFilters">
+                    <div class="rt-filter-bar rt-noprint" id="programFilters">
                         <button class="ez-filter-btn active" data-program="all">All</button>
                         <button class="ez-filter-btn" data-program="BSCSE">BSCSE</button>
                         <button class="ez-filter-btn" data-program="BSDS">BSDS</button>
-                        <span class="rt-source-note" style="margin-left: auto;">Fall 2026 CSE &amp; BSDS</span>
                     </div>
 
-                    <!-- Courses List Container -->
+                    <!-- Selected Courses List -->
                     <div class="rt-course-list" id="courseList"></div>
 
                     <!-- Custom Class Collapsible -->
                     <details class="rt-details rt-noprint" id="customDetails">
-                        <summary><i class="fas fa-plus-circle"></i> Add custom class (FYDP, lab, etc.)</summary>
+                        <summary><i class="fas fa-plus"></i> Custom Class (FYDP, Lab)</summary>
                         <div class="rt-custom-grid">
                             <div class="ez-input-group" style="grid-column: 1 / -1;">
-                                <label class="ez-label" for="customTitle">Class title</label>
-                                <input type="text" class="ez-input" id="customTitle" placeholder="CSE 4999 (A) - Final Year Design Project">
+                                <label class="ez-label" for="customTitle">Title</label>
+                                <input type="text" class="ez-input" id="customTitle" placeholder="CSE 4999 (A) - Final Project">
                             </div>
                             <div class="ez-input-group" style="grid-column: 1 / -1;">
                                 <label class="ez-label">Days</label>
@@ -194,13 +183,13 @@
                                 <input type="number" class="ez-input" id="customCredit" min="0" max="12" step="0.5" value="0">
                             </div>
                             <div class="ez-input-group" style="grid-column: 1 / -1;">
-                                <label class="ez-label" for="customFaculty">Faculty (optional)</label>
+                                <label class="ez-label" for="customFaculty">Faculty</label>
                                 <input type="text" class="ez-input" id="customFaculty" placeholder="Faculty name or initials">
                             </div>
                         </div>
-                        <div class="ez-action-deck" style="margin-top: 14px;">
+                        <div class="ez-action-deck" style="margin-top: 10px;">
                             <button class="ez-btn ez-btn-primary ez-btn-sm" id="btnAddCustom">
-                                <i class="fas fa-plus"></i> Add custom class
+                                <i class="fas fa-plus"></i> Add Class
                             </button>
                             <span class="rt-msg" id="customMsg" style="margin: 0;"></span>
                         </div>
@@ -209,10 +198,10 @@
 
                 <!-- Clash-Free Solver Card -->
                 <section class="ez-card rt-drawer-card rt-noprint">
-                    <div class="ez-card-header">
-                        <div>
-                            <h3><i class="fas fa-wand-magic-sparkles" style="color: var(--primary);"></i> Clash-Free Solver</h3>
-                            <p>Calculates compact schedules with zero overlaps</p>
+                    <div class="rt-drawer-header">
+                        <div class="rt-drawer-title">
+                            <i class="fas fa-wand-magic-sparkles"></i>
+                            <span>Solver &amp; Filters</span>
                         </div>
                     </div>
 
@@ -228,86 +217,83 @@
                             </div>
                         </div>
 
-                        <div class="rt-option-group" style="margin-top: 14px;">
-                            <span class="rt-option-label">Daily Time Bounds</span>
-                            <div class="rt-inline-row" style="gap: 8px;">
-                                <input type="time" class="ez-input" id="optEarliest" style="width: 130px;" aria-label="Earliest start">
+                        <div class="rt-option-group" style="margin-top: 10px;">
+                            <span class="rt-option-label">Time Limits</span>
+                            <div class="rt-inline-row" style="gap: 6px;">
+                                <input type="time" class="ez-input" id="optEarliest" style="width: 110px;" aria-label="Earliest start">
                                 <span class="rt-msg" style="margin: 0;">to</span>
-                                <input type="time" class="ez-input" id="optLatest" style="width: 130px;" aria-label="Latest end">
+                                <input type="time" class="ez-input" id="optLatest" style="width: 110px;" aria-label="Latest end">
                             </div>
                         </div>
 
-                        <div class="rt-option-group" style="margin-top: 14px;">
+                        <div class="rt-option-group" style="margin-top: 10px;">
                             <span class="rt-option-label">Export Preferences</span>
                             <div class="rt-check-row">
                                 <label class="rt-check">
-                                    <input type="checkbox" id="optInfo" checked> UIU Deadlines &amp; Milestones
+                                    <input type="checkbox" id="optInfo" checked> Deadlines
                                 </label>
                                 <label class="rt-check">
-                                    <input type="checkbox" id="optAlarm" checked> Reminder
+                                    <input type="checkbox" id="optAlarm" checked> 15m Reminder
                                     <input type="number" id="alarmMin" value="15" min="0" max="120" step="5"
-                                        style="width: 48px; height: 24px; padding: 0 4px; border: 1px solid var(--border-glass); border-radius: 4px; background: var(--surface-2); color: var(--text); font-size: 0.75rem; text-align: center;">
-                                    min before
+                                        style="display: none;">
                                 </label>
                             </div>
                         </div>
 
-                        <div style="margin-top: 18px;">
-                            <button class="ez-btn ez-btn-primary" id="btnSolve" style="width: 100%; height: 44px; font-size: 0.92rem;">
+                        <div style="margin-top: 14px;">
+                            <button class="ez-btn ez-btn-primary" id="btnSolve" style="width: 100%; height: 32px; font-weight: 600;">
                                 <i class="fas fa-bolt"></i> Generate Clash-Free Options
                             </button>
                         </div>
 
-                        <div class="rt-msg" id="solverMsg" style="margin-top: 10px;"></div>
+                        <div class="rt-msg" id="solverMsg" style="margin-top: 8px;"></div>
                         <div class="rt-schedule-list" id="optionList"></div>
                     </div>
                 </section>
             </aside>
 
-            <!-- Right Studio Stage: Live Interactive Timetable Canvas -->
+            <!-- Right Schedule Board (Interactive Canvas) -->
             <main class="rt-studio-canvas">
                 <section class="ez-card rt-canvas-card">
-                    <div class="ez-card-header rt-canvas-header">
-                        <div>
-                            <h3><i class="fas fa-calendar-days" style="color: var(--primary);"></i> Weekly Timetable</h3>
-                            <p id="previewNote">Add courses on the left to preview your schedule</p>
-                        </div>
-                        <div class="rt-preview-actions rt-noprint">
-                            <button class="ez-btn ez-btn-sm" id="btnCopy">
-                                <i class="fas fa-copy"></i> Copy
+                    <!-- Compact Board Toolbar with Inline KPIs -->
+                    <div class="rt-canvas-header">
+                        <div class="rt-kpis" id="previewStats"></div>
+                        <div class="rt-canvas-actions rt-noprint">
+                            <span id="previewNote" style="display: none;"></span>
+                            <button class="ez-btn ez-btn-sm" id="btnCopy" title="Copy routine text">
+                                <i class="fas fa-copy"></i> <span class="hide-mobile">Copy</span>
                             </button>
-                            <button class="ez-btn ez-btn-sm" id="btnPrint">
-                                <i class="fas fa-print"></i> Print
+                            <button class="ez-btn ez-btn-sm" id="btnPrint" title="Print timetable">
+                                <i class="fas fa-print"></i> <span class="hide-mobile">Print</span>
                             </button>
-                            <button class="ez-btn ez-btn-sm ez-btn-primary" id="btnDownload2">
+                            <button class="ez-btn ez-btn-sm ez-btn-primary" id="btnDownload2" title="Download .ics calendar">
                                 <i class="fas fa-download"></i> .ics
                             </button>
                         </div>
                     </div>
 
+                    <!-- Clash Warning Pill -->
                     <div class="ez-alert ez-alert-warning rt-clash-alert" id="clashAlert" style="display: none;">
                         <i class="fas fa-triangle-exclamation" style="margin-top: 2px;"></i>
                         <div id="clashText"></div>
                     </div>
 
-                    <!-- Live KPI Bar -->
-                    <div class="rt-kpis" id="previewStats"></div>
-
-                    <!-- Interactive Timetable Grid -->
+                    <!-- 5-Day Weekly Timetable Grid -->
                     <div class="rt-timetable-wrap" id="timetable"></div>
 
-                    <!-- Course Color Legend -->
-                    <div class="rt-legend" id="legend"></div>
-
-                    <div class="rt-source-note" style="margin-top: 14px;">
-                        Section data from official UIU Fall 2026 CSE &amp; BSDS schedule. Academic calendar from <a href="https://www.uiu.ac.bd/academics/calendar/" target="_blank" rel="noopener">uiu.ac.bd</a>.
+                    <!-- Color Legend & Attribution -->
+                    <div class="rt-board-footer">
+                        <div class="rt-legend" id="legend"></div>
+                        <div class="rt-source-note">
+                            UIU Fall 2026 CSE &amp; BSDS class database · Official calendar from <a href="https://www.uiu.ac.bd/academics/calendar/" target="_blank" rel="noopener">uiu.ac.bd</a>
+                        </div>
                     </div>
                 </section>
             </main>
         </div>
 
-        <footer class="ez-footer" style="margin-top: 36px;">
-            <div>Built for UIU students. 100% client-side privacy.</div>
+        <footer class="ez-footer">
+            <div>EZ_UIU · 100% Client-Side Academic Suite for United International University students.</div>
             <div>Crafted by <a href="https://junaed93.github.io" target="_blank" rel="noopener">Junaed</a></div>
         </footer>
     </div>
