@@ -600,11 +600,11 @@
 
         const uid = 'cg' + Math.random().toString(36).slice(2, 7);
         const width = Math.max(560, history.length * 92);
-        const height = 250;
+        const height = 240;
         const padLeft = 34;
-        const padRight = 22;
-        const padTop = 20;
-        const padBottom = 34;
+        const padRight = 24;
+        const padTop = 36;
+        const padBottom = 32;
         const chartWidth = width - padLeft - padRight;
         const chartHeight = height - padTop - padBottom;
 
@@ -642,43 +642,44 @@
         let svg = `<svg viewBox="0 0 ${width} ${height}" preserveAspectRatio="none" style="width:100%; min-width:${width}px; height:${height}px; display:block;">
             <defs>
                 <linearGradient id="${uid}-area" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stop-color="var(--ez-primary)" stop-opacity="0.16"/>
+                    <stop offset="0%" stop-color="var(--ez-primary)" stop-opacity="0.12"/>
                     <stop offset="100%" stop-color="var(--ez-primary)" stop-opacity="0"/>
                 </linearGradient>
                 <filter id="${uid}-dot" x="-40%" y="-40%" width="180%" height="180%">
-                    <feDropShadow dx="0" dy="1" stdDeviation="1.4" flood-opacity="0.18"/>
+                    <feDropShadow dx="0" dy="1" stdDeviation="1.2" flood-opacity="0.15"/>
                 </filter>
             </defs>`;
 
         // Horizontal gridlines + y labels (0..4)
         for (let g = 0; g <= 4; g++) {
             const y = getY(g);
-            svg += `<line x1="${padLeft}" y1="${y}" x2="${width - padRight}" y2="${y}" stroke="var(--ez-border)" stroke-width="1"/>`;
+            svg += `<line x1="${padLeft}" y1="${y}" x2="${width - padRight}" y2="${y}" stroke="var(--ez-border-subtle)" stroke-width="1"/>`;
             svg += `<text x="${padLeft - 9}" y="${y + 3.5}" fill="var(--ez-text-4)" font-size="10" font-weight="500" text-anchor="end">${g}.0</text>`;
         }
 
         // Probation threshold band
-        svg += `<line x1="${padLeft}" y1="${yThreshold}" x2="${width - padRight}" y2="${yThreshold}" stroke="var(--ez-danger)" stroke-width="1.5" stroke-dasharray="5 4" opacity="0.7"/>`;
-        svg += `<text x="${width - padRight}" y="${yThreshold - 6}" fill="var(--ez-danger)" font-size="9.5" font-weight="600" text-anchor="end">Probation ${minCgpa.toFixed(2)}</text>`;
+        svg += `<line x1="${padLeft}" y1="${yThreshold}" x2="${width - padRight}" y2="${yThreshold}" stroke="var(--ez-danger)" stroke-width="1.5" stroke-dasharray="5 4" opacity="0.6"/>`;
+        svg += `<text x="${width - padRight}" y="${yThreshold - 6}" fill="var(--ez-danger)" font-size="9" font-weight="600" text-anchor="end">Probation ${minCgpa.toFixed(2)}</text>`;
 
         // Area fill under cumulative line
         svg += `<path d="${areaPath}" fill="url(#${uid}-area)"/>`;
 
+        // Term GPA line (dashed, secondary)
+        svg += `<path d="${term.line}" fill="none" stroke="var(--ez-primary)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="4 4" opacity="0.55"/>`;
+
         // Cumulative CGPA line (solid, primary)
         svg += `<path d="${cgpa.line}" fill="none" stroke="var(--ez-primary)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>`;
-
-        // Term GPA line (dashed, muted accent)
-        svg += `<path d="${term.line}" fill="none" stroke="var(--ez-accent)" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="4 4" opacity="0.85"/>`;
 
         // X labels + points
         history.forEach((h, i) => {
             const x = getX(i);
-            svg += `<text x="${x}" y="${height - 12}" fill="var(--ez-text-3)" font-size="10.5" font-weight="600" text-anchor="middle">${h.trimester}</text>`;
+            svg += `<text x="${x}" y="${height - 10}" fill="var(--ez-text-3)" font-size="10" font-weight="600" text-anchor="middle">${h.trimester}</text>`;
 
-            svg += `<circle cx="${x}" cy="${getY(h.gpa)}" r="3" fill="var(--ez-surface)" stroke="var(--ez-accent)" stroke-width="2"><title>${h.trimester} term GPA ${h.gpa.toFixed(2)}</title></circle>`;
-            svg += `<circle cx="${x}" cy="${getY(h.cumulativeCGPA)}" r="4.5" fill="var(--ez-primary)" stroke="var(--ez-surface)" stroke-width="2" filter="url(#${uid}-dot)"><title>${h.trimester} cumulative CGPA ${h.cumulativeCGPA.toFixed(2)}</title></circle>`;
-            // value callout on cumulative point
-            svg += `<text x="${x}" y="${getY(h.cumulativeCGPA) - 10}" fill="var(--ez-text-2)" font-size="10" font-weight="700" text-anchor="middle">${h.cumulativeCGPA.toFixed(2)}</text>`;
+            svg += `<circle cx="${x}" cy="${getY(h.gpa)}" r="2.5" fill="#ffffff" stroke="var(--ez-primary)" stroke-width="1.5" opacity="0.8"><title>${h.trimester} term GPA ${h.gpa.toFixed(2)}</title></circle>`;
+            svg += `<circle cx="${x}" cy="${getY(h.cumulativeCGPA)}" r="4" fill="var(--ez-primary)" stroke="#ffffff" stroke-width="2" filter="url(#${uid}-dot)"><title>${h.trimester} cumulative CGPA ${h.cumulativeCGPA.toFixed(2)}</title></circle>`;
+            
+            // value callout on cumulative point with halo mask
+            svg += `<text x="${x}" y="${getY(h.cumulativeCGPA) - 9}" fill="var(--ez-text)" font-size="10" font-weight="700" text-anchor="middle" stroke="#ffffff" stroke-width="4px" paint-order="stroke fill" stroke-linejoin="round">${h.cumulativeCGPA.toFixed(2)}</text>`;
         });
 
         svg += `</svg>`;

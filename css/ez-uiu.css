@@ -71,7 +71,7 @@
     --shadow-md: 0 4px 10px rgba(0, 0, 0, 0.06), 0 1px 3px rgba(0, 0, 0, 0.04);
     --shadow-lg: 0 10px 24px -3px rgba(0, 0, 0, 0.08), 0 4px 8px -2px rgba(0, 0, 0, 0.04);
 
-    --maxw: 1380px;
+    --maxw: 1160px;
 
     /* Legacy Mappings for Existing Scripts */
     --ez-bg: var(--bg);
@@ -515,12 +515,13 @@ a:hover {
 .ez-hero-grid {
     display: grid;
     grid-template-columns: 1fr;
-    gap: 14px;
+    gap: 12px;
     margin-bottom: 16px;
 }
-@media (min-width: 860px) {
+@media (min-width: 820px) {
     .ez-hero-grid {
-        grid-template-columns: 260px 1fr;
+        grid-template-columns: 220px 1fr;
+        align-items: stretch;
     }
 }
 
@@ -528,7 +529,7 @@ a:hover {
     background: var(--surface);
     border: 1px solid var(--border);
     border-radius: var(--r-lg);
-    padding: 18px 14px;
+    padding: 14px 16px;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -539,9 +540,9 @@ a:hover {
 
 .ez-gauge-wrap {
     position: relative;
-    width: 130px;
-    height: 130px;
-    margin-bottom: 8px;
+    width: 116px;
+    height: 116px;
+    margin: 0 auto 6px;
 }
 .ez-gauge-center {
     position: absolute;
@@ -552,7 +553,7 @@ a:hover {
     justify-content: center;
 }
 .ez-gauge-num {
-    font-size: 1.95rem;
+    font-size: 1.85rem;
     font-weight: 700;
     letter-spacing: -0.03em;
     line-height: 1;
@@ -560,18 +561,18 @@ a:hover {
     color: var(--text);
 }
 .ez-gauge-scale {
-    font-size: 0.65rem;
+    font-size: 0.62rem;
     font-weight: 600;
     color: var(--text-4);
     text-transform: uppercase;
     letter-spacing: 0.06em;
-    margin-top: 3px;
+    margin-top: 2px;
 }
 .ez-gauge-tier-pill {
     display: inline-flex;
     align-items: center;
     gap: 4px;
-    padding: 2px 9px;
+    padding: 2px 8px;
     border-radius: var(--r-full);
     font-size: 0.72rem;
     font-weight: 600;
@@ -588,7 +589,7 @@ a:hover {
 /* ---------------- KPI Stat Cards ---------------- */
 .ez-kpi-stack {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
     gap: 10px;
 }
 
@@ -596,22 +597,22 @@ a:hover {
     background: var(--surface);
     border: 1px solid var(--border);
     border-radius: var(--r-md);
-    padding: 12px 14px;
+    padding: 14px 16px;
     box-shadow: var(--shadow-xs);
     display: flex;
     flex-direction: column;
-    justify-content: space-between;
+    justify-content: center;
+    gap: 6px;
 }
 
 .ez-stat-top {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    margin-bottom: 6px;
     gap: 6px;
 }
 .ez-stat-label {
-    font-size: 0.68rem;
+    font-size: 0.7rem;
     font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.05em;
@@ -623,19 +624,18 @@ a:hover {
     border-radius: var(--r-xs);
     background: var(--surface-2);
     color: var(--text-2);
-    display: flex;
+    display: inline-flex;
     align-items: center;
     justify-content: center;
     font-size: 0.75rem;
 }
 .ez-stat-value {
-    font-size: 1.45rem;
+    font-size: 1.55rem;
     font-weight: 700;
     letter-spacing: -0.025em;
     color: var(--text);
     font-variant-numeric: tabular-nums;
     line-height: 1.15;
-    margin-bottom: 2px;
 }
 .ez-stat-sub {
     font-size: 0.72rem;
