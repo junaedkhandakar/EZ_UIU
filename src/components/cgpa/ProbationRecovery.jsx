@@ -1,126 +1,92 @@
 import React, { useMemo } from 'react';
-import { Card, CardHeader, CardContent } from '../common/Card';
-import { Badge } from '../common/Badge';
-import { ShieldAlert, ShieldCheck, AlertCircle, ArrowRight, Lightbulb } from 'lucide-react';
+import { ShieldAlert, ShieldCheck, Lightbulb } from 'lucide-react';
 import { calculateAcademicMetrics } from '../../utils/cgpaUtils';
 
-export function ProbationRecovery({ courses = [], minCgpa = 2.00, dept = 'regular' }) {
-  const metrics = useMemo(() => {
-    return calculateAcademicMetrics(courses);
-  }, [courses]);
+export function ProbationRecovery({ courses = [], minCgpa = 2.0, dept = 'regular' }) {
+  const metrics = useMemo(() => calculateAcademicMetrics(courses), [courses]);
+  const onProbation = metrics.cgpa < minCgpa && metrics.credits > 0;
 
-  const isOnProbation = metrics.cgpa < minCgpa && metrics.credits > 0;
-  const currentCgpa = metrics.cgpa;
-  const currentCredits = metrics.credits;
-  const currentPoints = metrics.points;
-
-  // Recovery Scenarios:
-  // How many credits at 3.00, 3.33, 3.67, 4.00 are needed to reach minCgpa?
-  // New CGPA = (currentPoints + newCredits * scenarioGpa) / (currentCredits + newCredits) >= minCgpa
-  // currentPoints + newCredits * scenarioGpa >= minCgpa * currentCredits + minCgpa * newCredits
-  // newCredits * (scenarioGpa - minCgpa) >= minCgpa * currentCredits - currentPoints
-  // newCredits >= (minCgpa * currentCredits - currentPoints) / (scenarioGpa - minCgpa)
   const scenarios = useMemo(() => {
-    if (!isOnProbation) return [];
-
-    const deficitPoints = (minCgpa * currentCredits) - currentPoints;
-    const targets = [
-      { gpa: 4.00, label: 'Straight A (4.00 GPA)' },
-      { gpa: 3.67, label: 'A- Average (3.67 GPA)' },
-      { gpa: 3.33, label: 'B+ Average (3.33 GPA)' },
-      { gpa: 3.00, label: 'B Average (3.00 GPA)' },
-    ];
-
-    return targets.map(t => {
-      const netGainPerCredit = t.gpa - minCgpa;
-      if (netGainPerCredit <= 0) {
-        return { ...t, creditsNeeded: Infinity, terms: Infinity };
-      }
-      const creditsNeeded = Math.ceil(deficitPoints / netGainPerCredit);
-      const terms = Math.ceil(creditsNeeded / 12);
-      return {
-        ...t,
-        creditsNeeded,
-        terms,
-      };
+    if (!onProbation) return [];
+    const deficit = minCgpa * metrics.credits - metrics.points;
+    return [
+      { gpa: 4.0, label: 'Straight A' },
+      { gpa: 3.67, label: 'A− average' },
+      { gpa: 3.33, label: 'B+ average' },
+      { gpa: 3.0, label: 'B average' },
+    ].map((t) => {
+      const perCredit = t.gpa - minCgpa;
+      const creditsNeeded = perCredit > 0 ? Math.ceil(deficit / perCredit) : Infinity;
+      return { ...t, creditsNeeded, terms: Math.ceil(creditsNeeded / 12) };
     });
-  }, [isOnProbation, minCgpa, currentCredits, currentPoints]);
+  }, [onProbation, minCgpa, metrics]);
 
-  if (!isOnProbation) {
+  if (!onProbation) {
     return (
-      <Card className="p-8 text-center bg-emerald-500/[0.03] border-emerald-500/20">
-        <div className="w-12 h-12 rounded-2xl bg-emerald-500/10 text-emerald-600 flex items-center justify-center mx-auto mb-3">
-          <ShieldCheck className="w-6 h-6" />
+      <div className="flex flex-col items-center rounded-2xl border border-ok/20 bg-ok/[0.04] px-6 py-12 text-center shadow-card">
+        <div className="rounded-2xl bg-ok/10 p-3 text-ok">
+          <ShieldCheck className="h-6 w-6" strokeWidth={2.2} />
         </div>
-        <h3 className="text-base font-bold text-zinc-900 dark:text-zinc-100">
-          Good Academic Standing
-        </h3>
-        <p className="text-xs text-zinc-500 max-w-md mx-auto mt-1">
-          Your current CGPA is <b>{currentCgpa.toFixed(2)}</b>, comfortably exceeding the minimum {minCgpa.toFixed(2)} threshold for {dept === 'pharmacy' ? 'Pharmacy' : 'Regular'} programs. No probation recovery is needed!
+        <h3 className="mt-3 text-[15px] font-bold text-ink">Good academic standing</h3>
+        <p className="mt-1.5 max-w-md text-xs leading-relaxed text-ink-2">
+          CGPA <b className="num">{metrics.cgpa.toFixed(2)}</b> clears the {minCgpa.toFixed(2)}{' '}
+          threshold for {dept === 'pharmacy' ? 'Pharmacy' : 'Regular'} programs. No recovery plan
+          needed — keep the streak going.
         </p>
-      </Card>
+      </div>
     );
   }
 
   return (
-    <div className="flex flex-col gap-6">
-      {/* Alert Banner */}
-      <div className="p-5 rounded-2xl bg-rose-500/10 border border-rose-500/20 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-        <div className="flex items-start gap-3">
-          <div className="p-2 rounded-xl bg-rose-500/20 text-rose-600 dark:text-rose-400 shrink-0">
-            <ShieldAlert className="w-5 h-5" />
-          </div>
-          <div>
-            <h4 className="text-sm font-bold text-rose-700 dark:text-rose-300">
-              Academic Probation Warning (CGPA {currentCgpa.toFixed(2)} &lt; {minCgpa.toFixed(2)})
-            </h4>
-            <p className="text-xs text-rose-600/80 dark:text-rose-300/80 mt-0.5">
-              Under UIU Academic Regulations, maintaining a CGPA below {minCgpa.toFixed(2)} results in academic probation. Students on probation cannot register for more than 9–12 credits without departmental advisor approval.
-            </p>
-          </div>
+    <div className="flex flex-col gap-4">
+      {/* Alert */}
+      <div className="flex items-start gap-3.5 rounded-2xl border border-bad/25 bg-bad/[0.07] p-5">
+        <div className="shrink-0 rounded-xl bg-bad/15 p-2 text-bad">
+          <ShieldAlert className="h-5 w-5" strokeWidth={2.2} />
+        </div>
+        <div>
+          <h4 className="text-sm font-bold text-bad">
+            Academic probation — CGPA {metrics.cgpa.toFixed(2)} &lt; {minCgpa.toFixed(2)}
+          </h4>
+          <p className="mt-1 text-xs leading-relaxed text-ink-2">
+            UIU regulations place students below {minCgpa.toFixed(2)} on probation: registration is
+            capped at 9–12 credits without advisor approval. Below are the exact credits needed to
+            clear it.
+          </p>
         </div>
       </div>
 
-      {/* Recovery Scenarios */}
-      <Card>
-        <CardHeader
-          title="Probation Recovery Roadmaps"
-          subtitle={`Credits required to raise your CGPA from ${currentCgpa.toFixed(2)} to the safe ≥ ${minCgpa.toFixed(2)} threshold`}
-        />
-        <CardContent>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            {scenarios.map(s => (
-              <div
-                key={s.gpa}
-                className="p-4 rounded-xl bg-black/[0.02] dark:bg-white/[0.03] border border-black/[0.06] dark:border-white/[0.08] flex flex-col justify-between gap-3"
-              >
-                <div>
-                  <span className="text-xs font-bold text-zinc-700 dark:text-zinc-300">
-                    {s.label}
-                  </span>
-                  <div className="mt-2 text-2xl font-extrabold text-apple-blue tabular-nums">
-                    {s.creditsNeeded === Infinity ? '—' : `${s.creditsNeeded} cr`}
-                  </div>
-                </div>
-                <div className="text-[11px] text-zinc-500 border-t border-black/[0.04] dark:border-white/[0.06] pt-2">
-                  {s.terms === Infinity ? 'Cannot recover at this pace' : `Approx. ${s.terms} trimester(s) at 12 cr/term`}
-                </div>
-              </div>
-            ))}
-          </div>
-
-          {/* Strategic Advice */}
-          <div className="mt-6 p-4 rounded-xl bg-amber-500/[0.06] border border-amber-500/20 flex items-start gap-3">
-            <Lightbulb className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
-            <div className="text-xs text-amber-800 dark:text-amber-300 space-y-1">
-              <p className="font-semibold">Fastest Way to Escape Probation: Retakes</p>
-              <p className="opacity-90 leading-relaxed">
-                Taking new courses only slowly nudges your CGPA upward. Retaking 1 or 2 courses where you previously received an <b>F or D</b> directly replaces the poor grade with your new grade, instantly removing the deficit from your cumulative record. Check the <b>Retake Optimizer</b> tab above to see your exact jump!
-              </p>
+      {/* Scenario tiles */}
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        {scenarios.map((s) => (
+          <div
+            key={s.gpa}
+            className="flex flex-col rounded-2xl border border-line bg-surface p-4 shadow-card"
+          >
+            <div className="text-xs font-bold text-ink-2">{s.label}</div>
+            <div className="num mt-2 text-[26px] font-extrabold leading-none tracking-tight text-ink">
+              {s.creditsNeeded === Infinity ? '—' : `${s.creditsNeeded} cr`}
+            </div>
+            <div className="mt-1.5 text-[11px] font-medium text-ink-3">
+              {s.terms === Infinity ? 'not achievable' : `≈ ${s.terms} trimester${s.terms > 1 ? 's' : ''} @ 12 cr`}
+            </div>
+            <div className="num mt-3 rounded-lg bg-surface2 px-2 py-1 text-center text-[10px] font-semibold text-ink-2">
+              GPA {s.gpa.toFixed(2)}
             </div>
           </div>
-        </CardContent>
-      </Card>
+        ))}
+      </div>
+
+      <div className="flex items-start gap-3 rounded-2xl border border-line bg-surface2/50 p-4">
+        <Lightbulb className="mt-0.5 h-4 w-4 shrink-0 text-warn" strokeWidth={2.2} />
+        <p className="text-xs leading-relaxed text-ink-2">
+          Fastest path: pair retakes of low-grade courses (they replace old points entirely) with a
+          12-credit load at A− or better. Check the <b className="text-ink">Retake Lab</b> tab to
+          simulate exactly how far each retake lifts you.
+        </p>
+      </div>
     </div>
   );
 }
+
+export default ProbationRecovery;
