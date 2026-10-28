@@ -268,18 +268,18 @@ export function getHonorsStanding(cgpa, earnedCredits, minRequiredCredits = 138)
       progressPercent: ((cgpa - 3.80) / 0.10) * 100,
       description: 'High distinction (CGPA ≥ 3.80)',
     };
-  } else if (cgpa >= 3.65) {
+  } else if (cgpa >= 3.75) {
     return {
       tier: 'Cum Laude',
       badgeColor: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800',
-      progressPercent: ((cgpa - 3.65) / 0.15) * 100,
-      description: 'With distinction (CGPA ≥ 3.65)',
+      progressPercent: ((cgpa - 3.75) / 0.05) * 100,
+      description: 'With distinction (CGPA ≥ 3.75)',
     };
   } else if (cgpa >= 2.00) {
     return {
       tier: 'Good Standing',
       badgeColor: 'bg-zinc-100 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300 border-zinc-200 dark:border-zinc-700',
-      progressPercent: ((cgpa - 2.00) / 1.65) * 100,
+      progressPercent: ((cgpa - 2.00) / 1.75) * 100,
       description: 'Satisfactory academic standing',
     };
   } else {

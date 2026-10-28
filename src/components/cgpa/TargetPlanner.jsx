@@ -5,7 +5,7 @@ import { Target, CheckCircle2, AlertTriangle, XCircle, Zap } from 'lucide-react'
 
 const PRESETS = [
   { label: '3.00 · Standard', value: 3.0 },
-  { label: '3.65 · Cum Laude', value: 3.65 },
+  { label: '3.75 · Cum Laude', value: 3.75 },
   { label: '3.80 · Magna', value: 3.8 },
   { label: '3.90 · Summa', value: 3.9 },
 ];
