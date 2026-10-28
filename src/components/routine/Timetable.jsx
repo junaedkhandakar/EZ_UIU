@@ -1,4 +1,5 @@
 import React, { useMemo } from 'react';
+import { motion, AnimatePresence } from 'motion/react';
 import { DAYS, fmtTime, colourFor, pad2 } from '../../utils/routineSolver';
 
 const HOUR_H = 56; // px per hour
@@ -21,7 +22,7 @@ export default function Timetable({ sections = [] }) {
     const height = (totalMin / 60) * HOUR_H;
     const y = (m) => ((m - startMin) / 60) * HOUR_H;
 
-    // clash detection: overlapping meetings on same day from different sections
+    // clash detection
     const clashIds = new Set();
     DAYS.forEach((d) => {
       const list = meetings.filter((m) => m[0] === d).sort((a, b) => a[1] - b[1]);
@@ -66,18 +67,18 @@ export default function Timetable({ sections = [] }) {
 
   return (
     <div
-      className={`overflow-x-auto rounded-2xl border bg-surface shadow-card ${
-        hasClash ? 'border-bad/40' : 'border-line'
+      className={`overflow-x-auto rounded-2xl border bg-surface shadow-card transition-colors duration-200 ${
+        hasClash ? 'border-bad/40 shadow-[0_0_20px_rgba(239,68,68,0.1)]' : 'border-line'
       }`}
     >
       <div className="min-w-[640px]">
         {/* header row */}
-        <div className="flex border-b border-line">
+        <div className="flex border-b border-line bg-surface2/40">
           <div className="w-12 shrink-0" />
           {DAYS.map((d) => (
             <div
               key={d}
-              className="flex-1 border-l border-line px-2 py-2.5 text-center text-[11px] font-bold uppercase tracking-[0.08em] text-ink-2"
+              className="flex-1 border-l border-line px-2 py-2.5 text-center text-[11px] font-bold uppercase tracking-[0.1em] text-ink-2"
             >
               {d}
             </div>
@@ -87,7 +88,7 @@ export default function Timetable({ sections = [] }) {
         {/* body */}
         <div className="flex" style={{ height }}>
           {/* time gutter */}
-          <div className="relative w-12 shrink-0">
+          <div className="relative w-12 shrink-0 select-none">
             {hours.map((h) => (
               <div
                 key={h}
@@ -109,47 +110,55 @@ export default function Timetable({ sections = [] }) {
                   style={{ top: ((h - hours[0]) / 60) * HOUR_H }}
                 />
               ))}
-              {byDay[d].map((b, i) => (
-                <div
-                  key={`${b.sec.id}-${i}`}
-                  title={`${b.sec.code} (${b.sec.section}) · ${fmtTime(b.start)}–${fmtTime(b.end)}${b.room ? ` · ${b.room}` : ''}`}
-                  className={`group absolute left-1 right-1.5 cursor-default overflow-hidden rounded-xl border px-2.5 py-1.5 transition-all hover:scale-[1.02] hover:shadow-lift ${
-                    b.clash ? 'z-20 ring-2 ring-bad' : ''
-                  }`}
-                  style={{
-                    top: b.top,
-                    height: b.height,
-                    borderLeftWidth: 3,
-                    borderColor: `color-mix(in srgb, ${b.color} 35%, transparent)`,
-                    borderLeftColor: b.color,
-                    background: `color-mix(in srgb, ${b.color} 16%, var(--surface))`,
-                  }}
-                >
-                  <div className="flex items-center justify-between gap-1">
-                    <span className="truncate text-[11.5px] font-bold text-ink">{b.sec.code}</span>
-                    <span
-                      className="num shrink-0 rounded-md px-1 py-0.5 text-[9px] font-bold"
-                      style={{ background: `color-mix(in srgb, ${b.color} 22%, transparent)` }}
-                    >
-                      {b.sec.section}
-                    </span>
-                  </div>
-                  {b.height >= 46 && (
-                    <div className="num mt-0.5 truncate text-[9.5px] font-medium text-ink-2">
-                      {fmtTime(b.start)}–{fmtTime(b.end)}
-                      {b.room ? ` · ${b.room}` : ''}
+              <AnimatePresence>
+                {byDay[d].map((b, i) => (
+                  <motion.div
+                    key={`${b.sec.id}-${i}`}
+                    layout
+                    initial={{ opacity: 0, scale: 0.92, y: 6 }}
+                    animate={{ opacity: 1, scale: 1, y: 0 }}
+                    exit={{ opacity: 0, scale: 0.9 }}
+                    transition={{ type: 'spring', stiffness: 450, damping: 28 }}
+                    whileHover={{ scale: 1.025, zIndex: 30, transition: { type: 'spring', stiffness: 500, damping: 25 } }}
+                    title={`${b.sec.code} (${b.sec.section}) · ${fmtTime(b.start)}–${fmtTime(b.end)}${b.room ? ` · ${b.room}` : ''}`}
+                    className={`group absolute left-1 right-1.5 cursor-pointer overflow-hidden rounded-xl border px-2.5 py-1.5 shadow-sm transition-shadow hover:shadow-lift ${
+                      b.clash ? 'z-20 ring-2 ring-bad' : ''
+                    }`}
+                    style={{
+                      top: b.top,
+                      height: b.height,
+                      borderLeftWidth: 3.5,
+                      borderColor: `color-mix(in srgb, ${b.color} 35%, transparent)`,
+                      borderLeftColor: b.color,
+                      background: `color-mix(in srgb, ${b.color} 16%, var(--surface))`,
+                    }}
+                  >
+                    <div className="flex items-center justify-between gap-1">
+                      <span className="truncate text-[11.5px] font-bold text-ink">{b.sec.code}</span>
+                      <span
+                        className="num shrink-0 rounded-md px-1 py-0.5 text-[9px] font-bold"
+                        style={{ background: `color-mix(in srgb, ${b.color} 22%, transparent)` }}
+                      >
+                        {b.sec.section}
+                      </span>
                     </div>
-                  )}
-                  {b.height >= 68 && (
-                    <div className="mt-0.5 truncate text-[9.5px] text-ink-3">{b.sec.title}</div>
-                  )}
-                  {b.clash && (
-                    <div className="mt-1 inline-flex rounded-md bg-bad/15 px-1.5 py-0.5 text-[8.5px] font-bold uppercase tracking-wide text-bad">
-                      Clash
-                    </div>
-                  )}
-                </div>
-              ))}
+                    {b.height >= 46 && (
+                      <div className="num mt-0.5 truncate text-[9.5px] font-medium text-ink-2">
+                        {fmtTime(b.start)}–{fmtTime(b.end)}
+                        {b.room ? ` · ${b.room}` : ''}
+                      </div>
+                    )}
+                    {b.height >= 68 && (
+                      <div className="mt-0.5 truncate text-[9.5px] text-ink-3">{b.sec.title}</div>
+                    )}
+                    {b.clash && (
+                      <div className="mt-1 inline-flex rounded-md bg-bad/15 px-1.5 py-0.5 text-[8.5px] font-bold uppercase tracking-wide text-bad">
+                        Clash
+                      </div>
+                    )}
+                  </motion.div>
+                ))}
+              </AnimatePresence>
             </div>
           ))}
         </div>

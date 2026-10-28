@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
+import { motion, AnimatePresence } from 'motion/react';
 import {
   Search,
   Plus,
@@ -10,6 +11,7 @@ import {
   Trophy,
 } from 'lucide-react';
 import Button from '../ui/Button';
+import Surface from '../ui/Surface';
 import Select from '../ui/Select';
 import Empty from '../ui/Empty';
 import Timetable from './Timetable';
@@ -61,7 +63,6 @@ export function RoutineView() {
     [calId]
   );
 
-  /* active sections for the timetable */
   const activeSections = useMemo(() => {
     const list = [];
     selectedCourses.forEach((c) => {
@@ -80,7 +81,6 @@ export function RoutineView() {
   );
   const totalCredits = activeSections.reduce((s, x) => s + (x.credit || 0), 0);
 
-  /* handlers */
   const addCourse = (code) => {
     if (selectedCourses.some((c) => c.code === code)) {
       showToast(`${code} is already added`, 'info');
@@ -168,13 +168,12 @@ export function RoutineView() {
   const selectedCodes = new Set(selectedCourses.map((c) => c.code));
 
   return (
-    <div className="view-in flex flex-col gap-5">
+    <div className="flex flex-col gap-5">
       {/* header */}
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <div className="text-[11px] font-semibold uppercase tracking-[0.12em] text-ink-3">
-            {activeCalendar ? `${activeCalendar.term} ${activeCalendar.year}` : 'Fall 2026'} ·
-            clash-free solver
+          <div className="text-[11px] font-semibold uppercase tracking-[0.14em] text-accent">
+            {activeCalendar ? `${activeCalendar.term} ${activeCalendar.year}` : 'Fall 2026'} · clash-free solver
           </div>
           <h1 className="mt-1 text-[26px] font-extrabold tracking-tight text-ink sm:text-3xl">
             Routine Builder
@@ -201,7 +200,7 @@ export function RoutineView() {
         {/* ============ LEFT: enrollment panel ============ */}
         <div className="flex flex-col gap-4 xl:col-span-5">
           {/* search */}
-          <div className="rounded-2xl border border-line bg-surface p-4 shadow-card">
+          <Surface className="p-4">
             <div className="flex items-center justify-between gap-2">
               <h3 className="text-[15px] font-bold tracking-tight text-ink">Add courses</h3>
               <Select
@@ -224,45 +223,53 @@ export function RoutineView() {
                 placeholder="Search code, title, or faculty…"
                 className="h-10 w-full rounded-xl border border-line bg-surface2/70 py-2 pl-9 pr-3 text-[13px] text-ink placeholder-ink-3 transition-colors hover:border-line-strong focus:outline-none focus:ring-2 focus:ring-accent/40"
               />
-              {query.trim().length >= 2 && (
-                <div className="absolute inset-x-0 top-full z-30 mt-1.5 max-h-[280px] overflow-y-auto rounded-xl border border-line bg-surface shadow-pop fade-in">
-                  {results.length === 0 ? (
-                    <div className="px-3.5 py-3 text-xs text-ink-3">No matches found</div>
-                  ) : (
-                    results.map((c) => {
-                      const added = selectedCodes.has(c.code);
-                      return (
-                        <button
-                          key={c.code}
-                          onClick={() => addCourse(c.code)}
-                          disabled={added}
-                          className="flex w-full items-center justify-between gap-3 border-b border-line/60 px-3.5 py-2.5 text-left transition-colors last:border-0 hover:bg-surface2 disabled:opacity-40"
-                        >
-                          <span className="min-w-0">
-                            <span className="mr-2 font-bold text-accent">{c.code}</span>
-                            <span className="text-xs text-ink-2">{c.title}</span>
-                          </span>
-                          <span className="flex shrink-0 items-center gap-1.5">
-                            <span className="num rounded-md bg-surface2 px-1.5 py-0.5 text-[10px] font-bold text-ink-3">
-                              {c.credit} cr
+              <AnimatePresence>
+                {query.trim().length >= 2 && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 6, scale: 0.98 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    exit={{ opacity: 0, y: 4, scale: 0.98 }}
+                    transition={{ type: 'spring', stiffness: 500, damping: 30 }}
+                    className="absolute inset-x-0 top-full z-30 mt-1.5 max-h-[280px] overflow-y-auto rounded-xl border border-line bg-surface shadow-pop"
+                  >
+                    {results.length === 0 ? (
+                      <div className="px-3.5 py-3 text-xs text-ink-3">No matches found</div>
+                    ) : (
+                      results.map((c) => {
+                        const added = selectedCodes.has(c.code);
+                        return (
+                          <button
+                            key={c.code}
+                            onClick={() => addCourse(c.code)}
+                            disabled={added}
+                            className="flex w-full items-center justify-between gap-3 border-b border-line/60 px-3.5 py-2.5 text-left transition-colors last:border-0 hover:bg-surface2 disabled:opacity-40"
+                          >
+                            <span className="min-w-0">
+                              <span className="mr-2 font-bold text-accent">{c.code}</span>
+                              <span className="text-xs text-ink-2">{c.title}</span>
                             </span>
-                            {added ? (
-                              <Check className="h-3.5 w-3.5 text-ok" />
-                            ) : (
-                              <Plus className="h-3.5 w-3.5 text-ink-3" />
-                            )}
-                          </span>
-                        </button>
-                      );
-                    })
-                  )}
-                </div>
-              )}
+                            <span className="flex shrink-0 items-center gap-1.5">
+                              <span className="num rounded-md bg-surface2 px-1.5 py-0.5 text-[10px] font-bold text-ink-3">
+                                {c.credit} cr
+                              </span>
+                              {added ? (
+                                <Check className="h-3.5 w-3.5 text-ok" />
+                              ) : (
+                                <Plus className="h-3.5 w-3.5 text-ink-3" />
+                              )}
+                            </span>
+                          </button>
+                        );
+                      })
+                    )}
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </div>
-          </div>
+          </Surface>
 
           {/* enrolled list */}
-          <div className="rounded-2xl border border-line bg-surface shadow-card">
+          <Surface>
             <div className="flex items-center justify-between border-b border-line px-4 py-3">
               <h3 className="text-[15px] font-bold tracking-tight text-ink">
                 Enrolled
@@ -283,69 +290,81 @@ export function RoutineView() {
               />
             ) : (
               <ul className="divide-y divide-line/60">
-                {selectedCourses.map((sel) => {
-                  const meta = COURSE_BY_CODE[sel.code] || {};
-                  const secs = SECTIONS_BY_CODE[sel.code] || [];
-                  const activeSec = sel.sectionId ? SECTION_BY_ID[sel.sectionId] : null;
-                  return (
-                    <li key={sel.code} className="px-4 py-3">
-                      <div className="flex items-start justify-between gap-2">
-                        <div className="min-w-0 flex-1">
-                          <div className="flex items-center gap-2">
-                            <span className="truncate text-[13px] font-bold text-ink">{sel.code}</span>
-                            <span className="num shrink-0 text-[10px] font-semibold text-ink-3">
-                              {meta.credit || ''} cr
-                            </span>
-                          </div>
-                          <div className="truncate text-[11px] text-ink-3">{meta.title || ''}</div>
-                          {activeSec && (
-                            <div className="mt-1 text-[10.5px] font-medium text-ink-2">
-                              {sectionSummary(activeSec)}
-                            </div>
-                          )}
-                        </div>
-                        <button
-                          onClick={() => removeCourse(sel.code)}
-                          className="rounded-lg p-1.5 text-ink-3 transition-colors hover:bg-bad/10 hover:text-bad"
-                          title={`Remove ${sel.code}`}
-                        >
-                          <Trash2 className="h-3.5 w-3.5" />
-                        </button>
-                      </div>
-                      <Select
-                        value={sel.sectionId || ''}
-                        onChange={(e) => pickSection(sel.code, e.target.value)}
-                        className="mt-2"
+                <AnimatePresence initial={false}>
+                  {selectedCourses.map((sel) => {
+                    const meta = COURSE_BY_CODE[sel.code] || {};
+                    const secs = SECTIONS_BY_CODE[sel.code] || [];
+                    const activeSec = sel.sectionId ? SECTION_BY_ID[sel.sectionId] : null;
+                    return (
+                      <motion.li
+                        key={sel.code}
+                        layout
+                        initial={{ opacity: 0, height: 0 }}
+                        animate={{ opacity: 1, height: 'auto' }}
+                        exit={{ opacity: 0, height: 0 }}
+                        transition={{ type: 'spring', stiffness: 450, damping: 30 }}
+                        className="px-4 py-3"
                       >
-                        <option value="">Auto — let solver decide</option>
-                        {secs.map((s) => (
-                          <option key={s.id} value={s.id}>
-                            {sectionSummary(s)}
-                          </option>
-                        ))}
-                      </Select>
-                    </li>
-                  );
-                })}
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="min-w-0 flex-1">
+                            <div className="flex items-center gap-2">
+                              <span className="truncate text-[13px] font-bold text-ink">{sel.code}</span>
+                              <span className="num shrink-0 text-[10px] font-semibold text-ink-3">
+                                {meta.credit || ''} cr
+                              </span>
+                            </div>
+                            <div className="truncate text-[11px] text-ink-3">{meta.title || ''}</div>
+                            {activeSec && (
+                              <div className="mt-1 text-[10.5px] font-medium text-ink-2">
+                                {sectionSummary(activeSec)}
+                              </div>
+                            )}
+                          </div>
+                          <motion.button
+                            whileTap={{ scale: 0.9 }}
+                            onClick={() => removeCourse(sel.code)}
+                            className="rounded-lg p-1.5 text-ink-3 transition-colors hover:bg-bad/10 hover:text-bad"
+                            title={`Remove ${sel.code}`}
+                          >
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </motion.button>
+                        </div>
+                        <Select
+                          value={sel.sectionId || ''}
+                          onChange={(e) => pickSection(sel.code, e.target.value)}
+                          className="mt-2"
+                        >
+                          <option value="">Auto — let solver decide</option>
+                          {secs.map((s) => (
+                            <option key={s.id} value={s.id}>
+                              {sectionSummary(s)}
+                            </option>
+                          ))}
+                        </Select>
+                      </motion.li>
+                    );
+                  })}
+                </AnimatePresence>
               </ul>
             )}
-          </div>
+          </Surface>
 
           {/* constraints */}
-          <div className="rounded-2xl border border-line bg-surface p-4 shadow-card">
+          <Surface className="p-4">
             <h3 className="text-[15px] font-bold tracking-tight text-ink">Constraints</h3>
             <div className="mt-3.5">
-              <div className="mb-2 text-[11px] font-semibold uppercase tracking-[0.07em] text-ink-3">
+              <div className="mb-2 text-[11px] font-semibold uppercase tracking-[0.08em] text-ink-3">
                 Free days
               </div>
               <div className="flex flex-wrap gap-1.5">
                 {FREE_DAY_OPTIONS.map((d) => {
                   const on = daysOff.includes(d);
                   return (
-                    <button
+                    <motion.button
                       key={d}
+                      whileTap={{ scale: 0.94 }}
                       onClick={() => toggleDayOff(d)}
-                      className={`rounded-xl border px-3 py-1.5 text-xs font-bold transition-all active:scale-95 ${
+                      className={`rounded-xl border px-3 py-1.5 text-xs font-bold transition-colors ${
                         on
                           ? 'border-accent bg-accentSoft text-accent'
                           : 'border-line bg-surface2/70 text-ink-2 hover:text-ink'
@@ -353,14 +372,14 @@ export function RoutineView() {
                     >
                       {on && <Check className="mr-1 inline h-3 w-3" />}
                       {d}
-                    </button>
+                    </motion.button>
                   );
                 })}
               </div>
             </div>
             <div className="mt-4 grid grid-cols-2 gap-3">
               <div>
-                <label className="mb-1.5 block text-[11px] font-semibold uppercase tracking-[0.07em] text-ink-3">
+                <label className="mb-1.5 block text-[11px] font-semibold uppercase tracking-[0.08em] text-ink-3">
                   No classes before
                 </label>
                 <input
@@ -371,7 +390,7 @@ export function RoutineView() {
                 />
               </div>
               <div>
-                <label className="mb-1.5 block text-[11px] font-semibold uppercase tracking-[0.07em] text-ink-3">
+                <label className="mb-1.5 block text-[11px] font-semibold uppercase tracking-[0.08em] text-ink-3">
                   No classes after
                 </label>
                 <input
@@ -382,80 +401,94 @@ export function RoutineView() {
                 />
               </div>
             </div>
-          </div>
+          </Surface>
         </div>
 
         {/* ============ RIGHT: solver + timetable ============ */}
         <div className="flex flex-col gap-4 xl:col-span-7">
           {/* score strip */}
-          {liveScore && (
-            <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-              <div className="rounded-2xl border border-accent/25 bg-accentSoft/40 p-3.5 text-center shadow-card">
-                <div className="text-[9.5px] font-bold uppercase tracking-[0.1em] text-accent">
-                  Fit score
-                </div>
-                <div className="num mt-1 text-[24px] font-extrabold leading-none tracking-tight text-accent">
-                  {liveScore.score}
-                </div>
-              </div>
-              <div className="rounded-2xl border border-line bg-surface p-3.5 text-center shadow-card">
-                <div className="text-[9.5px] font-bold uppercase tracking-[0.1em] text-ink-3">
-                  Days on campus
-                </div>
-                <div className="num mt-1 text-[24px] font-extrabold leading-none tracking-tight text-ink">
-                  {liveScore.daysUsed}
-                </div>
-              </div>
-              <div className="rounded-2xl border border-line bg-surface p-3.5 text-center shadow-card">
-                <div className="text-[9.5px] font-bold uppercase tracking-[0.1em] text-ink-3">
-                  Gap minutes
-                </div>
-                <div className="num mt-1 text-[24px] font-extrabold leading-none tracking-tight text-ink">
-                  {liveScore.gaps}
-                </div>
-              </div>
-              <div className="rounded-2xl border border-line bg-surface p-3.5 text-center shadow-card">
-                <div className="text-[9.5px] font-bold uppercase tracking-[0.1em] text-ink-3">
-                  Window
-                </div>
-                <div className="num mt-1 whitespace-nowrap text-[15px] font-extrabold leading-none tracking-tight text-ink" style={{ paddingTop: 6 }}>
-                  {liveScore.earliest ? fmtTime(liveScore.earliest) : '—'}–
-                  {liveScore.latest ? fmtTime(liveScore.latest) : '—'}
-                </div>
-              </div>
-            </div>
-          )}
+          <AnimatePresence>
+            {liveScore && (
+              <motion.div
+                initial={{ opacity: 0, y: -6 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -6 }}
+                transition={{ type: 'spring', stiffness: 400, damping: 25 }}
+                className="grid grid-cols-2 gap-3 sm:grid-cols-4"
+              >
+                <Surface hover className="border-accent/25 bg-accentSoft/30 p-3.5 text-center">
+                  <div className="text-[9.5px] font-bold uppercase tracking-[0.1em] text-accent">
+                    Fit score
+                  </div>
+                  <div className="num mt-1 text-[24px] font-extrabold leading-none tracking-tight text-accent">
+                    {liveScore.score}
+                  </div>
+                </Surface>
+                <Surface hover className="p-3.5 text-center">
+                  <div className="text-[9.5px] font-bold uppercase tracking-[0.1em] text-ink-3">
+                    Days on campus
+                  </div>
+                  <div className="num mt-1 text-[24px] font-extrabold leading-none tracking-tight text-ink">
+                    {liveScore.daysUsed}
+                  </div>
+                </Surface>
+                <Surface hover className="p-3.5 text-center">
+                  <div className="text-[9.5px] font-bold uppercase tracking-[0.1em] text-ink-3">
+                    Gap minutes
+                  </div>
+                  <div className="num mt-1 text-[24px] font-extrabold leading-none tracking-tight text-ink">
+                    {liveScore.gaps}
+                  </div>
+                </Surface>
+                <Surface hover className="p-3.5 text-center">
+                  <div className="text-[9.5px] font-bold uppercase tracking-[0.1em] text-ink-3">
+                    Window
+                  </div>
+                  <div className="num mt-1 whitespace-nowrap text-[15px] font-extrabold leading-none tracking-tight text-ink" style={{ paddingTop: 6 }}>
+                    {liveScore.earliest ? fmtTime(liveScore.earliest) : '—'}–
+                    {liveScore.latest ? fmtTime(liveScore.latest) : '—'}
+                  </div>
+                </Surface>
+              </motion.div>
+            )}
+          </AnimatePresence>
 
           {/* solver options */}
-          {solvedOptions.length > 0 && (
-            <div className="no-scrollbar flex items-center gap-2 overflow-x-auto rounded-2xl border border-line bg-surface p-2.5 shadow-card">
-              <span className="flex shrink-0 items-center gap-1.5 pl-1.5 pr-2 text-[11px] font-bold uppercase tracking-[0.08em] text-ink-3">
-                <Trophy className="h-3.5 w-3.5 text-accent" />
-                Options
-              </span>
-              {solvedOptions.map((opt, i) => (
-                <button
-                  key={i}
-                  onClick={() => {
-                    setOptionIndex(i);
-                    applyOption(opt);
-                  }}
-                  className={`shrink-0 rounded-xl border px-3 py-1.5 text-[11.5px] font-bold transition-all active:scale-95 ${
-                    optionIndex === i
-                      ? 'border-accent bg-accentSoft text-accent'
-                      : 'border-line bg-surface2/70 text-ink-2 hover:text-ink'
-                  }`}
-                >
-                  Option {i + 1} · {opt.metrics.score}
-                </button>
-              ))}
-            </div>
-          )}
+          <AnimatePresence>
+            {solvedOptions.length > 0 && (
+              <motion.div
+                initial={{ opacity: 0, y: -6 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -6 }}
+                className="no-scrollbar flex items-center gap-2 overflow-x-auto rounded-2xl border border-line bg-surface p-2.5 shadow-card"
+              >
+                <span className="flex shrink-0 items-center gap-1.5 pl-1.5 pr-2 text-[11px] font-bold uppercase tracking-[0.08em] text-ink-3">
+                  <Trophy className="h-3.5 w-3.5 text-accent" />
+                  Options
+                </span>
+                {solvedOptions.map((opt, i) => (
+                  <motion.button
+                    key={i}
+                    whileTap={{ scale: 0.94 }}
+                    onClick={() => {
+                      setOptionIndex(i);
+                      applyOption(opt);
+                    }}
+                    className={`shrink-0 rounded-xl border px-3 py-1.5 text-[11.5px] font-bold transition-all ${
+                      optionIndex === i
+                        ? 'border-accent bg-accentSoft text-accent'
+                        : 'border-line bg-surface2/70 text-ink-2 hover:text-ink'
+                    }`}
+                  >
+                    Option {i + 1} · {opt.metrics.score}
+                  </motion.button>
+                ))}
+              </motion.div>
+            )}
+          </AnimatePresence>
 
           {/* clash banner */}
-          {activeSections.length > 0 && (
-            <ClashBanner sections={activeSections} />
-          )}
+          {activeSections.length > 0 && <ClashBanner sections={activeSections} />}
 
           {/* timetable */}
           <Timetable sections={activeSections} />
@@ -464,8 +497,9 @@ export function RoutineView() {
           {activeSections.length > 0 && (
             <div className="flex flex-wrap gap-1.5">
               {activeSections.map((s) => (
-                <span
+                <motion.span
                   key={s.id}
+                  whileHover={{ scale: 1.05 }}
                   className="flex items-center gap-1.5 rounded-lg border border-line bg-surface px-2.5 py-1.5 text-[11px] font-semibold text-ink-2 shadow-card"
                 >
                   <span
@@ -473,7 +507,7 @@ export function RoutineView() {
                     style={{ background: `color-mix(in srgb, ${colourFor(s.code)} 70%, transparent)` }}
                   />
                   {s.code} · {s.section}
-                </span>
+                </motion.span>
               ))}
             </div>
           )}
@@ -483,7 +517,6 @@ export function RoutineView() {
   );
 }
 
-/* inline clash banner component */
 function ClashBanner({ sections }) {
   const clashes = [];
   const all = sections.flatMap((s) => (s.meetings || []).map((m) => ({ m, s })));
@@ -498,13 +531,17 @@ function ClashBanner({ sections }) {
   }
   if (!clashes.length) return null;
   return (
-    <div className="flex items-start gap-2.5 rounded-2xl border border-bad/30 bg-bad/[0.08] p-4">
+    <motion.div
+      initial={{ opacity: 0, scale: 0.98 }}
+      animate={{ opacity: 1, scale: 1 }}
+      className="flex items-start gap-2.5 rounded-2xl border border-bad/30 bg-bad/[0.08] p-4"
+    >
       <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-bad" strokeWidth={2.2} />
       <p className="text-xs leading-relaxed text-bad">
         <b>{clashes.length} section clash(es):</b> {clashes.join(' · ')} — unlock a section or run
         Auto-generate for a clash-free combination.
       </p>
-    </div>
+    </motion.div>
   );
 }
 

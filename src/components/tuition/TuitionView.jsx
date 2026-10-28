@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from 'react';
+import { motion } from 'motion/react';
 import {
   Receipt,
   Printer,
@@ -9,6 +10,7 @@ import {
   Info,
 } from 'lucide-react';
 import Button from '../ui/Button';
+import Surface from '../ui/Surface';
 import Select from '../ui/Select';
 import { calculateTuitionFees, estimateDegreeCost, SCHOLARSHIP_TIERS } from '../../utils/tuitionUtils';
 import { DEPT_PROFILES, formatBDT, getEffectiveCourses, calculateAcademicMetrics } from '../../utils/cgpaUtils';
@@ -16,7 +18,7 @@ import { useToast } from '../../context/ToastContext';
 
 const inputCls =
   'w-full rounded-xl border border-line bg-surface2/70 px-3.5 py-2.5 text-[13px] text-ink placeholder-ink-3 transition-colors hover:border-line-strong focus:outline-none focus:ring-2 focus:ring-accent/40';
-const labelCls = 'mb-1.5 block text-[11px] font-semibold uppercase tracking-[0.07em] text-ink-3';
+const labelCls = 'mb-1.5 block text-[11px] font-semibold uppercase tracking-[0.08em] text-ink-3';
 
 function Leader({ label, value, strong = false, accent = false, sub }) {
   return (
@@ -101,7 +103,7 @@ export function TuitionView({ courses = [], settings = {}, defaultDept = 'regula
     setRetakeCredits(runningRetakes);
     showToast(
       runningCredits
-        ? `Synced ${runningCredits} running credits from your transcript`
+        ? `Synced ${runningCredits} running credits from transcript`
         : 'No running courses found in transcript',
       runningCredits ? 'success' : 'info'
     );
@@ -110,11 +112,11 @@ export function TuitionView({ courses = [], settings = {}, defaultDept = 'regula
   const print = () => window.print();
 
   return (
-    <div className="view-in flex flex-col gap-5">
+    <div className="flex flex-col gap-5">
       {/* header */}
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <div className="text-[11px] font-semibold uppercase tracking-[0.12em] text-ink-3">
+          <div className="text-[11px] font-semibold uppercase tracking-[0.14em] text-accent">
             {deptProfile.name} · official waiver rules
           </div>
           <h1 className="mt-1 text-[26px] font-extrabold tracking-tight text-ink sm:text-3xl">
@@ -135,7 +137,7 @@ export function TuitionView({ courses = [], settings = {}, defaultDept = 'regula
         {/* ============ LEFT: inputs + installments ============ */}
         <div className="flex flex-col gap-4 lg:col-span-7">
           {/* registration card */}
-          <div className="rounded-2xl border border-line bg-surface p-5 shadow-card">
+          <Surface className="p-5">
             <h3 className="text-[15px] font-bold tracking-tight text-ink">Registration</h3>
             <div className="mt-4 grid grid-cols-2 gap-3">
               <div className="col-span-2 sm:col-span-1">
@@ -143,7 +145,7 @@ export function TuitionView({ courses = [], settings = {}, defaultDept = 'regula
                 <Select value={dept} onChange={(e) => setDept(e.target.value)}>
                   {Object.entries(DEPT_PROFILES).map(([k, v]) => (
                     <option key={k} value={k}>
-                      {v.label}
+                      {v.name}
                     </option>
                   ))}
                 </Select>
@@ -217,18 +219,22 @@ export function TuitionView({ courses = [], settings = {}, defaultDept = 'regula
             </div>
 
             {fees.underloadAlert && (
-              <div className="mt-4 flex items-start gap-2.5 rounded-xl border border-warn/25 bg-warn/10 p-3.5">
+              <motion.div
+                initial={{ opacity: 0, scale: 0.98 }}
+                animate={{ opacity: 1, scale: 1 }}
+                className="mt-4 flex items-start gap-2.5 rounded-xl border border-warn/25 bg-warn/10 p-3.5"
+              >
                 <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-warn" strokeWidth={2.2} />
                 <p className="text-xs leading-relaxed text-warn">
                   Under {deptProfile.minCreditsForScholarship} credits, merit waivers are forfeited
                   this term under the minimum-load rule.
                 </p>
-              </div>
+              </motion.div>
             )}
-          </div>
+          </Surface>
 
           {/* installments timeline */}
-          <div className="rounded-2xl border border-line bg-surface p-5 shadow-card">
+          <Surface className="p-5">
             <div className="flex items-center justify-between">
               <h3 className="text-[15px] font-bold tracking-tight text-ink">Installments</h3>
               <span className="text-[11px] font-medium text-ink-3">
@@ -238,7 +244,6 @@ export function TuitionView({ courses = [], settings = {}, defaultDept = 'regula
             <ol className="relative mt-4 space-y-0">
               {fees.installments.map((inst, i) => (
                 <li key={inst.name} className="relative flex gap-4 pb-6 last:pb-0">
-                  {/* connector */}
                   {i < fees.installments.length - 1 && (
                     <span className="absolute left-[7px] top-5 h-full w-px bg-line" />
                   )}
@@ -264,10 +269,10 @@ export function TuitionView({ courses = [], settings = {}, defaultDept = 'regula
                 </li>
               ))}
             </ol>
-          </div>
+          </Surface>
 
           {/* degree estimator */}
-          <div className="rounded-2xl border border-line bg-surface p-5 shadow-card">
+          <Surface className="p-5">
             <div className="flex items-center gap-2">
               <GraduationCap className="h-4 w-4 text-accent" strokeWidth={2.2} />
               <h3 className="text-[15px] font-bold tracking-tight text-ink">Full degree estimate</h3>
@@ -307,15 +312,17 @@ export function TuitionView({ courses = [], settings = {}, defaultDept = 'regula
                 </span>
               </div>
               <div className="h-2 overflow-hidden rounded-full bg-surface2">
-                <div
-                  className="h-full rounded-full bg-gradient-to-r from-accent to-accent2 transition-all duration-700"
-                  style={{
+                <motion.div
+                  className="h-full rounded-full bg-gradient-to-r from-accent to-accent2"
+                  initial={{ width: 0 }}
+                  animate={{
                     width: `${
                       settings.programCredits
                         ? Math.min(100, (completedCredits / settings.programCredits) * 100)
                         : 0
                     }%`,
                   }}
+                  transition={{ type: 'spring', stiffness: 200, damping: 25 }}
                 />
               </div>
             </div>
@@ -346,18 +353,22 @@ export function TuitionView({ courses = [], settings = {}, defaultDept = 'regula
                 </div>
               </div>
             </div>
-          </div>
+          </Surface>
         </div>
 
         {/* ============ RIGHT: receipt ============ */}
         <div className="lg:col-span-5">
           <div className="lg:sticky lg:top-6">
-            <div className="overflow-hidden rounded-2xl border border-line bg-surface shadow-card">
+            <Surface className="overflow-hidden">
               {/* receipt head */}
               <div className="border-b border-dashed border-line-strong px-5 pb-4 pt-5 text-center">
-                <div className="mx-auto w-fit rounded-xl bg-gradient-to-br from-accent to-accent2 p-2.5 shadow-[0_4px_16px_-4px_var(--accent)]">
+                <motion.div
+                  whileHover={{ scale: 1.08, rotate: 3 }}
+                  whileTap={{ scale: 0.95 }}
+                  className="mx-auto w-fit rounded-xl bg-gradient-to-br from-accent to-accent2 p-2.5 shadow-[0_4px_16px_-4px_var(--accent)]"
+                >
                   <Receipt className="h-5 w-5 text-white" strokeWidth={2.2} />
-                </div>
+                </motion.div>
                 <div className="mt-2.5 text-[10px] font-bold uppercase tracking-[0.18em] text-ink-3">
                   Fee statement
                 </div>
@@ -402,9 +413,15 @@ export function TuitionView({ courses = [], settings = {}, defaultDept = 'regula
                 <div className="text-[10px] font-bold uppercase tracking-[0.14em] text-ink-3">
                   Total payable
                 </div>
-                <div className="num mt-1 text-[34px] font-extrabold leading-none tracking-tight text-ink">
+                <motion.div
+                  key={fees.totalPayable}
+                  initial={{ scale: 0.96 }}
+                  animate={{ scale: 1 }}
+                  transition={{ type: 'spring', stiffness: 400, damping: 20 }}
+                  className="num mt-1 text-[34px] font-extrabold leading-none tracking-tight text-ink"
+                >
                   ৳{fees.totalPayable.toLocaleString()}
-                </div>
+                </motion.div>
                 <div className="num mt-2 text-[11px] font-medium text-ink-3">
                   ≈ ৳{Math.round(fees.totalPayable / Math.max(1, fees.installments.length)).toLocaleString()} / installment
                   {fees.totalDiscount > 0 && (
@@ -436,7 +453,7 @@ export function TuitionView({ courses = [], settings = {}, defaultDept = 'regula
                   </div>
                 </div>
               </div>
-            </div>
+            </Surface>
 
             <p className="mt-3 flex items-start gap-2 px-1 text-[10.5px] leading-relaxed text-ink-3">
               <BookMarked className="mt-0.5 h-3 w-3 shrink-0" />
