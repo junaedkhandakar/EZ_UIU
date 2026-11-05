@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useRef } from 'react';
+import React, { useState, useMemo, useRef, useEffect } from 'react';
 import confetti from 'canvas-confetti';
 import { motion, AnimatePresence } from 'motion/react';
 import {
@@ -90,13 +90,27 @@ function GaugeRing({ cgpa, probation }) {
   );
 }
 
-export function CgpaView({ courses, setCourses, settings, setSettings }) {
+export function CgpaView({
+  courses,
+  setCourses,
+  settings,
+  setSettings,
+  forceOpenUcam = false,
+  onResetUcamTrigger,
+}) {
   const { showToast } = useToast();
   const [tab, setTab] = useState('overview');
   const [addOpen, setAddOpen] = useState(false);
   const [ucamOpen, setUcamOpen] = useState(false);
   const [runningOverrides, setRunningOverrides] = useState({});
   const fileRef = useRef(null);
+
+  useEffect(() => {
+    if (forceOpenUcam) {
+      setUcamOpen(true);
+      onResetUcamTrigger?.();
+    }
+  }, [forceOpenUcam, onResetUcamTrigger]);
 
   const deptConfig = DEPT_PROFILES[settings.dept] || DEPT_PROFILES.regular;
   const programCredits = settings.programCredits || deptConfig.defaultCredits;

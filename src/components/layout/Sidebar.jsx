@@ -1,6 +1,16 @@
 import React from 'react';
 import { motion } from 'motion/react';
-import { GraduationCap, Gauge, Receipt, CalendarRange, ShieldCheck, Sun, Moon } from 'lucide-react';
+import {
+  GraduationCap,
+  Gauge,
+  Receipt,
+  CalendarRange,
+  ShieldCheck,
+  Sun,
+  Moon,
+  Search,
+  Command,
+} from 'lucide-react';
 import { useTheme } from '../../context/ThemeContext';
 
 export const NAV = [
@@ -9,13 +19,13 @@ export const NAV = [
   { id: 'routine', label: 'Routine', icon: CalendarRange, desc: 'Class schedule' },
 ];
 
-export default function Sidebar({ active, onChange }) {
+export default function Sidebar({ active, onChange, onOpenCommandPalette }) {
   const { theme, toggle } = useTheme();
 
   return (
     <aside className="fixed inset-y-0 left-0 z-40 hidden w-[228px] flex-col border-r border-line bg-base/80 backdrop-blur-2xl lg:flex">
       {/* Brand */}
-      <div className="flex items-center gap-3 px-5 pb-6 pt-6">
+      <div className="flex items-center gap-3 px-5 pb-5 pt-6">
         <motion.div
           whileHover={{ scale: 1.05, rotate: -4 }}
           whileTap={{ scale: 0.95 }}
@@ -29,6 +39,22 @@ export default function Sidebar({ active, onChange }) {
             Academic Suite
           </div>
         </div>
+      </div>
+
+      {/* Quick Search Button */}
+      <div className="px-3 pb-3">
+        <motion.button
+          whileHover={{ scale: 1.01 }}
+          whileTap={{ scale: 0.97 }}
+          onClick={onOpenCommandPalette}
+          className="flex w-full items-center justify-between rounded-xl border border-line bg-surface2/60 px-3 py-2 text-xs font-medium text-ink-3 transition-colors hover:border-line-strong hover:bg-surface2 hover:text-ink shadow-sm"
+        >
+          <div className="flex items-center gap-2">
+            <Search className="h-3.5 w-3.5 text-accent" />
+            <span>Search anything…</span>
+          </div>
+          <span className="kbd-shortcut font-bold">⌘K</span>
+        </motion.button>
       </div>
 
       {/* Nav */}

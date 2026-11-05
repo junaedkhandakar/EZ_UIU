@@ -1,13 +1,14 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
 import { ThemeProvider } from './context/ThemeContext';
-import { ToastProvider } from './context/ToastContext';
+import { ToastProvider, useToast } from './context/ToastContext';
 import Sidebar from './components/layout/Sidebar';
 import { MobileTopBar, MobileTabBar } from './components/layout/MobileBar';
 import CgpaView from './components/cgpa/CgpaView';
 import TuitionView from './components/tuition/TuitionView';
 import RoutineView from './components/routine/RoutineView';
-import { DEMO_TRANSCRIPT_COURSES } from './utils/cgpaUtils';
+import CommandPalette from './components/ui/CommandPalette';
+import { DEMO_TRANSCRIPT_COURSES, exportCSV } from './utils/cgpaUtils';
 
 const STORAGE_COURSES = 'ez_uiu_courses';
 const STORAGE_SETTINGS = 'ez_uiu_settings';
@@ -42,6 +43,8 @@ function Aurora() {
 
 export function AppContent() {
   const [activeTab, setActiveTab] = useState('cgpa');
+  const [commandPaletteOpen, setCommandPaletteOpen] = useState(false);
+  const [ucamModalTrigger, setUcamModalTrigger] = useState(false);
 
   const [courses, setCourses] = useState(() => {
     try {
@@ -76,11 +79,39 @@ export function AppContent() {
     } catch {}
   }, [settings]);
 
+  // Global Keyboard Shortcuts (Cmd+K / Ctrl+K and 1, 2, 3 tab navigation)
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if ((e.metaKey || e.ctrlKey) && e.key && e.key.toLowerCase() === 'k') {
+        e.preventDefault();
+        setCommandPaletteOpen((prev) => !prev);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
+
+  const handleAddCourse = useCallback((newCourse) => {
+    setCourses((prev) => [newCourse, ...prev]);
+  }, []);
+
+  const handleLoadDemo = useCallback(() => {
+    setCourses(DEMO_TRANSCRIPT_COURSES);
+  }, []);
+
+  const handleExportCSV = useCallback(() => {
+    exportCSV(courses);
+  }, [courses]);
+
   return (
-    <div className="min-h-dvh bg-base text-ink antialiased selection:bg-accent selection:text-white">
+    <div className="min-h-dvh bg-base text-ink antialiased">
       <Aurora />
-      <Sidebar active={activeTab} onChange={setActiveTab} />
-      <MobileTopBar />
+      <Sidebar
+        active={activeTab}
+        onChange={setActiveTab}
+        onOpenCommandPalette={() => setCommandPaletteOpen(true)}
+      />
+      <MobileTopBar onOpenCommandPalette={() => setCommandPaletteOpen(true)} />
 
       <main className="mx-auto w-full max-w-[1180px] px-4 pb-28 pt-5 sm:px-6 lg:pb-10 lg:pl-[calc(228px+2rem)] lg:pr-8 lg:pt-8">
         <AnimatePresence mode="wait" initial={false}>
@@ -92,7 +123,14 @@ export function AppContent() {
             transition={{ type: 'spring', stiffness: 450, damping: 32 }}
           >
             {activeTab === 'cgpa' && (
-              <CgpaView courses={courses} setCourses={setCourses} settings={settings} setSettings={setSettings} />
+              <CgpaView
+                courses={courses}
+                setCourses={setCourses}
+                settings={settings}
+                setSettings={setSettings}
+                forceOpenUcam={ucamModalTrigger}
+                onResetUcamTrigger={() => setUcamModalTrigger(false)}
+              />
             )}
             {activeTab === 'tuition' && (
               <TuitionView courses={courses} settings={settings} defaultDept={settings.dept} />
@@ -103,6 +141,20 @@ export function AppContent() {
       </main>
 
       <MobileTabBar active={activeTab} onChange={setActiveTab} />
+
+      <CommandPalette
+        isOpen={commandPaletteOpen}
+        onClose={() => setCommandPaletteOpen(false)}
+        activeTab={activeTab}
+        setActiveTab={setActiveTab}
+        onAddCourse={handleAddCourse}
+        onOpenUcam={() => {
+          setActiveTab('cgpa');
+          setUcamModalTrigger(true);
+        }}
+        onLoadDemo={handleLoadDemo}
+        onExportCSV={handleExportCSV}
+      />
     </div>
   );
 }

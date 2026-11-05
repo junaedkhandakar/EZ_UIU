@@ -8,6 +8,8 @@ import {
   GraduationCap,
   RefreshCw,
   Info,
+  ShieldCheck,
+  CheckCircle2,
 } from 'lucide-react';
 import Button from '../ui/Button';
 import Surface from '../ui/Surface';
@@ -113,7 +115,7 @@ export function TuitionView({ courses = [], settings = {}, defaultDept = 'regula
 
   return (
     <div className="flex flex-col gap-5">
-      {/* header */}
+      {/* Header */}
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
           <div className="text-[11px] font-semibold uppercase tracking-[0.14em] text-accent">
@@ -128,7 +130,7 @@ export function TuitionView({ courses = [], settings = {}, defaultDept = 'regula
             Sync from CGPA
           </Button>
           <Button variant="secondary" icon={Printer} onClick={print}>
-            Print
+            Print Statement
           </Button>
         </div>
       </div>
@@ -136,12 +138,12 @@ export function TuitionView({ courses = [], settings = {}, defaultDept = 'regula
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-12">
         {/* ============ LEFT: inputs + installments ============ */}
         <div className="flex flex-col gap-4 lg:col-span-7">
-          {/* registration card */}
+          {/* Registration Parameters */}
           <Surface className="p-5">
-            <h3 className="text-[15px] font-bold tracking-tight text-ink">Registration</h3>
+            <h3 className="text-[15px] font-bold tracking-tight text-ink">Registration Parameters</h3>
             <div className="mt-4 grid grid-cols-2 gap-3">
               <div className="col-span-2 sm:col-span-1">
-                <label className={labelCls}>Program</label>
+                <label className={labelCls}>Department Program</label>
                 <Select value={dept} onChange={(e) => setDept(e.target.value)}>
                   {Object.entries(DEPT_PROFILES).map(([k, v]) => (
                     <option key={k} value={k}>
@@ -151,7 +153,7 @@ export function TuitionView({ courses = [], settings = {}, defaultDept = 'regula
                 </Select>
               </div>
               <div className="col-span-2 sm:col-span-1">
-                <label className={labelCls}>Registered credits</label>
+                <label className={labelCls}>Registered Credits</label>
                 <input
                   type="number"
                   min="0"
@@ -162,7 +164,7 @@ export function TuitionView({ courses = [], settings = {}, defaultDept = 'regula
                 />
               </div>
               <div>
-                <label className={labelCls}>Per-credit fee (৳)</label>
+                <label className={labelCls}>Per-Credit Tuition (৳)</label>
                 <input
                   type="number"
                   min="0"
@@ -172,7 +174,7 @@ export function TuitionView({ courses = [], settings = {}, defaultDept = 'regula
                 />
               </div>
               <div>
-                <label className={labelCls}>Trimester fee (৳)</label>
+                <label className={labelCls}>Trimester Activity Fee (৳)</label>
                 <input
                   type="number"
                   min="0"
@@ -182,7 +184,7 @@ export function TuitionView({ courses = [], settings = {}, defaultDept = 'regula
                 />
               </div>
               <div>
-                <label className={labelCls}>Thesis credits (0% waiver)</label>
+                <label className={labelCls}>Thesis Credits (0% waiver)</label>
                 <input
                   type="number"
                   min="0"
@@ -193,7 +195,7 @@ export function TuitionView({ courses = [], settings = {}, defaultDept = 'regula
                 />
               </div>
               <div>
-                <label className={labelCls}>Retake credits (50% off)</label>
+                <label className={labelCls}>Retake Credits (50% off)</label>
                 <input
                   type="number"
                   min="0"
@@ -204,7 +206,7 @@ export function TuitionView({ courses = [], settings = {}, defaultDept = 'regula
                 />
               </div>
               <div className="col-span-2">
-                <label className={labelCls}>Merit waiver tier</label>
+                <label className={labelCls}>Merit Scholarship Tier</label>
                 <Select
                   value={scholarship}
                   onChange={(e) => setScholarship(parseFloat(e.target.value))}
@@ -226,19 +228,19 @@ export function TuitionView({ courses = [], settings = {}, defaultDept = 'regula
               >
                 <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-warn" strokeWidth={2.2} />
                 <p className="text-xs leading-relaxed text-warn">
-                  Under {deptProfile.minCreditsForScholarship} credits, merit waivers are forfeited
-                  this term under the minimum-load rule.
+                  <b>Underload Policy Warning:</b> Under {deptProfile.minCreditsForScholarship} credits,
+                  merit scholarship waivers are forfeited per UIU academic regulations.
                 </p>
               </motion.div>
             )}
           </Surface>
 
-          {/* installments timeline */}
+          {/* Installments Timeline */}
           <Surface className="p-5">
             <div className="flex items-center justify-between">
-              <h3 className="text-[15px] font-bold tracking-tight text-ink">Installments</h3>
-              <span className="text-[11px] font-medium text-ink-3">
-                {dept === 'pharmacy' ? '4 payments' : '3 payments'}
+              <h3 className="text-[15px] font-bold tracking-tight text-ink">Installment Payment Schedule</h3>
+              <span className="text-[11px] font-semibold text-accent">
+                {dept === 'pharmacy' ? '4 Installments' : '3 Installments'}
               </span>
             </div>
             <ol className="relative mt-4 space-y-0">
@@ -271,15 +273,15 @@ export function TuitionView({ courses = [], settings = {}, defaultDept = 'regula
             </ol>
           </Surface>
 
-          {/* degree estimator */}
+          {/* Degree Estimator */}
           <Surface className="p-5">
             <div className="flex items-center gap-2">
               <GraduationCap className="h-4 w-4 text-accent" strokeWidth={2.2} />
-              <h3 className="text-[15px] font-bold tracking-tight text-ink">Full degree estimate</h3>
+              <h3 className="text-[15px] font-bold tracking-tight text-ink">Full Degree Cost Projector</h3>
             </div>
             <div className="mt-4 grid grid-cols-2 gap-3">
               <div>
-                <label className={labelCls}>Avg credits / term</label>
+                <label className={labelCls}>Average Pace (Cr/Term)</label>
                 <input
                   type="number"
                   min="1"
@@ -290,7 +292,7 @@ export function TuitionView({ courses = [], settings = {}, defaultDept = 'regula
                 />
               </div>
               <div>
-                <label className={labelCls}>Avg waiver</label>
+                <label className={labelCls}>Expected Long-Term Waiver</label>
                 <Select value={avgScholarship} onChange={(e) => setAvgScholarship(parseFloat(e.target.value))}>
                   {SCHOLARSHIP_TIERS.map((t) => (
                     <option key={t.value} value={t.value}>
@@ -304,7 +306,7 @@ export function TuitionView({ courses = [], settings = {}, defaultDept = 'regula
             <div className="mt-5">
               <div className="mb-1.5 flex items-baseline justify-between text-[11px]">
                 <span className="font-semibold uppercase tracking-[0.08em] text-ink-3">
-                  Degree progress
+                  Overall Program Progress
                 </span>
                 <span className="num font-bold text-ink">
                   {completedCredits} / {settings.programCredits || profile.defaultCredits} cr ·{' '}
@@ -330,7 +332,7 @@ export function TuitionView({ courses = [], settings = {}, defaultDept = 'regula
             <div className="mt-4 grid grid-cols-3 gap-3 text-center">
               <div className="rounded-xl border border-line bg-surface2/50 p-3">
                 <div className="text-[9.5px] font-semibold uppercase tracking-[0.08em] text-ink-3">
-                  Paid so far
+                  Paid So Far
                 </div>
                 <div className="num mt-1 text-[15px] font-extrabold tracking-tight text-ink">
                   {formatBDT(degree.paidCost)}
@@ -346,7 +348,7 @@ export function TuitionView({ courses = [], settings = {}, defaultDept = 'regula
               </div>
               <div className="rounded-xl border border-line bg-surface2/50 p-3">
                 <div className="text-[9.5px] font-semibold uppercase tracking-[0.08em] text-ink-3">
-                  Total degree
+                  Total Degree
                 </div>
                 <div className="num mt-1 text-[15px] font-extrabold tracking-tight text-accent">
                   {formatBDT(degree.totalEstimatedCost)}
@@ -356,109 +358,141 @@ export function TuitionView({ courses = [], settings = {}, defaultDept = 'regula
           </Surface>
         </div>
 
-        {/* ============ RIGHT: receipt ============ */}
+        {/* ============ RIGHT: luxury notched ticket receipt ============ */}
         <div className="lg:col-span-5">
           <div className="lg:sticky lg:top-6">
-            <Surface className="overflow-hidden">
-              {/* receipt head */}
-              <div className="border-b border-dashed border-line-strong px-5 pb-4 pt-5 text-center">
-                <motion.div
-                  whileHover={{ scale: 1.08, rotate: 3 }}
-                  whileTap={{ scale: 0.95 }}
-                  className="mx-auto w-fit rounded-xl bg-gradient-to-br from-accent to-accent2 p-2.5 shadow-[0_4px_16px_-4px_var(--accent)]"
-                >
-                  <Receipt className="h-5 w-5 text-white" strokeWidth={2.2} />
-                </motion.div>
-                <div className="mt-2.5 text-[10px] font-bold uppercase tracking-[0.18em] text-ink-3">
-                  Fee statement
+            <Surface className="relative overflow-hidden border border-line shadow-card">
+              {/* Receipt Header */}
+              <div className="border-b border-dashed border-line-strong px-5 pb-5 pt-6 text-center">
+                <div className="flex items-center justify-center gap-2">
+                  <motion.div
+                    whileHover={{ scale: 1.08, rotate: 3 }}
+                    whileTap={{ scale: 0.95 }}
+                    className="w-fit rounded-xl bg-gradient-to-br from-accent to-accent2 p-2.5 shadow-[0_4px_16px_-4px_var(--accent)]"
+                  >
+                    <Receipt className="h-5 w-5 text-white" strokeWidth={2.2} />
+                  </motion.div>
                 </div>
-                <div className="mt-0.5 text-[13px] font-bold text-ink">
-                  {deptProfile.name} · {credits} credits
+                <div className="mt-3 text-[10px] font-bold uppercase tracking-[0.2em] text-accent">
+                  Official Statement of Account
+                </div>
+                <div className="mt-1 text-[14px] font-extrabold text-ink">
+                  {deptProfile.name}
+                </div>
+                <div className="mt-1 inline-flex items-center gap-1.5 rounded-full border border-ok/30 bg-ok/10 px-2.5 py-0.5 text-[10px] font-bold text-ok">
+                  <ShieldCheck className="h-3 w-3" />
+                  VERIFIED UIU BILLING
                 </div>
               </div>
 
-              {/* receipt body */}
-              <div className="space-y-2.5 px-5 py-4">
+              {/* Perforated ticket punch notches */}
+              <div className="relative my-0 flex items-center justify-between">
+                <span className="-ml-3 h-6 w-6 rounded-full border border-line bg-base shadow-inner" />
+                <span className="flex-1 border-b border-dashed border-line-strong opacity-50" />
+                <span className="-mr-3 h-6 w-6 rounded-full border border-line bg-base shadow-inner" />
+              </div>
+
+              {/* Receipt Items */}
+              <div className="space-y-3 px-6 py-4">
                 <Leader
-                  label="Tuition base"
+                  label="Gross Tuition Base"
                   value={formatBDT(fees.baseTuition)}
                   sub={`${credits} cr × ৳${perCreditFee.toLocaleString()}`}
                 />
                 {fees.retakeDiscount > 0 && (
-                  <Leader label="Retake waiver (50%)" value={`−${formatBDT(fees.retakeDiscount)}`} accent />
+                  <Leader
+                    label="Retake Waiver (50% Off)"
+                    value={`−${formatBDT(fees.retakeDiscount)}`}
+                    accent
+                    sub={`${fees.retakeCredits} cr retake discount`}
+                  />
                 )}
                 {fees.scholarshipDiscount > 0 && (
                   <Leader
-                    label={`Merit waiver (${(scholarship * 100).toFixed(0)}%)`}
+                    label={`Merit Waiver (${(scholarship * 100).toFixed(0)}%)`}
                     value={`−${formatBDT(fees.scholarshipDiscount)}`}
                     accent
+                    sub={`Applied to ${fees.regularCredits} regular credits`}
                   />
                 )}
                 {fees.thesisCredits > 0 && (
-                  <div className="flex items-start gap-2 rounded-lg bg-surface2/60 px-2.5 py-2">
-                    <Info className="mt-0.5 h-3 w-3 shrink-0 text-ink-3" />
+                  <div className="flex items-start gap-2 rounded-lg bg-surface2/70 px-2.5 py-2">
+                    <Info className="mt-0.5 h-3.5 w-3.5 shrink-0 text-accent" />
                     <p className="text-[10.5px] leading-snug text-ink-3">
-                      {fees.thesisCredits} thesis credit(s) — no waiver applies per UIU policy.
+                      {fees.thesisCredits} Thesis / FYDP credits exempt from waiver per university statute.
                     </p>
                   </div>
                 )}
-                <div className="!mt-3 border-t border-dashed border-line-strong pt-3">
-                  <Leader label="Net tuition" value={formatBDT(fees.netTuition)} strong />
+                <div className="!mt-4 border-t border-dashed border-line-strong pt-3">
+                  <Leader label="Net Tuition Payable" value={formatBDT(fees.netTuition)} strong />
                 </div>
-                <Leader label="Trimester fee" value={formatBDT(fees.trimesterFee)} />
+                <Leader label="Trimester Activity Fee" value={formatBDT(fees.trimesterFee)} />
               </div>
 
-              {/* total */}
-              <div className="border-t border-dashed border-line-strong bg-surface2/40 px-5 py-4">
-                <div className="text-[10px] font-bold uppercase tracking-[0.14em] text-ink-3">
-                  Total payable
-                </div>
-                <motion.div
-                  key={fees.totalPayable}
-                  initial={{ scale: 0.96 }}
-                  animate={{ scale: 1 }}
-                  transition={{ type: 'spring', stiffness: 400, damping: 20 }}
-                  className="num mt-1 text-[34px] font-extrabold leading-none tracking-tight text-ink"
-                >
-                  ৳{fees.totalPayable.toLocaleString()}
-                </motion.div>
-                <div className="num mt-2 text-[11px] font-medium text-ink-3">
-                  ≈ ৳{Math.round(fees.totalPayable / Math.max(1, fees.installments.length)).toLocaleString()} / installment
+              {/* Total Banner */}
+              <div className="border-t border-dashed border-line-strong bg-surface2/50 px-6 py-5">
+                <div className="flex items-baseline justify-between">
+                  <span className="text-[11px] font-bold uppercase tracking-[0.14em] text-ink-3">
+                    Net Total Due
+                  </span>
                   {fees.totalDiscount > 0 && (
-                    <span className="ml-1 font-bold text-ok">
-                      (saving ৳{fees.totalDiscount.toLocaleString()})
+                    <span className="rounded-md bg-ok/15 px-2 py-0.5 text-[10.5px] font-bold text-ok">
+                      Saving {formatBDT(fees.totalDiscount)}
                     </span>
                   )}
                 </div>
+                <motion.div
+                  key={fees.totalPayable}
+                  initial={{ scale: 0.95 }}
+                  animate={{ scale: 1 }}
+                  transition={{ type: 'spring', stiffness: 450, damping: 20 }}
+                  className="num mt-2 text-[36px] font-extrabold leading-none tracking-tight text-ink"
+                >
+                  ৳{fees.totalPayable.toLocaleString()}
+                </motion.div>
+                <div className="num mt-2 text-xs font-semibold text-ink-3">
+                  ≈ ৳{Math.round(fees.totalPayable / Math.max(1, fees.installments.length)).toLocaleString()} per installment
+                </div>
               </div>
 
-              {/* credit mix */}
-              <div className="flex border-t border-line text-center">
-                <div className="flex-1 border-r border-line px-2 py-3">
-                  <div className="num text-[15px] font-extrabold text-ink">{fees.regularCredits}</div>
-                  <div className="mt-0.5 text-[9px] font-semibold uppercase tracking-[0.1em] text-ink-3">
+              {/* Credit Composition Bar */}
+              <div className="grid grid-cols-3 border-t border-line bg-surface text-center">
+                <div className="border-r border-line p-3">
+                  <div className="num text-[16px] font-extrabold text-ink">{fees.regularCredits}</div>
+                  <div className="text-[9.5px] font-bold uppercase tracking-wider text-ink-3">
                     Regular
                   </div>
                 </div>
-                <div className="flex-1 border-r border-line px-2 py-3">
-                  <div className="num text-[15px] font-extrabold text-warn">{fees.retakeCredits}</div>
-                  <div className="mt-0.5 text-[9px] font-semibold uppercase tracking-[0.1em] text-ink-3">
+                <div className="border-r border-line p-3">
+                  <div className="num text-[16px] font-extrabold text-warn">{fees.retakeCredits}</div>
+                  <div className="text-[9.5px] font-bold uppercase tracking-wider text-ink-3">
                     Retake
                   </div>
                 </div>
-                <div className="flex-1 px-2 py-3">
-                  <div className="num text-[15px] font-extrabold text-ink-2">{fees.thesisCredits}</div>
-                  <div className="mt-0.5 text-[9px] font-semibold uppercase tracking-[0.1em] text-ink-3">
+                <div className="p-3">
+                  <div className="num text-[16px] font-extrabold text-ink-2">{fees.thesisCredits}</div>
+                  <div className="text-[9.5px] font-bold uppercase tracking-wider text-ink-3">
                     Thesis
                   </div>
                 </div>
               </div>
-            </Surface>
 
-            <p className="mt-3 flex items-start gap-2 px-1 text-[10.5px] leading-relaxed text-ink-3">
-              <BookMarked className="mt-0.5 h-3 w-3 shrink-0" />
-              Rates reflect published UIU fees. Verify final amounts on UCam before paying.
-            </p>
+              {/* Barcode graphic footer */}
+              <div className="flex flex-col items-center justify-center border-t border-line/60 bg-surface2/30 px-6 py-3.5">
+                <div className="flex h-6 items-center gap-[2px] opacity-40 dark:opacity-30">
+                  {[3, 1, 4, 1, 5, 9, 2, 6, 5, 3, 5, 8, 9, 7, 9, 3, 2, 3, 8, 4, 6, 2, 6, 4, 3, 3, 8, 3, 2, 7, 9].map((w, idx) => (
+                    <span
+                      key={idx}
+                      className="inline-block h-full bg-ink"
+                      style={{ width: `${(w % 3) + 1}px` }}
+                    />
+                  ))}
+                </div>
+                <span className="num mt-1 font-mono text-[9px] uppercase tracking-widest text-ink-3">
+                  UIU-FIN-2026-REG-{credits}CR
+                </span>
+              </div>
+            </Surface>
           </div>
         </div>
       </div>

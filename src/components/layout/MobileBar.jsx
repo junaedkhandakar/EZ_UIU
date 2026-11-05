@@ -1,10 +1,10 @@
 import React from 'react';
 import { motion } from 'motion/react';
-import { GraduationCap, Sun, Moon, Gauge, Receipt, CalendarRange } from 'lucide-react';
+import { GraduationCap, Sun, Moon, Gauge, Receipt, CalendarRange, Search } from 'lucide-react';
 import { useTheme } from '../../context/ThemeContext';
 import { NAV } from './Sidebar';
 
-export function MobileTopBar() {
+export function MobileTopBar({ onOpenCommandPalette }) {
   const { theme, toggle } = useTheme();
   return (
     <header className="glass sticky top-0 z-40 flex items-center justify-between border-b border-line px-4 py-3 lg:hidden">
@@ -23,21 +23,31 @@ export function MobileTopBar() {
           </div>
         </div>
       </div>
-      <motion.button
-        whileTap={{ scale: 0.92 }}
-        onClick={toggle}
-        className="rounded-xl border border-line bg-surface/70 p-2 text-ink-2 transition-colors hover:text-ink"
-        aria-label="Toggle theme"
-      >
-        <motion.div
-          key={theme}
-          initial={{ rotate: -90, opacity: 0 }}
-          animate={{ rotate: 0, opacity: 1 }}
-          transition={{ type: 'spring', stiffness: 400, damping: 20 }}
+      <div className="flex items-center gap-1.5">
+        <motion.button
+          whileTap={{ scale: 0.92 }}
+          onClick={onOpenCommandPalette}
+          className="rounded-xl border border-line bg-surface/70 p-2 text-ink-2 transition-colors hover:text-ink"
+          aria-label="Open Command Palette"
         >
-          {theme === 'dark' ? <Sun className="h-4 w-4 text-warn" /> : <Moon className="h-4 w-4 text-accent" />}
-        </motion.div>
-      </motion.button>
+          <Search className="h-4 w-4 text-accent" />
+        </motion.button>
+        <motion.button
+          whileTap={{ scale: 0.92 }}
+          onClick={toggle}
+          className="rounded-xl border border-line bg-surface/70 p-2 text-ink-2 transition-colors hover:text-ink"
+          aria-label="Toggle theme"
+        >
+          <motion.div
+            key={theme}
+            initial={{ rotate: -90, opacity: 0 }}
+            animate={{ rotate: 0, opacity: 1 }}
+            transition={{ type: 'spring', stiffness: 400, damping: 20 }}
+          >
+            {theme === 'dark' ? <Sun className="h-4 w-4 text-warn" /> : <Moon className="h-4 w-4 text-accent" />}
+          </motion.div>
+        </motion.button>
+      </div>
     </header>
   );
 }
