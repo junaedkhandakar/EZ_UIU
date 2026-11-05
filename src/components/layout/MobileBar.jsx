@@ -33,10 +33,11 @@ export function MobileTopBar({ onOpenCommandPalette }) {
           <Search className="h-4 w-4 text-accent" />
         </motion.button>
         <motion.button
+          id="mobile-theme-toggle"
+          aria-label="Toggle theme"
           whileTap={{ scale: 0.92 }}
           onClick={toggle}
-          className="rounded-xl border border-line bg-surface/70 p-2 text-ink-2 transition-colors hover:text-ink"
-          aria-label="Toggle theme"
+          className="cursor-pointer rounded-xl border border-line bg-surface/70 p-2 text-ink-2 transition-colors hover:text-ink"
         >
           <motion.div
             key={theme}

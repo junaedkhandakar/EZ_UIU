@@ -110,9 +110,11 @@ export default function Sidebar({ active, onChange, onOpenCommandPalette }) {
           </div>
         </div>
         <motion.button
+          id="sidebar-theme-toggle"
+          aria-label="Toggle theme"
           whileTap={{ scale: 0.96 }}
           onClick={toggle}
-          className="flex w-full items-center gap-3 rounded-xl border border-line bg-surface/50 px-3 py-2.5 text-ink-2 transition-colors hover:bg-surface2/60 hover:text-ink"
+          className="flex w-full cursor-pointer items-center gap-3 rounded-xl border border-line bg-surface/50 px-3 py-2.5 text-ink-2 transition-colors hover:bg-surface2/60 hover:text-ink"
         >
           <motion.div
             key={theme}
