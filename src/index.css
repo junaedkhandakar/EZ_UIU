@@ -4,19 +4,19 @@
 
 @layer base {
   :root {
-    --bg: #f5f5f8;
+    --bg: #f8f9fa;
     --surface: #ffffff;
-    --surface-2: #eeeeef;
-    --border: rgba(17, 17, 26, 0.08);
-    --border-strong: rgba(17, 17, 26, 0.16);
-    --border-specular: rgba(255, 255, 255, 0.9);
-    --text: #141417;
-    --text-2: #52525e;
-    --text-3: #8a8a95;
-    --accent: #5555dd;
-    --accent-2: #875bf7;
-    --accent-soft: rgba(85, 85, 221, 0.12);
-    --accent-glow: rgba(85, 85, 221, 0.35);
+    --surface-2: #f1f3f5;
+    --border: rgba(15, 23, 42, 0.08);
+    --border-strong: rgba(15, 23, 42, 0.15);
+    --border-specular: rgba(255, 255, 255, 0.8);
+    --text: #0f172a;
+    --text-2: #475569;
+    --text-3: #94a3b8;
+    --accent: #4f46e5;
+    --accent-2: #7c3aed;
+    --accent-soft: rgba(79, 70, 229, 0.09);
+    --accent-glow: rgba(79, 70, 229, 0.25);
     --ok: #059669;
     --warn: #d97706;
     --bad: #dc2626;
@@ -61,8 +61,12 @@
     inset: 0;
     pointer-events: none;
     z-index: 9999;
-    opacity: 0.025;
+    opacity: 0.012;
     background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+  }
+
+  .dark body::before {
+    opacity: 0.028;
   }
 
   ::-webkit-scrollbar {
