@@ -7,6 +7,7 @@ import { MobileTopBar, MobileTabBar } from './components/layout/MobileBar';
 import CgpaView from './components/cgpa/CgpaView';
 import TuitionView from './components/tuition/TuitionView';
 import RoutineView from './components/routine/RoutineView';
+import AdvisorView from './components/advisor/AdvisorView';
 import CommandPalette from './components/ui/CommandPalette';
 import { DEMO_TRANSCRIPT_COURSES, exportCSV } from './utils/cgpaUtils';
 
@@ -132,10 +133,17 @@ export function AppContent() {
                 onResetUcamTrigger={() => setUcamModalTrigger(false)}
               />
             )}
+            {activeTab === 'advisor' && (
+              <AdvisorView
+                courses={courses}
+                settings={settings}
+                onNavigateToRoutine={() => setActiveTab('routine')}
+              />
+            )}
+            {activeTab === 'routine' && <RoutineView />}
             {activeTab === 'tuition' && (
               <TuitionView courses={courses} settings={settings} defaultDept={settings.dept} />
             )}
-            {activeTab === 'routine' && <RoutineView />}
           </motion.div>
         </AnimatePresence>
       </main>

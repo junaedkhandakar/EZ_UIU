@@ -82,6 +82,18 @@ export default function CommandPalette({
         },
       },
       {
+        id: 'nav-advisor',
+        type: 'action',
+        category: 'Navigation',
+        title: 'Go to AI Academic Advisor',
+        desc: 'Optimal course baskets, prerequisite solver & graduation roadmap',
+        icon: Sparkles,
+        action: () => {
+          setActiveTab('advisor');
+          onClose();
+        },
+      },
+      {
         id: 'nav-routine',
         type: 'action',
         category: 'Navigation',

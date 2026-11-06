@@ -10,13 +10,15 @@ import {
   Moon,
   Search,
   Command,
+  Sparkles,
 } from 'lucide-react';
 import { useTheme } from '../../context/ThemeContext';
 
 export const NAV = [
   { id: 'cgpa', label: 'CGPA', icon: Gauge, desc: 'Grades & standing' },
-  { id: 'tuition', label: 'Tuition', icon: Receipt, desc: 'Fees & waivers' },
+  { id: 'advisor', label: 'AI Advisor', icon: Sparkles, desc: 'Prereqs & planning' },
   { id: 'routine', label: 'Routine', icon: CalendarRange, desc: 'Class schedule' },
+  { id: 'tuition', label: 'Tuition', icon: Receipt, desc: 'Fees & waivers' },
 ];
 
 export default function Sidebar({ active, onChange, onOpenCommandPalette }) {
