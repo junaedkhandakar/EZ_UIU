@@ -518,6 +518,45 @@ export function generateAIAnswer(query, context = {}) {
     return `🚨 **Academic Probation Policy:** Maintaining a CGPA below **2.00** results in academic probation. Students on probation are strictly capped at **9 to 12 credits** per trimester. The fastest recovery strategy is to retake low-credit 'F' or 'D' courses because new grades replace old points directly.`;
   }
 
+  if (q.includes('grade') || q.includes('grading') || q.includes('scale') || q.includes('marks')) {
+    return `📊 **Official UIU Grading System:**
+• **A (4.00):** 90% – 100% (Outstanding)
+• **A- (3.67):** 86% – <90% (Excellent)
+• **B+ (3.33):** 82% – <86% (Good)
+• **B (3.00):** 78% – <82% (Average)
+• **B- (2.67):** 74% – <78% (Below Average)
+• **C+ (2.33):** 70% – <74% (Satisfactory)
+• **C (2.00):** 66% – <70% (Pass)
+• **C- (1.67):** 62% – <66% (Pass)
+• **D+ (1.33):** 58% – <62% (Pass)
+• **D (1.00):** 55% – <58% (Lowest Passing Grade)
+• **F (0.00):** Below 55% (Fail)
+
+Minimum passing grade is **D (1.00)**. Graduation requires a cumulative CGPA $\\ge$ **2.00**.`;
+  }
+
+  if (q.includes('attendance') || q.includes('absence')) {
+    return `📋 **UIU Class Attendance Policy:**
+• UIU strictly enforces an **80% minimum class attendance** rule for all undergraduate programs.
+• Falling below 80% attendance without approved medical documentation makes a student ineligible to sit for the final examination in that course.`;
+  }
+
+  if (q.includes('exam slot') || q.includes('exam time') || q.includes('t1') || q.includes('t2') || q.includes('t3')) {
+    return `⏰ **UIU Final Exam Time Slots:**
+• **T1 Slot:** 9:00 AM – 11:00 AM
+• **T2 Slot:** 11:30 AM – 1:30 PM
+• **T3 Slot:** 2:00 PM – 4:00 PM (or 2:30 PM – 4:30 PM)
+
+The Schedule Auditor checks your courses to ensure no two courses share the same exam day and time slot!`;
+  }
+
+  if (q.includes('incomplete') || q.includes('withdraw') || q.includes('grade change')) {
+    return `📝 **UIU Academic Status Rules:**
+• **'W' (Withdrawn):** Course dropped within the official withdrawal window. Does not impact CGPA or count toward attempted grade points.
+• **'I' (Incomplete):** Permitted only under extreme documented emergencies. Must be cleared by sitting for the exam in the next trimester, otherwise it automatically converts to an **F**.
+• **Grade Change Deadline:** Grade change petitions must be submitted to the department head within the first week of the subsequent trimester.`;
+  }
+
   if (q.includes('data science') || q.includes('software') || q.includes('major')) {
     return `🎯 **Major Concentration Tracks:** UIU CSE requires completing at least **3 courses (9 credits)** from your chosen major track (such as Software Engineering or Data Science). Head over to the **Major Concentration** tab to review required electives and track your progress!`;
   }
@@ -535,19 +574,33 @@ export async function queryGeminiAdvisor({ apiKey, prompt, studentContext }) {
   }
 
   const systemInstructions = `
-You are the official AI Academic Advisor for United International University (UIU) in Bangladesh.
+You are the official AI Academic Advisor for United International University (UIU) in Dhaka, Bangladesh.
 You assist UIU students with curriculum advising, course registration, prerequisite chains, honors graduation, and tuition fee policies.
 
-Official UIU Policies:
-1. Degree Requirements: 138 credits for BSCSE/BBA, 165 for B. Pharm.
-2. Honors Graduation Thresholds:
+Official UIU Policies (Strictly adhere to these):
+1. Degree Requirements: 138 credits (141 for new curriculum) for BSCSE, 165 for B. Pharm.
+2. Official Grading Scale:
+   - A (4.00): 90% - 100%
+   - A- (3.67): 86% - <90%
+   - B+ (3.33): 82% - <86%
+   - B (3.00): 78% - <82%
+   - B- (2.67): 74% - <78%
+   - C+ (2.33): 70% - <74%
+   - C (2.00): 66% - <70%
+   - C- (1.67): 62% - <66%
+   - D+ (1.33): 58% - <62%
+   - D (1.00): 55% - <58% (Minimum passing grade)
+   - F (0.00): Below 55%
+3. Honors Graduation Thresholds:
    - Summa Cum Laude: CGPA >= 3.90
    - Magna Cum Laude: CGPA >= 3.80
    - Cum Laude: CGPA >= 3.75
-   - Academic Probation: CGPA < 2.00 (capped at 9-12 credits/term)
-3. Retake Policy: Grade replacement for C+ or below. New grade replaces old grade in CGPA. Retakes get 50% tuition waiver.
-4. Tuition Waiver: Minimum 9 credits registration required (14 for Pharmacy). Thesis/FYDP has 0% waiver.
-5. FYDP I (CSE 4000A): Requires 100+ completed credits.
+   - Academic Probation: CGPA < 2.00 (registration strictly capped at 9-12 credits/term)
+4. Retake Policy: Grade replacement for C+ or below. New grade completely replaces old grade in CGPA calculation (designated with 'R' on transcript). Retakes receive an automatic 50% course fee waiver.
+5. Tuition Waiver Rules: Minimum 9 credits registration required (14 for Pharmacy). Waivers do NOT apply to Thesis/FYDP, projects, internships, or retakes.
+6. Class Attendance: Minimum 80% class attendance required to be eligible for final examinations.
+7. FYDP I (CSE 4000A): Requires at least 100 completed credits.
+8. Exam Slots: T1 (9:00 AM - 11:00 AM), T2 (11:30 AM - 1:30 PM), T3 (2:00 PM - 4:00 PM / 2:30 PM - 4:30 PM).
 
 Student Context:
 - Current CGPA: ${studentContext.cgpa || 'N/A'}
@@ -555,7 +608,7 @@ Student Context:
 - Completed Courses: ${(studentContext.completedCourseCodes || []).join(', ') || 'None'}
 - Selected Major Track: ${studentContext.selectedMajor || 'General CSE'}
 
-Provide concise, friendly, and structured advice with markdown formatting.
+Provide concise, highly accurate, and structured advice with markdown formatting.
 `;
 
   const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey.trim()}`;
