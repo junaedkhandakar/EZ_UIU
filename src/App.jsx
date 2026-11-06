@@ -115,37 +115,29 @@ export function AppContent() {
       <MobileTopBar onOpenCommandPalette={() => setCommandPaletteOpen(true)} />
 
       <main className="mx-auto w-full max-w-[1180px] px-4 pb-28 pt-5 sm:px-6 lg:pb-10 lg:pl-[calc(228px+2rem)] lg:pr-8 lg:pt-8">
-        <AnimatePresence mode="wait" initial={false}>
-          <motion.div
-            key={activeTab}
-            initial={{ opacity: 0, y: 10, scale: 0.995 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: -8, scale: 0.995 }}
-            transition={{ type: 'spring', stiffness: 450, damping: 32 }}
-          >
-            {activeTab === 'cgpa' && (
-              <CgpaView
-                courses={courses}
-                setCourses={setCourses}
-                settings={settings}
-                setSettings={setSettings}
-                forceOpenUcam={ucamModalTrigger}
-                onResetUcamTrigger={() => setUcamModalTrigger(false)}
-              />
-            )}
-            {activeTab === 'advisor' && (
-              <AdvisorView
-                courses={courses}
-                settings={settings}
-                onNavigateToRoutine={() => setActiveTab('routine')}
-              />
-            )}
-            {activeTab === 'routine' && <RoutineView />}
-            {activeTab === 'tuition' && (
-              <TuitionView courses={courses} settings={settings} defaultDept={settings.dept} />
-            )}
-          </motion.div>
-        </AnimatePresence>
+        <div key={activeTab} className="pop-in">
+          {activeTab === 'cgpa' && (
+            <CgpaView
+              courses={courses}
+              setCourses={setCourses}
+              settings={settings}
+              setSettings={setSettings}
+              forceOpenUcam={ucamModalTrigger}
+              onResetUcamTrigger={() => setUcamModalTrigger(false)}
+            />
+          )}
+          {activeTab === 'advisor' && (
+            <AdvisorView
+              courses={courses}
+              settings={settings}
+              onNavigateToRoutine={() => setActiveTab('routine')}
+            />
+          )}
+          {activeTab === 'routine' && <RoutineView />}
+          {activeTab === 'tuition' && (
+            <TuitionView courses={courses} settings={settings} defaultDept={settings.dept} />
+          )}
+        </div>
       </main>
 
       <MobileTabBar active={activeTab} onChange={setActiveTab} />
