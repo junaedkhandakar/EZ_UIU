@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import {
   Sparkles,
@@ -18,6 +18,12 @@ import {
   Check,
   ChevronRight,
   CalendarCheck,
+  Key,
+  Network,
+  ListCheck,
+  X,
+  Plus,
+  GitBranch,
 } from 'lucide-react';
 import Tabs from '../ui/Tabs';
 import Button from '../ui/Button';
@@ -25,12 +31,16 @@ import Surface from '../ui/Surface';
 import Select from '../ui/Select';
 import {
   generateRecommendedBasket,
+  generateFullDegreeRoadmap,
+  auditCustomSchedule,
+  getPrerequisiteTree,
   calculateDegreeTimeline,
   generateAIAnswer,
+  queryGeminiAdvisor,
   getPassedCoursesSet,
 } from '../../utils/advisorEngine';
-import { MAJOR_TRACKS } from '../../data/advisorData';
-import { calculateAcademicMetrics, getEffectiveCourses, formatTrimester } from '../../utils/cgpaUtils';
+import { ALL_COURSES, MAJOR_TRACKS } from '../../data/advisorData';
+import { calculateAcademicMetrics, getEffectiveCourses } from '../../utils/cgpaUtils';
 import { useToast } from '../../context/ToastContext';
 
 export default function AdvisorView({
@@ -43,8 +53,24 @@ export default function AdvisorView({
   const [targetCredits, setTargetCredits] = useState(12);
   const [selectedMajor, setSelectedMajor] = useState('Software Engineering');
 
-  // AI Copilot State
+  // Custom Schedule Auditor State
+  const [auditSelectedCodes, setAuditSelectedCodes] = useState(['CSE 2215', 'CSE 2213', 'MATH 2205']);
+  const [auditCourseToAdd, setAuditCourseToAdd] = useState('');
+
+  // Prerequisite Visualizer State
+  const [selectedTreeCourse, setSelectedTreeCourse] = useState('CSE 4889');
+
+  // AI Copilot & Gemini Key State
+  const [geminiApiKey, setGeminiApiKey] = useState(() => {
+    try {
+      return localStorage.getItem('ez_gemini_api_key') || '';
+    } catch {
+      return '';
+    }
+  });
+  const [isApiKeyOpen, setIsApiKeyOpen] = useState(false);
   const [chatInput, setChatInput] = useState('');
+  const [isThinking, setIsThinking] = useState(false);
   const [chatMessages, setChatMessages] = useState([
     {
       role: 'ai',
@@ -52,14 +78,23 @@ export default function AdvisorView({
     },
   ]);
 
+  const saveApiKey = (key) => {
+    setGeminiApiKey(key);
+    try {
+      localStorage.setItem('ez_gemini_api_key', key.trim());
+      showToast(key.trim() ? 'Gemini API Key saved locally!' : 'API Key removed', 'info');
+    } catch {}
+  };
+
   const metrics = useMemo(() => {
     return calculateAcademicMetrics(getEffectiveCourses(courses));
   }, [courses]);
 
   const completedCredits = metrics.earnedCredits || 0;
   const currentCgpa = metrics.cgpa || 3.0;
+  const passedCodes = useMemo(() => getPassedCoursesSet(courses), [courses]);
 
-  // Next-Term Recommended Basket
+  // Mode 1: Next-Term Recommended Basket
   const basketAnalysis = useMemo(() => {
     return generateRecommendedBasket({
       completedCourses: courses,
@@ -68,6 +103,30 @@ export default function AdvisorView({
       selectedMajor,
     });
   }, [courses, currentCgpa, targetCredits, selectedMajor]);
+
+  // Mode 2: Multi-Trimester Degree Roadmap
+  const fullDegreeRoadmap = useMemo(() => {
+    return generateFullDegreeRoadmap({
+      completedCourses: courses,
+      currentCgpa,
+      maxCreditsPerSem: targetCredits,
+      selectedMajor,
+    });
+  }, [courses, currentCgpa, targetCredits, selectedMajor]);
+
+  // Mode 3: Custom Schedule Audit
+  const customAudit = useMemo(() => {
+    return auditCustomSchedule({
+      selectedCodes: auditSelectedCodes,
+      completedCourses: courses,
+      currentCgpa,
+    });
+  }, [auditSelectedCodes, courses, currentCgpa]);
+
+  // Mode 4: Prerequisite Tree
+  const prereqTree = useMemo(() => {
+    return getPrerequisiteTree(selectedTreeCourse, courses);
+  }, [selectedTreeCourse, courses]);
 
   // Graduation Timeline
   const timeline = useMemo(() => {
@@ -80,7 +139,6 @@ export default function AdvisorView({
   }, [completedCredits, settings.programCredits]);
 
   // Major Track Progress Audit
-  const passedCodes = useMemo(() => getPassedCoursesSet(courses), [courses]);
   const majorStats = useMemo(() => {
     return Object.entries(MAJOR_TRACKS).map(([name, track]) => {
       const completedInTrack = track.courses.filter((c) =>
@@ -96,7 +154,6 @@ export default function AdvisorView({
     });
   }, [passedCodes]);
 
-  // Handler to push recommended courses directly to Routine Builder
   const handlePushToRoutine = () => {
     try {
       const selectedForRoutine = basketAnalysis.basket.map((c) => ({
@@ -111,7 +168,7 @@ export default function AdvisorView({
     }
   };
 
-  const handleSendQuery = (textToSend) => {
+  const handleSendQuery = async (textToSend) => {
     const query = textToSend || chatInput;
     if (!query.trim()) return;
 
@@ -119,20 +176,45 @@ export default function AdvisorView({
     setChatMessages(newMsgs);
     setChatInput('');
 
-    setTimeout(() => {
-      const response = generateAIAnswer(query, {
-        cgpa: currentCgpa,
-        completedCredits,
-      });
-      setChatMessages((prev) => [...prev, { role: 'ai', text: response }]);
-    }, 250);
+    if (geminiApiKey.trim()) {
+      setIsThinking(true);
+      try {
+        const reply = await queryGeminiAdvisor({
+          apiKey: geminiApiKey,
+          prompt: query,
+          studentContext: {
+            cgpa: currentCgpa,
+            completedCredits,
+            completedCourseCodes: Array.from(passedCodes),
+            selectedMajor,
+          },
+        });
+        setChatMessages((prev) => [...prev, { role: 'ai', text: reply }]);
+      } catch (err) {
+        showToast(err.message || 'Gemini error, falling back to rule engine', 'error');
+        const fallback = generateAIAnswer(query, { cgpa: currentCgpa, completedCredits });
+        setChatMessages((prev) => [...prev, { role: 'ai', text: fallback }]);
+      } finally {
+        setIsThinking(false);
+      }
+    } else {
+      setTimeout(() => {
+        const response = generateAIAnswer(query, {
+          cgpa: currentCgpa,
+          completedCredits,
+        });
+        setChatMessages((prev) => [...prev, { role: 'ai', text: response }]);
+      }, 200);
+    }
   };
 
   const subTabs = [
     { value: 'basket', label: 'Next-Term Basket', icon: Sparkles },
-    { value: 'roadmap', label: 'Graduation Timeline', icon: GraduationCap },
+    { value: 'audit', label: 'Schedule Auditor', icon: ListCheck },
+    { value: 'tree', label: 'Prereq Tree', icon: GitBranch },
+    { value: 'roadmap', label: 'Full Degree Plan', icon: GraduationCap },
     { value: 'majors', label: 'Major Concentrations', icon: Layers },
-    { value: 'copilot', label: 'Ask Advisor', icon: MessageSquare },
+    { value: 'copilot', label: 'AI Copilot', icon: MessageSquare },
   ];
 
   return (
@@ -141,37 +223,79 @@ export default function AdvisorView({
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
           <div className="text-[11px] font-semibold uppercase tracking-[0.14em] text-accent">
-            Intelligent Prerequisite & Curriculum Engine
+            Curriculum Intelligence & Advising Engine
           </div>
           <h1 className="mt-1 text-[26px] font-extrabold tracking-tight text-ink sm:text-3xl">
             AI Academic Advisor
           </h1>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setIsApiKeyOpen(!isApiKeyOpen)}
+            className={`flex items-center gap-1.5 rounded-xl border px-3 py-1.5 text-xs font-semibold shadow-card transition-colors ${
+              geminiApiKey.trim()
+                ? 'border-ok/30 bg-ok/10 text-ok'
+                : 'border-line bg-surface text-ink-3 hover:text-ink'
+            }`}
+            title="Configure Gemini LLM API Key"
+          >
+            <Key className="h-3.5 w-3.5" />
+            <span>{geminiApiKey.trim() ? 'Gemini Active' : 'Connect Gemini'}</span>
+          </button>
           <div className="flex items-center gap-2 rounded-xl border border-line bg-surface px-3 py-1.5 shadow-card">
             <span className="text-[11px] font-semibold uppercase tracking-wider text-ink-3">CGPA</span>
             <span className="num font-mono text-sm font-bold text-accent">{currentCgpa.toFixed(2)}</span>
           </div>
           <div className="flex items-center gap-2 rounded-xl border border-line bg-surface px-3 py-1.5 shadow-card">
-            <span className="text-[11px] font-semibold uppercase tracking-wider text-ink-3">Completed</span>
+            <span className="text-[11px] font-semibold uppercase tracking-wider text-ink-3">Passed</span>
             <span className="num font-mono text-sm font-bold text-ink">{completedCredits} cr</span>
           </div>
         </div>
       </div>
 
+      {/* Gemini API Key Bar */}
+      {isApiKeyOpen && (
+        <Surface className="p-4 border-accent/30 bg-accentSoft/30">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+            <div className="flex-1">
+              <h4 className="text-xs font-bold text-ink flex items-center gap-1.5">
+                <Sparkles className="h-3.5 w-3.5 text-accent" />
+                Optional Google Gemini LLM Integration
+              </h4>
+              <p className="text-[11px] text-ink-3 mt-0.5">
+                Enter your free Google Gemini API key to activate deep natural language advising.
+                Your key is stored securely in your browser's localStorage and never leaves your device.
+              </p>
+            </div>
+            <div className="flex items-center gap-2">
+              <input
+                type="password"
+                value={geminiApiKey}
+                onChange={(e) => saveApiKey(e.target.value)}
+                placeholder="AIzaSy..."
+                className="h-9 w-48 sm:w-64 rounded-xl border border-line bg-surface px-3 font-mono text-xs text-ink outline-none focus:border-accent"
+              />
+              {geminiApiKey && (
+                <button
+                  onClick={() => saveApiKey('')}
+                  className="rounded-lg p-2 text-ink-3 hover:text-bad"
+                  title="Clear Key"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              )}
+            </div>
+          </div>
+        </Surface>
+      )}
+
       <Tabs tabs={subTabs} value={activeTab} onChange={setActiveTab} layoutId="advisor-subtabs" />
 
-      {/* ================= TAB 1: NEXT-TERM BASKET ================= */}
+      {/* ================= MODE 1: NEXT-TERM BASKET ================= */}
       {activeTab === 'basket' && (
-        <motion.div
-          key="basket"
-          initial={{ opacity: 0, y: 8 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: -6 }}
-          className="grid grid-cols-1 gap-4 lg:grid-cols-12"
-        >
-          {/* Controls & Summary */}
+        <div className="grid grid-cols-1 gap-4 lg:grid-cols-12 pop-in">
+          {/* Controls & Diagnostics */}
           <div className="flex flex-col gap-4 lg:col-span-5">
             <Surface className="p-5">
               <h3 className="text-[15px] font-bold tracking-tight text-ink">Advising Controls</h3>
@@ -231,9 +355,16 @@ export default function AdvisorView({
                 <div className="flex items-center justify-between text-xs">
                   <span className="text-ink-2">Final Exam Slot Conflicts:</span>
                   <span className="num font-bold text-ok">
-                    {basketAnalysis.examConflicts.length === 0 ? '0 Clashes (Safe)' : `${basketAnalysis.examConflicts.length} Clashes`}
+                    {basketAnalysis.examConflicts.length === 0
+                      ? '0 Clashes (Safe)'
+                      : `${basketAnalysis.examConflicts.length} Clashes`}
                   </span>
                 </div>
+                {basketAnalysis.tightExams?.length > 0 && (
+                  <div className="text-[11px] text-warn">
+                    ⚠️ {basketAnalysis.tightExams[0].desc}
+                  </div>
+                )}
               </div>
 
               {/* Push to routine builder action */}
@@ -330,20 +461,366 @@ export default function AdvisorView({
               </div>
             )}
           </div>
-        </motion.div>
+        </div>
       )}
 
-      {/* ================= TAB 2: GRADUATION ROADMAP ================= */}
+      {/* ================= MODE 2: CUSTOM SCHEDULE AUDITOR ================= */}
+      {activeTab === 'audit' && (
+        <div className="grid grid-cols-1 gap-4 lg:grid-cols-12 pop-in">
+          <div className="flex flex-col gap-4 lg:col-span-5">
+            <Surface className="p-5">
+              <h3 className="text-[15px] font-bold tracking-tight text-ink">
+                Schedule Stress-Tester
+              </h3>
+              <p className="text-xs text-ink-3 mt-1">
+                Select courses you plan to take together. The auditor verifies prerequisites, final exam
+                clashes, and cumulative difficulty.
+              </p>
+
+              {/* Add Course Dropdown */}
+              <div className="mt-4 flex gap-2">
+                <Select
+                  value={auditCourseToAdd}
+                  onChange={(e) => setAuditCourseToAdd(e.target.value)}
+                  className="flex-1"
+                >
+                  <option value="">Select course to test…</option>
+                  {ALL_COURSES.filter(
+                    (c) => !auditSelectedCodes.includes(c.course_code)
+                  ).map((c) => (
+                    <option key={c.course_code} value={c.course_code}>
+                      {c.course_code} · {c.course_name}
+                    </option>
+                  ))}
+                </Select>
+                <Button
+                  variant="primary"
+                  size="md"
+                  icon={Plus}
+                  disabled={!auditCourseToAdd}
+                  onClick={() => {
+                    setAuditSelectedCodes([...auditSelectedCodes, auditCourseToAdd]);
+                    setAuditCourseToAdd('');
+                  }}
+                >
+                  Add
+                </Button>
+              </div>
+
+              {/* Selected Courses Chips */}
+              <div className="mt-4 space-y-2">
+                <div className="text-[11px] font-bold uppercase tracking-wider text-ink-3">
+                  Courses Selected for Audit ({auditSelectedCodes.length}):
+                </div>
+                <div className="flex flex-wrap gap-1.5">
+                  {auditSelectedCodes.map((code) => (
+                    <span
+                      key={code}
+                      className="flex items-center gap-1.5 rounded-xl border border-line bg-surface2 px-2.5 py-1 text-xs font-bold text-ink"
+                    >
+                      {code}
+                      <button
+                        onClick={() =>
+                          setAuditSelectedCodes(auditSelectedCodes.filter((c) => c !== code))
+                        }
+                        className="text-ink-3 hover:text-bad"
+                      >
+                        <X className="h-3 w-3" />
+                      </button>
+                    </span>
+                  ))}
+                </div>
+              </div>
+
+              {/* Quick Presets */}
+              <div className="mt-5 border-t border-line pt-4">
+                <span className="text-[11px] font-bold uppercase tracking-wider text-ink-3">
+                  Quick Presets to Test:
+                </span>
+                <div className="mt-2 flex flex-wrap gap-1.5">
+                  <button
+                    onClick={() =>
+                      setAuditSelectedCodes(['CSE 2215', 'CSE 2217', 'CSE 2233', 'MATH 2205'])
+                    }
+                    className="rounded-lg border border-line bg-surface2/60 px-2 py-1 text-[11px] font-medium text-ink-2 hover:text-ink"
+                  >
+                    Heavy Theory Basket
+                  </button>
+                  <button
+                    onClick={() =>
+                      setAuditSelectedCodes(['CSE 1115', 'CSE 1116', 'MATH 2183', 'ENG 1013'])
+                    }
+                    className="rounded-lg border border-line bg-surface2/60 px-2 py-1 text-[11px] font-medium text-ink-2 hover:text-ink"
+                  >
+                    Freshman Term 2
+                  </button>
+                </div>
+              </div>
+            </Surface>
+          </div>
+
+          {/* Audit Results Panel */}
+          <div className="flex flex-col gap-4 lg:col-span-7">
+            <Surface className="p-5">
+              <div className="flex items-center justify-between border-b border-line pb-3">
+                <h3 className="text-[15px] font-bold text-ink flex items-center gap-2">
+                  <ShieldCheck className="h-4 w-4 text-accent" />
+                  Audit Verdict
+                </h3>
+                <span
+                  className={`rounded-full px-3 py-1 text-xs font-bold ${
+                    customAudit.isValid
+                      ? 'bg-ok/15 text-ok border border-ok/30'
+                      : 'bg-bad/15 text-bad border border-bad/30'
+                  }`}
+                >
+                  {customAudit.isValid ? 'Approved (Safe to Register)' : 'Issues Detected'}
+                </span>
+              </div>
+
+              {/* Summary Stats */}
+              <div className="grid grid-cols-3 gap-3 my-4">
+                <div className="rounded-xl border border-line bg-surface2/40 p-3 text-center">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-ink-3">
+                    Total Credits
+                  </span>
+                  <div className="num mt-1 text-lg font-extrabold text-ink">
+                    {customAudit.totalCredits} cr
+                  </div>
+                </div>
+                <div className="rounded-xl border border-line bg-surface2/40 p-3 text-center">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-ink-3">
+                    Hard Courses
+                  </span>
+                  <div className="num mt-1 text-lg font-extrabold text-warn">
+                    {customAudit.hardCount}
+                  </div>
+                </div>
+                <div className="rounded-xl border border-line bg-surface2/40 p-3 text-center">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-ink-3">
+                    Exam Clashes
+                  </span>
+                  <div className="num mt-1 text-lg font-extrabold text-ok">
+                    {customAudit.examConflicts.length}
+                  </div>
+                </div>
+              </div>
+
+              {/* Blocked or Warning Messages */}
+              {customAudit.blockedCourses.length > 0 && (
+                <div className="mb-4 space-y-2">
+                  <h4 className="text-xs font-bold text-bad flex items-center gap-1.5">
+                    <AlertTriangle className="h-4 w-4" />
+                    Prerequisite Issues:
+                  </h4>
+                  {customAudit.blockedCourses.map((b) => (
+                    <div
+                      key={b.code}
+                      className="rounded-xl border border-bad/25 bg-bad/10 p-3 text-xs text-bad"
+                    >
+                      <b>{b.code}:</b> {b.reason}
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* Exam Clashes */}
+              {customAudit.examConflicts.length > 0 && (
+                <div className="mb-4 space-y-2">
+                  <h4 className="text-xs font-bold text-bad flex items-center gap-1.5">
+                    <AlertTriangle className="h-4 w-4" />
+                    Final Exam Collision:
+                  </h4>
+                  {customAudit.examConflicts.map((c, idx) => (
+                    <div
+                      key={idx}
+                      className="rounded-xl border border-bad/25 bg-bad/10 p-3 text-xs text-bad"
+                    >
+                      {c.desc}
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* Approved Courses List */}
+              <div className="space-y-2">
+                <h4 className="text-xs font-bold text-ink-2">Valid Courses:</h4>
+                {customAudit.validCourses.map((c) => (
+                  <div
+                    key={c.course_code}
+                    className="flex items-center justify-between rounded-xl border border-line bg-surface2/50 p-3 text-xs"
+                  >
+                    <div>
+                      <span className="font-mono font-bold text-accent mr-2">
+                        {c.course_code}
+                      </span>
+                      <span className="text-ink font-semibold">{c.course_name}</span>
+                    </div>
+                    <span className="text-ink-3">
+                      {c.credit} cr · {c.difficulty} · Exam: {c.exam_day} ({c.exam_slot})
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </Surface>
+          </div>
+        </div>
+      )}
+
+      {/* ================= MODE 3: PREREQUISITE TREE ================= */}
+      {activeTab === 'tree' && (
+        <div className="grid grid-cols-1 gap-4 lg:grid-cols-12 pop-in">
+          <div className="flex flex-col gap-4 lg:col-span-5">
+            <Surface className="p-5">
+              <h3 className="text-[15px] font-bold tracking-tight text-ink flex items-center gap-2">
+                <GitBranch className="h-4 w-4 text-accent" />
+                Course Prerequisite Explorer
+              </h3>
+              <p className="text-xs text-ink-3 mt-1">
+                Select any course to trace its complete upstream prerequisite chain and see what is
+                already passed vs. still missing.
+              </p>
+
+              <div className="mt-4">
+                <label className="mb-1.5 block text-[11px] font-semibold uppercase tracking-wider text-ink-3">
+                  Target Course
+                </label>
+                <Select
+                  value={selectedTreeCourse}
+                  onChange={(e) => setSelectedTreeCourse(e.target.value)}
+                >
+                  {ALL_COURSES.map((c) => (
+                    <option key={c.course_code} value={c.course_code}>
+                      {c.course_code} · {c.course_name}
+                    </option>
+                  ))}
+                </Select>
+              </div>
+
+              {/* Quick Jump Buttons */}
+              <div className="mt-4">
+                <span className="text-[11px] font-bold uppercase tracking-wider text-ink-3">
+                  High-Impact Capstones to Explore:
+                </span>
+                <div className="mt-2 flex flex-wrap gap-1.5">
+                  {['CSE 4889', 'CSE 4611', 'CSE 4783', 'CSE 4587', 'CSE 3811', 'CSE 3411'].map(
+                    (code) => (
+                      <button
+                        key={code}
+                        onClick={() => setSelectedTreeCourse(code)}
+                        className={`rounded-lg border px-2 py-1 text-xs font-mono font-bold transition-all ${
+                          selectedTreeCourse === code
+                            ? 'border-accent bg-accentSoft text-accent'
+                            : 'border-line bg-surface2 text-ink-2 hover:text-ink'
+                        }`}
+                      >
+                        {code}
+                      </button>
+                    )
+                  )}
+                </div>
+              </div>
+            </Surface>
+          </div>
+
+          {/* Tree Visualization Card */}
+          <div className="flex flex-col gap-4 lg:col-span-7">
+            <Surface className="p-5">
+              {prereqTree && (
+                <div>
+                  <div className="flex items-start justify-between border-b border-line pb-4">
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <span className="font-mono text-lg font-extrabold text-accent">
+                          {prereqTree.target.course_code}
+                        </span>
+                        <span className="rounded-md border border-line bg-surface2 px-1.5 py-0.5 text-xs font-bold text-ink">
+                          {prereqTree.target.credit} cr
+                        </span>
+                      </div>
+                      <h3 className="text-base font-bold text-ink mt-0.5">
+                        {prereqTree.target.course_name}
+                      </h3>
+                    </div>
+
+                    <span
+                      className={`rounded-full px-3 py-1 text-xs font-bold ${
+                        prereqTree.isTargetPassed
+                          ? 'bg-ok/15 text-ok border border-ok/30'
+                          : prereqTree.arePrereqsMet
+                            ? 'bg-accentSoft text-accent border border-accent/30'
+                            : 'bg-bad/15 text-bad border border-bad/30'
+                      }`}
+                    >
+                      {prereqTree.isTargetPassed
+                        ? 'Passed Already'
+                        : prereqTree.arePrereqsMet
+                          ? 'Unlocked & Ready to Take'
+                          : 'Locked by Prerequisites'}
+                    </span>
+                  </div>
+
+                  {/* Chain List */}
+                  <div className="mt-5 space-y-3">
+                    <h4 className="text-xs font-bold uppercase tracking-wider text-ink-3">
+                      Required Upstream Chain ({prereqTree.prerequisitesList.length} prerequisite courses):
+                    </h4>
+
+                    {prereqTree.prerequisitesList.length === 0 ? (
+                      <div className="rounded-xl border border-line bg-surface2/40 p-4 text-xs text-ink-3 text-center">
+                        This is an entry-level course with zero prerequisites. You can take it anytime!
+                      </div>
+                    ) : (
+                      <div className="space-y-2">
+                        {prereqTree.prerequisitesList.map((node, idx) => (
+                          <div
+                            key={node.code}
+                            className={`flex items-center justify-between rounded-xl border p-3 text-xs transition-colors ${
+                              node.isPassed
+                                ? 'border-ok/30 bg-ok/5 text-ink'
+                                : 'border-bad/30 bg-bad/5 text-ink'
+                            }`}
+                          >
+                            <div className="flex items-center gap-3">
+                              <span
+                                className={`flex h-6 w-6 items-center justify-center rounded-full text-[10px] font-bold ${
+                                  node.isPassed ? 'bg-ok text-white' : 'bg-bad text-white'
+                                }`}
+                              >
+                                {node.isPassed ? '✓' : '!'}
+                              </span>
+                              <div>
+                                <span className="font-mono font-bold text-accent mr-2">
+                                  {node.code}
+                                </span>
+                                <span className="font-medium text-ink">{node.name}</span>
+                              </div>
+                            </div>
+
+                            <span
+                              className={`num font-bold text-[11px] ${
+                                node.isPassed ? 'text-ok' : 'text-bad'
+                              }`}
+                            >
+                              {node.isPassed ? 'Passed' : 'Still Required'}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+            </Surface>
+          </div>
+        </div>
+      )}
+
+      {/* ================= MODE 4: FULL DEGREE ROADMAP ================= */}
       {activeTab === 'roadmap' && (
-        <motion.div
-          key="roadmap"
-          initial={{ opacity: 0, y: 8 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: -6 }}
-          className="grid grid-cols-1 gap-4 lg:grid-cols-12"
-        >
+        <div className="flex flex-col gap-4 pop-in">
           {/* Degree Velocity KPI Cards */}
-          <div className="grid grid-cols-2 gap-4 sm:grid-cols-4 lg:col-span-12">
+          <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
             <Surface hover className="p-4 sm:p-5">
               <span className="text-[10.5px] font-semibold uppercase tracking-wider text-ink-3">
                 Completed Credits
@@ -393,21 +870,19 @@ export default function AdvisorView({
                 )}
               </div>
               <div className="mt-1 text-xs text-ink-3">
-                {timeline.fydpEligible
-                  ? 'Ready for CSE 4000A'
-                  : 'Credits left to reach 100 cr'}
+                {timeline.fydpEligible ? 'Ready for CSE 4000A' : 'Credits left to reach 100 cr'}
               </div>
             </Surface>
           </div>
 
           {/* FYDP Milestone Card */}
-          <Surface className="p-5 lg:col-span-12">
+          <Surface className="p-5">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
               <div>
                 <div className="flex items-center gap-2">
                   <GraduationCap className="h-5 w-5 text-accent" />
                   <h3 className="text-base font-bold text-ink">
-                    Final Year Design Project (FYDP I / CSE 4000A) Readiness
+                    Final Year Design Project (FYDP I / CSE 4000A) Gatekeeper
                   </h3>
                 </div>
                 <p className="mt-1 text-xs text-ink-2 max-w-2xl">
@@ -426,28 +901,61 @@ export default function AdvisorView({
                   </span>
                 </div>
                 <div className="h-2.5 rounded-full bg-surface2 overflow-hidden">
-                  <motion.div
-                    className="h-full bg-gradient-to-r from-accent to-accent2"
-                    initial={{ width: 0 }}
-                    animate={{ width: `${Math.min(100, (timeline.safeCompleted / 100) * 100)}%` }}
-                    transition={{ type: 'spring', stiffness: 200, damping: 25 }}
+                  <div
+                    className="h-full bg-gradient-to-r from-accent to-accent2 transition-all duration-700"
+                    style={{ width: `${Math.min(100, (timeline.safeCompleted / 100) * 100)}%` }}
                   />
                 </div>
               </div>
             </div>
           </Surface>
-        </motion.div>
+
+          {/* Multi-Term Semester Roadmap Grid */}
+          <div className="mt-2 space-y-3">
+            <div className="flex items-center justify-between">
+              <h3 className="text-[15px] font-bold tracking-tight text-ink">
+                Automated Multi-Trimester Degree Plan
+              </h3>
+              <span className="text-xs text-ink-3">
+                Calculated up to Trimester 12 under {targetCredits} cr/term
+              </span>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+              {fullDegreeRoadmap.map((sem) => (
+                <Surface hover key={sem.trimesterNum} className="p-4">
+                  <div className="flex items-center justify-between border-b border-line pb-2 mb-3">
+                    <span className="font-bold text-accent text-sm">{sem.title}</span>
+                    <span className="num font-bold text-xs rounded-md bg-surface2 px-2 py-0.5 text-ink-2">
+                      {sem.credits} Credits
+                    </span>
+                  </div>
+                  <div className="space-y-1.5">
+                    {sem.courses.map((c) => (
+                      <div
+                        key={c.course_code}
+                        className="flex items-center justify-between text-xs rounded-lg p-1.5 hover:bg-surface2/60"
+                      >
+                        <div className="truncate min-w-0 mr-2">
+                          <span className="font-mono font-bold text-accent mr-1.5">
+                            {c.course_code}
+                          </span>
+                          <span className="text-ink truncate">{c.course_name}</span>
+                        </div>
+                        <span className="text-ink-3 shrink-0 font-mono">{c.credit} cr</span>
+                      </div>
+                    ))}
+                  </div>
+                </Surface>
+              ))}
+            </div>
+          </div>
+        </div>
       )}
 
-      {/* ================= TAB 3: MAJOR CONCENTRATIONS ================= */}
+      {/* ================= MODE 5: MAJOR CONCENTRATIONS ================= */}
       {activeTab === 'majors' && (
-        <motion.div
-          key="majors"
-          initial={{ opacity: 0, y: 8 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: -6 }}
-          className="grid grid-cols-1 gap-4 md:grid-cols-2"
-        >
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 pop-in">
           {majorStats.map(({ name, track, completedCount, requiredCount, isCompleted }) => (
             <Surface hover key={name} className="p-5 flex flex-col justify-between">
               <div>
@@ -518,18 +1026,12 @@ export default function AdvisorView({
               </div>
             </Surface>
           ))}
-        </motion.div>
+        </div>
       )}
 
-      {/* ================= TAB 4: ASK ADVISOR COPILOT ================= */}
+      {/* ================= MODE 6: ASK ADVISOR COPILOT ================= */}
       {activeTab === 'copilot' && (
-        <motion.div
-          key="copilot"
-          initial={{ opacity: 0, y: 8 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: -6 }}
-          className="flex flex-col gap-4 max-w-3xl mx-auto w-full"
-        >
+        <div className="flex flex-col gap-4 max-w-3xl mx-auto w-full pop-in">
           {/* Quick Prompt Chips */}
           <div className="flex flex-wrap items-center gap-1.5">
             {[
@@ -572,6 +1074,16 @@ export default function AdvisorView({
                 </div>
               </div>
             ))}
+            {isThinking && (
+              <div className="flex gap-3 justify-start">
+                <div className="h-8 w-8 rounded-xl bg-gradient-to-br from-accent to-accent2 p-1.5 text-white shrink-0 shadow-md">
+                  <Sparkles className="h-full w-full animate-spin" />
+                </div>
+                <div className="rounded-2xl px-4 py-3 text-xs border border-line bg-surface2/60 text-ink-3 italic">
+                  Gemini is analyzing your UIU academic record…
+                </div>
+              </div>
+            )}
           </Surface>
 
           {/* Chat Input Bar */}
@@ -589,12 +1101,12 @@ export default function AdvisorView({
               size="lg"
               icon={Send}
               onClick={() => handleSendQuery()}
-              disabled={!chatInput.trim()}
+              disabled={!chatInput.trim() || isThinking}
             >
               Ask
             </Button>
           </div>
-        </motion.div>
+        </div>
       )}
     </div>
   );

@@ -1,5 +1,7 @@
-import { ALL_COURSES, ADVISOR_COURSE_MAP, MAJOR_TRACKS } from '../data/advisorData';
+import { ALL_COURSES, ADVISOR_COURSE_MAP, MAJOR_TRACKS, GED_ELECTIVES } from '../data/advisorData';
 import { GRADE_POINTS } from './cgpaUtils';
+
+const SLOT_ORDER = ['T1', 'T2', 'T3'];
 
 /**
  * Normalize course codes: "CSE1115", "cse 1115" -> "CSE 1115"
@@ -12,6 +14,11 @@ export function normalizeCode(code) {
   return clean;
 }
 
+export function findCourse(code) {
+  const norm = normalizeCode(code);
+  return ADVISOR_COURSE_MAP[norm] || null;
+}
+
 /**
  * Get set of passed course codes from student course record
  */
@@ -20,7 +27,7 @@ export function getPassedCoursesSet(courseList = []) {
   courseList.forEach((c) => {
     const code = normalizeCode(c.courseId || c.course_code);
     const grade = (c.grade || '').toUpperCase();
-    if (code && grade && grade !== 'F' && grade !== 'W' && GRADE_POINTS[grade] >= 1.0) {
+    if (code && grade && grade !== 'F' && grade !== 'W' && (GRADE_POINTS[grade] || 0) >= 1.0) {
       passed.add(code);
     }
   });
@@ -50,7 +57,6 @@ export function calculateUnlockingPower(targetCode, passedSet) {
     const prereqs = (other.prerequisites || []).map(normalizeCode);
     if (prereqs.includes(code)) {
       directUnlockCount++;
-      // Check if this course is the last remaining prerequisite
       const missingCount = prereqs.filter((p) => !passedSet.has(p) && p !== code).length;
       if (missingCount === 0) {
         indirectUnlockCount += 2;
@@ -62,31 +68,41 @@ export function calculateUnlockingPower(targetCode, passedSet) {
 }
 
 /**
- * Check if courses in a basket share identical final exam day and slot
+ * Detect exam slot conflicts and tight exam pairs
  */
 export function detectExamConflicts(courseBasket = []) {
   const conflicts = [];
+  const tightExams = [];
+
   for (let i = 0; i < courseBasket.length; i++) {
     for (let j = i + 1; j < courseBasket.length; j++) {
       const a = courseBasket[i];
       const b = courseBasket[j];
-      if (
-        a.exam_day &&
-        b.exam_day &&
-        a.exam_slot &&
-        b.exam_slot &&
-        a.exam_day === b.exam_day &&
-        a.exam_slot === b.exam_slot
-      ) {
-        conflicts.push({
-          courseA: a.course_code,
-          courseB: b.course_code,
-          slot: `${a.exam_day} (${a.exam_slot})`,
-        });
+      if (a.exam_day && b.exam_day && a.exam_day === b.exam_day) {
+        if (a.exam_slot && b.exam_slot && a.exam_slot === b.exam_slot) {
+          conflicts.push({
+            courseA: a.course_code,
+            courseB: b.course_code,
+            day: a.exam_day,
+            slot: a.exam_slot,
+            desc: `Both ${a.course_code} and ${b.course_code} have final exams on ${a.exam_day} at ${a.exam_slot}`,
+          });
+        } else if (a.exam_slot && b.exam_slot) {
+          const gap = Math.abs(SLOT_ORDER.indexOf(a.exam_slot) - SLOT_ORDER.indexOf(b.exam_slot));
+          if (gap === 1) {
+            tightExams.push({
+              courseA: a.course_code,
+              courseB: b.course_code,
+              day: a.exam_day,
+              slots: `${a.exam_slot} & ${b.exam_slot}`,
+              desc: `Back-to-back exams on ${a.exam_day}: ${a.course_code} (${a.exam_slot}) & ${b.course_code} (${b.exam_slot})`,
+            });
+          }
+        }
       }
     }
   }
-  return conflicts;
+  return { conflicts, tightExams };
 }
 
 /**
@@ -100,14 +116,12 @@ export function generateRecommendedBasket({
 }) {
   const passedSet = getPassedCoursesSet(completedCourses);
 
-  // Find all unlocked, uncompleted courses
   const eligibleCourses = ALL_COURSES.filter((course) => {
     const code = normalizeCode(course.course_code);
     if (passedSet.has(code)) return false;
     return arePrerequisitesMet(course, passedSet);
   });
 
-  // Calculate scores for each eligible course
   const scoredCourses = eligibleCourses.map((course) => {
     const code = normalizeCode(course.course_code);
     const unlockingScore = calculateUnlockingPower(code, passedSet);
@@ -115,16 +129,13 @@ export function generateRecommendedBasket({
 
     let priorityScore = unlockingScore * 4;
 
-    // Prioritize earlier curriculum trimesters
     if (course.trimester) {
       priorityScore += Math.max(0, (12 - course.trimester) * 5);
     }
 
-    // Core course bonus
     if (course.type === 'Core') priorityScore += 25;
     else if (course.type === 'Lab') priorityScore += 15;
 
-    // Major elective bonus if matching selected major
     if (selectedMajor && MAJOR_TRACKS[selectedMajor]) {
       const majorCodes = MAJOR_TRACKS[selectedMajor].courses.map((c) => normalizeCode(c.course_code));
       if (majorCodes.includes(code)) {
@@ -132,11 +143,10 @@ export function generateRecommendedBasket({
       }
     }
 
-    // Difficulty gating based on CGPA
     if (currentCgpa < 2.5 && difficulty === 'hard') {
-      priorityScore -= 40; // Discourage heavy courses on probation
+      priorityScore -= 40;
     } else if (currentCgpa >= 3.5 && difficulty === 'hard') {
-      priorityScore += 10; // High achievers can tackle hard prerequisites early
+      priorityScore += 10;
     }
 
     return {
@@ -147,10 +157,8 @@ export function generateRecommendedBasket({
     };
   });
 
-  // Sort by priority descending
   scoredCourses.sort((a, b) => b.priorityScore - a.priorityScore);
 
-  // Greedy selection under target credit cap without exam slot conflicts
   const basket = [];
   let currentCredits = 0;
   let hardCourseCount = 0;
@@ -159,36 +167,28 @@ export function generateRecommendedBasket({
     const candidateCredit = candidate.credit || 3;
     const diff = (candidate.difficulty || 'Medium').toLowerCase();
 
-    // Workload limit: max 1 hard course if CGPA < 3.0, max 2 if >= 3.0
     if (diff === 'hard' && hardCourseCount >= (currentCgpa >= 3.0 ? 2 : 1)) {
       continue;
     }
 
-    // Credit limit check
     if (currentCredits + candidateCredit > targetCredits + 1.5) {
       continue;
     }
 
-    // Check exam conflict with currently selected basket
     const testBasket = [...basket, candidate];
-    const conflicts = detectExamConflicts(testBasket);
+    const { conflicts } = detectExamConflicts(testBasket);
     if (conflicts.length > 0) {
-      continue; // Skip this candidate to avoid exam clash
+      continue;
     }
 
-    // Add reason tags
     const reasons = [];
     if (candidate.unlockingScore >= 6) {
       reasons.push(`⚡ Key Bottleneck (Unlocks ${Math.round(candidate.unlockingScore / 3)}+ courses)`);
     }
-    if (candidate.type === 'Core') {
-      reasons.push('📘 Required Core');
-    }
-    if (candidate.type === 'Lab') {
-      reasons.push('🧪 Practical Lab');
-    }
+    if (candidate.type === 'Core') reasons.push('📘 Required Core');
+    if (candidate.type === 'Lab') reasons.push('🧪 Practical Lab');
     if (selectedMajor && MAJOR_TRACKS[selectedMajor]?.courses.some((c) => normalizeCode(c.course_code) === normalizeCode(candidate.course_code))) {
-      reasons.push(`🎯 ${selectedMajor} Major Elective`);
+      reasons.push(`🎯 ${selectedMajor} Elective`);
     }
 
     basket.push({
@@ -202,7 +202,6 @@ export function generateRecommendedBasket({
     if (currentCredits >= targetCredits) break;
   }
 
-  // Workload analysis
   let workloadGrade = 'Balanced';
   let workloadColor = 'text-ok';
   if (hardCourseCount >= 2 && currentCredits >= 13) {
@@ -213,6 +212,8 @@ export function generateRecommendedBasket({
     workloadColor = 'text-bad';
   }
 
+  const { conflicts, tightExams } = detectExamConflicts(basket);
+
   return {
     basket,
     totalCredits: currentCredits,
@@ -220,7 +221,222 @@ export function generateRecommendedBasket({
     workloadGrade,
     workloadColor,
     eligibleCount: eligibleCourses.length,
-    examConflicts: detectExamConflicts(basket),
+    examConflicts: conflicts,
+    tightExams,
+  };
+}
+
+/**
+ * Full Multi-Trimester Degree Auto-Planner (Semester by Semester to 138 cr)
+ */
+export function generateFullDegreeRoadmap({
+  completedCourses = [],
+  currentCgpa = 3.0,
+  maxCreditsPerSem = 13.5,
+  selectedMajor = 'Software Engineering',
+}) {
+  const passedSet = new Set(Array.from(getPassedCoursesSet(completedCourses)));
+  const completedCr = Array.from(passedSet).reduce((sum, code) => {
+    const c = findCourse(code);
+    return sum + (c?.credit || 3);
+  }, 0);
+
+  const startSem = Math.min(12, Math.max(1, Math.ceil(completedCr / 12) + 1));
+  const plannedSemesters = [];
+  const plannedCodes = new Set(passedSet);
+
+  const majorElectives = (MAJOR_TRACKS[selectedMajor]?.courses || []).map((c) => ({
+    ...c,
+    category: 'MAJOR_ELECTIVE',
+  }));
+
+  for (let sem = startSem; sem <= 12; sem++) {
+    let semCredits = 0;
+    const semCourses = [];
+
+    // Step 1: Core courses for this curriculum trimester or earlier
+    const uncompletedCore = ALL_COURSES.filter((c) => {
+      const code = normalizeCode(c.course_code);
+      if (plannedCodes.has(code) || c.category === 'MAJOR_ELECTIVE') return false;
+      return arePrerequisitesMet(c, plannedCodes);
+    }).sort((a, b) => {
+      const powerA = calculateUnlockingPower(a.course_code, plannedCodes);
+      const powerB = calculateUnlockingPower(b.course_code, plannedCodes);
+      return powerB - powerA;
+    });
+
+    for (const c of uncompletedCore) {
+      if (semCredits + c.credit <= maxCreditsPerSem) {
+        semCourses.push(c);
+        semCredits += c.credit;
+        plannedCodes.add(normalizeCode(c.course_code));
+      }
+    }
+
+    // Step 2: Major electives if room left
+    for (const c of majorElectives) {
+      const code = normalizeCode(c.course_code);
+      if (plannedCodes.has(code)) continue;
+      if (!arePrerequisitesMet(c, plannedCodes)) continue;
+
+      if (semCredits + c.credit <= maxCreditsPerSem) {
+        semCourses.push(c);
+        semCredits += c.credit;
+        plannedCodes.add(code);
+      }
+    }
+
+    // Step 3: GED open credit electives
+    for (const c of GED_ELECTIVES) {
+      const code = normalizeCode(c.course_code);
+      if (plannedCodes.has(code)) continue;
+      if (semCredits + c.credit <= maxCreditsPerSem) {
+        semCourses.push(c);
+        semCredits += c.credit;
+        plannedCodes.add(code);
+      }
+    }
+
+    if (semCourses.length > 0) {
+      plannedSemesters.push({
+        trimesterNum: sem,
+        title: `Trimester ${sem}`,
+        credits: semCredits,
+        courses: semCourses,
+      });
+    }
+
+    if (plannedCodes.size >= ALL_COURSES.length) break;
+  }
+
+  return plannedSemesters;
+}
+
+/**
+ * Custom Course Schedule Auditor ("Can I Take These Together?")
+ */
+export function auditCustomSchedule({
+  selectedCodes = [],
+  completedCourses = [],
+  currentCgpa = 3.0,
+}) {
+  const passedSet = getPassedCoursesSet(completedCourses);
+  const validCourses = [];
+  const blockedCourses = [];
+  let totalCredits = 0;
+  let hardCount = 0;
+
+  selectedCodes.forEach((rawCode) => {
+    const code = normalizeCode(rawCode);
+    const course = findCourse(code);
+
+    if (!course) {
+      blockedCourses.push({
+        code,
+        reason: 'Course not recognized in curriculum database',
+      });
+      return;
+    }
+
+    if (passedSet.has(code)) {
+      blockedCourses.push({
+        code,
+        course,
+        reason: 'Already passed this course in previous trimester',
+      });
+      return;
+    }
+
+    if (!arePrerequisitesMet(course, passedSet)) {
+      const missing = (course.prerequisites || []).filter(
+        (p) => !passedSet.has(normalizeCode(p))
+      );
+      blockedCourses.push({
+        code,
+        course,
+        missing,
+        reason: `Missing prerequisites: ${missing.join(', ')}`,
+      });
+      return;
+    }
+
+    validCourses.push(course);
+    totalCredits += course.credit || 3;
+    if ((course.difficulty || '').toLowerCase() === 'hard') hardCount++;
+  });
+
+  const { conflicts, tightExams } = detectExamConflicts(validCourses);
+
+  let workloadStatus = 'SAFE';
+  let workloadMsg = 'Balanced workload with safe exam spacing';
+  if (conflicts.length > 0) {
+    workloadStatus = 'CLASH';
+    workloadMsg = 'Critical: Final exam slot collision detected!';
+  } else if (hardCount >= 2 && totalCredits >= 12) {
+    workloadStatus = 'HEAVY';
+    workloadMsg = 'Demanding: 2+ Hard courses in the same trimester';
+  } else if (totalCredits > 15) {
+    workloadStatus = 'OVERLOAD';
+    workloadMsg = 'Overload: Exceeds standard 15-credit load';
+  }
+
+  return {
+    validCourses,
+    blockedCourses,
+    examConflicts: conflicts,
+    tightExams,
+    totalCredits,
+    hardCount,
+    workloadStatus,
+    workloadMsg,
+    isValid: blockedCourses.length === 0 && conflicts.length === 0,
+  };
+}
+
+/**
+ * Recursive Prerequisite Chain Resolver
+ * Finds the entire tree of prerequisites required to unlock a target course
+ */
+export function getPrerequisiteTree(targetCode, completedCourses = []) {
+  const norm = normalizeCode(targetCode);
+  const target = findCourse(norm);
+  if (!target) return null;
+
+  const passedSet = getPassedCoursesSet(completedCourses);
+  const visited = new Set();
+  const chain = [];
+
+  function traverse(code, depth = 0) {
+    const c = findCourse(code);
+    if (!c || visited.has(code)) return;
+    visited.add(code);
+
+    const isTarget = code === norm;
+    const isPassed = passedSet.has(code);
+
+    (c.prerequisites || []).forEach((prereq) => {
+      traverse(normalizeCode(prereq), depth + 1);
+    });
+
+    if (!isTarget) {
+      chain.push({
+        code: c.course_code,
+        name: c.course_name,
+        credit: c.credit,
+        difficulty: c.difficulty,
+        depth,
+        isPassed,
+      });
+    }
+  }
+
+  traverse(norm, 0);
+
+  return {
+    target,
+    isTargetPassed: passedSet.has(norm),
+    arePrereqsMet: arePrerequisitesMet(target, passedSet),
+    prerequisitesList: chain,
   };
 }
 
@@ -256,7 +472,6 @@ export function calculateDegreeTimeline({
     paceColor = 'text-warn';
   }
 
-  // FYDP / Thesis Eligibility Check (UIU requires 100+ credits completed before FYDP I)
   const FYDP_MIN_CREDITS = 100;
   const fydpEligible = safeCompleted >= FYDP_MIN_CREDITS;
   const creditsToFydp = Math.max(0, FYDP_MIN_CREDITS - safeCompleted);
@@ -277,7 +492,7 @@ export function calculateDegreeTimeline({
 }
 
 /**
- * Intelligent Academic Q&A Rule-Engine
+ * Intelligent Academic Q&A Rule-Engine (Offline fallback)
  */
 export function generateAIAnswer(query, context = {}) {
   const q = (query || '').toLowerCase();
@@ -308,4 +523,68 @@ export function generateAIAnswer(query, context = {}) {
   }
 
   return `📚 **Academic Advising Recommendation:** Based on your current CGPA of **${cgpa.toFixed(2)}** and **${completedCr} credits completed**, prioritize clearing all bottleneck prerequisites (Discrete Math, Data Structures, Algorithms) while keeping a balanced mix of 1 Hard Core + 2 Medium Core + 1 Lab to sustain a strong CGPA.`;
+}
+
+/**
+ * Optional Google Gemini 1.5 Flash Connector
+ * Connects directly to Google Generative Language API if user enters an API key
+ */
+export async function queryGeminiAdvisor({ apiKey, prompt, studentContext }) {
+  if (!apiKey || !apiKey.trim()) {
+    throw new Error('Please enter a Google Gemini API Key in the settings field.');
+  }
+
+  const systemInstructions = `
+You are the official AI Academic Advisor for United International University (UIU) in Bangladesh.
+You assist UIU students with curriculum advising, course registration, prerequisite chains, honors graduation, and tuition fee policies.
+
+Official UIU Policies:
+1. Degree Requirements: 138 credits for BSCSE/BBA, 165 for B. Pharm.
+2. Honors Graduation Thresholds:
+   - Summa Cum Laude: CGPA >= 3.90
+   - Magna Cum Laude: CGPA >= 3.80
+   - Cum Laude: CGPA >= 3.75
+   - Academic Probation: CGPA < 2.00 (capped at 9-12 credits/term)
+3. Retake Policy: Grade replacement for C+ or below. New grade replaces old grade in CGPA. Retakes get 50% tuition waiver.
+4. Tuition Waiver: Minimum 9 credits registration required (14 for Pharmacy). Thesis/FYDP has 0% waiver.
+5. FYDP I (CSE 4000A): Requires 100+ completed credits.
+
+Student Context:
+- Current CGPA: ${studentContext.cgpa || 'N/A'}
+- Completed Credits: ${studentContext.completedCredits || 0} cr
+- Completed Courses: ${(studentContext.completedCourseCodes || []).join(', ') || 'None'}
+- Selected Major Track: ${studentContext.selectedMajor || 'General CSE'}
+
+Provide concise, friendly, and structured advice with markdown formatting.
+`;
+
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey.trim()}`;
+
+  const response = await fetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      contents: [
+        {
+          role: 'user',
+          parts: [{ text: `${systemInstructions}\n\nStudent Question:\n${prompt}` }],
+        },
+      ],
+      generationConfig: {
+        temperature: 0.4,
+        maxOutputTokens: 600,
+      },
+    }),
+  });
+
+  if (!response.ok) {
+    const errData = await response.json().catch(() => ({}));
+    throw new Error(errData?.error?.message || `Gemini API error (HTTP ${response.status})`);
+  }
+
+  const data = await response.json();
+  const reply = data?.candidates?.[0]?.content?.parts?.[0]?.text;
+  if (!reply) throw new Error('No response text generated by Gemini.');
+
+  return reply;
 }
