@@ -63,7 +63,7 @@ export function AppContent() {
     return {
       dept: 'regular',
       programCredits: 138,
-      tuitionPerCredit: 5000,
+      tuitionPerCredit: 6500,
       perTrimesterFee: 6500,
     };
   });

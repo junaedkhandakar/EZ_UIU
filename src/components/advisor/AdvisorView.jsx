@@ -24,19 +24,26 @@ import {
   X,
   Plus,
   GitBranch,
+  Bot,
+  Cpu,
+  Globe,
+  ExternalLink,
+  Settings2,
+  RefreshCw,
 } from 'lucide-react';
 import Tabs from '../ui/Tabs';
 import Button from '../ui/Button';
 import Surface from '../ui/Surface';
 import Select from '../ui/Select';
 import {
+  AI_PROVIDERS,
   generateRecommendedBasket,
   generateFullDegreeRoadmap,
   auditCustomSchedule,
   getPrerequisiteTree,
   calculateDegreeTimeline,
   generateAIAnswer,
-  queryGeminiAdvisor,
+  queryUniversalAIAdvisor,
   getPassedCoursesSet,
 } from '../../utils/advisorEngine';
 import { ALL_COURSES, MAJOR_TRACKS } from '../../data/advisorData';
@@ -60,31 +67,79 @@ export default function AdvisorView({
   // Prerequisite Visualizer State
   const [selectedTreeCourse, setSelectedTreeCourse] = useState('CSE 4889');
 
-  // AI Copilot & Gemini Key State
-  const [geminiApiKey, setGeminiApiKey] = useState(() => {
+  // AI Provider & Settings State
+  const [selectedProvider, setSelectedProvider] = useState(() => {
     try {
-      return localStorage.getItem('ez_gemini_api_key') || '';
+      return localStorage.getItem('ez_ai_provider') || 'instant';
     } catch {
-      return '';
+      return 'instant';
     }
   });
-  const [isApiKeyOpen, setIsApiKeyOpen] = useState(false);
+
+  const [providerKeys, setProviderKeys] = useState(() => {
+    try {
+      const saved = localStorage.getItem('ez_ai_keys');
+      if (saved) return JSON.parse(saved);
+      const legacyGemini = localStorage.getItem('ez_gemini_api_key');
+      return { gemini: legacyGemini || '', groq: '', openrouter: '' };
+    } catch {
+      return { gemini: '', groq: '', openrouter: '' };
+    }
+  });
+
+  const [providerModels, setProviderModels] = useState(() => {
+    try {
+      const saved = localStorage.getItem('ez_ai_models');
+      if (saved) return JSON.parse(saved);
+    } catch {}
+    return {
+      gemini: 'gemini-1.5-flash',
+      groq: 'llama-3.3-70b-versatile',
+      openrouter: 'deepseek/deepseek-r1:free',
+      instant: 'mistral',
+    };
+  });
+
+  const [isAiSettingsOpen, setIsAiSettingsOpen] = useState(false);
   const [chatInput, setChatInput] = useState('');
   const [isThinking, setIsThinking] = useState(false);
   const [chatMessages, setChatMessages] = useState([
     {
       role: 'ai',
-      text: "👋 Hello! I'm your **UIU AI Academic Advisor**. Based on your transcript and curriculum requirements, I can recommend your next optimal course basket, verify prerequisite readiness, check exam clashes, and audit your graduation timeline. How can I help you today?",
+      provider: 'UIU Intelligence',
+      text: "👋 Hello! I'm your **UIU AI Academic Advisor**. Based on official university policies and your academic record, I can recommend clash-free course baskets, verify prerequisite readiness, check probation rules, and audit your graduation timeline. How can I help you today?",
     },
   ]);
 
-  const saveApiKey = (key) => {
-    setGeminiApiKey(key);
+  const saveProvider = (provId) => {
+    setSelectedProvider(provId);
     try {
-      localStorage.setItem('ez_gemini_api_key', key.trim());
-      showToast(key.trim() ? 'Gemini API Key saved locally!' : 'API Key removed', 'info');
+      localStorage.setItem('ez_ai_provider', provId);
+      showToast(`AI Provider switched to ${AI_PROVIDERS[provId]?.name}`, 'info');
     } catch {}
   };
+
+  const saveKeyForProvider = (provId, keyVal) => {
+    const updated = { ...providerKeys, [provId]: keyVal };
+    setProviderKeys(updated);
+    try {
+      localStorage.setItem('ez_ai_keys', JSON.stringify(updated));
+      if (provId === 'gemini') {
+        localStorage.setItem('ez_gemini_api_key', keyVal.trim());
+      }
+      showToast(`${AI_PROVIDERS[provId]?.name} API key updated`, 'info');
+    } catch {}
+  };
+
+  const saveModelForProvider = (provId, modelId) => {
+    const updated = { ...providerModels, [provId]: modelId };
+    setProviderModels(updated);
+    try {
+      localStorage.setItem('ez_ai_models', JSON.stringify(updated));
+    } catch {}
+  };
+
+  const activeProviderConfig = AI_PROVIDERS[selectedProvider] || AI_PROVIDERS.instant;
 
   const metrics = useMemo(() => {
     return calculateAcademicMetrics(getEffectiveCourses(courses));
@@ -138,18 +193,19 @@ export default function AdvisorView({
     });
   }, [completedCredits, settings.programCredits]);
 
-  // Major Track Progress Audit
+  // Major Track Progress Audit (Supports 4 electives for Summer 2026+ and 3 for legacy)
   const majorStats = useMemo(() => {
     return Object.entries(MAJOR_TRACKS).map(([name, track]) => {
       const completedInTrack = track.courses.filter((c) =>
         passedCodes.has(c.course_code.toUpperCase())
       );
+      const req = track.minElectives || 4;
       return {
         name,
         track,
         completedCount: completedInTrack.length,
-        requiredCount: 3,
-        isCompleted: completedInTrack.length >= 3,
+        requiredCount: req,
+        isCompleted: completedInTrack.length >= req,
       };
     });
   }, [passedCodes]);
@@ -175,36 +231,46 @@ export default function AdvisorView({
     const newMsgs = [...chatMessages, { role: 'user', text: query }];
     setChatMessages(newMsgs);
     setChatInput('');
+    setIsThinking(true);
 
-    if (geminiApiKey.trim()) {
-      setIsThinking(true);
-      try {
-        const reply = await queryGeminiAdvisor({
-          apiKey: geminiApiKey,
-          prompt: query,
-          studentContext: {
-            cgpa: currentCgpa,
-            completedCredits,
-            completedCourseCodes: Array.from(passedCodes),
-            selectedMajor,
-          },
-        });
-        setChatMessages((prev) => [...prev, { role: 'ai', text: reply }]);
-      } catch (err) {
-        showToast(err.message || 'Gemini error, falling back to rule engine', 'error');
-        const fallback = generateAIAnswer(query, { cgpa: currentCgpa, completedCredits });
-        setChatMessages((prev) => [...prev, { role: 'ai', text: fallback }]);
-      } finally {
-        setIsThinking(false);
-      }
-    } else {
-      setTimeout(() => {
-        const response = generateAIAnswer(query, {
+    const apiKey = providerKeys[selectedProvider] || '';
+    const model = providerModels[selectedProvider] || activeProviderConfig.defaultModel;
+
+    try {
+      const reply = await queryUniversalAIAdvisor({
+        provider: selectedProvider,
+        apiKey,
+        model,
+        prompt: query,
+        studentContext: {
           cgpa: currentCgpa,
           completedCredits,
-        });
-        setChatMessages((prev) => [...prev, { role: 'ai', text: response }]);
-      }, 200);
+          completedCourseCodes: Array.from(passedCodes),
+          selectedMajor,
+        },
+      });
+      setChatMessages((prev) => [
+        ...prev,
+        {
+          role: 'ai',
+          provider: `${activeProviderConfig.name} (${model})`,
+          text: reply,
+        },
+      ]);
+    } catch (err) {
+      showToast(err.message || 'Error communicating with AI provider', 'error');
+      // Automatic smart fallback
+      const fallback = generateAIAnswer(query, { cgpa: currentCgpa, completedCredits });
+      setChatMessages((prev) => [
+        ...prev,
+        {
+          role: 'ai',
+          provider: 'UIU Regulations Engine (Fallback)',
+          text: `${fallback}\n\n*(Error contacting ${activeProviderConfig.name}: ${err.message})*`,
+        },
+      ]);
+    } finally {
+      setIsThinking(false);
     }
   };
 
@@ -230,19 +296,33 @@ export default function AdvisorView({
           </h1>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
+          {/* Multi-AI Provider Selector Button */}
           <button
-            onClick={() => setIsApiKeyOpen(!isApiKeyOpen)}
-            className={`flex items-center gap-1.5 rounded-xl border px-3 py-1.5 text-xs font-semibold shadow-card transition-colors ${
-              geminiApiKey.trim()
-                ? 'border-ok/30 bg-ok/10 text-ok'
-                : 'border-line bg-surface text-ink-3 hover:text-ink'
+            onClick={() => setIsAiSettingsOpen(!isAiSettingsOpen)}
+            className={`flex items-center gap-2 rounded-xl border px-3 py-1.5 text-xs font-semibold shadow-card transition-colors ${
+              isAiSettingsOpen
+                ? 'border-accent bg-accentSoft text-accent'
+                : selectedProvider === 'instant'
+                  ? 'border-accent/40 bg-accentSoft/50 text-accent hover:border-accent'
+                  : providerKeys[selectedProvider]?.trim() || selectedProvider === 'offline'
+                    ? 'border-ok/30 bg-ok/10 text-ok hover:border-ok/50'
+                    : 'border-line bg-surface text-ink-3 hover:text-ink'
             }`}
-            title="Configure Gemini LLM API Key"
+            title="Configure AI Models & Free API Keys"
           >
-            <Key className="h-3.5 w-3.5" />
-            <span>{geminiApiKey.trim() ? 'Gemini Active' : 'Connect Gemini'}</span>
+            {selectedProvider === 'instant' && <Sparkles className="h-3.5 w-3.5 text-accent" />}
+            {selectedProvider === 'gemini' && <Zap className="h-3.5 w-3.5 text-warn" />}
+            {selectedProvider === 'groq' && <Cpu className="h-3.5 w-3.5 text-ok" />}
+            {selectedProvider === 'openrouter' && <Globe className="h-3.5 w-3.5 text-accent2" />}
+            {selectedProvider === 'offline' && <ShieldCheck className="h-3.5 w-3.5 text-ok" />}
+            <span className="font-bold">{activeProviderConfig.name}</span>
+            <span className="rounded bg-surface2 px-1.5 py-0.5 text-[9.5px] font-medium text-ink-3">
+              {activeProviderConfig.badge}
+            </span>
+            <Settings2 className="h-3 w-3 opacity-60" />
           </button>
+
           <div className="flex items-center gap-2 rounded-xl border border-line bg-surface px-3 py-1.5 shadow-card">
             <span className="text-[11px] font-semibold uppercase tracking-wider text-ink-3">CGPA</span>
             <span className="num font-mono text-sm font-bold text-accent">{currentCgpa.toFixed(2)}</span>
@@ -254,36 +334,120 @@ export default function AdvisorView({
         </div>
       </div>
 
-      {/* Gemini API Key Bar */}
-      {isApiKeyOpen && (
-        <Surface className="p-4 border-accent/30 bg-accentSoft">
-          <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
-            <div className="flex-1">
-              <h4 className="text-xs font-bold text-ink flex items-center gap-1.5">
-                <Sparkles className="h-3.5 w-3.5 text-accent" />
-                Optional Google Gemini LLM Integration
-              </h4>
-              <p className="text-[11px] text-ink-3 mt-0.5">
-                Enter your free Google Gemini API key to activate deep natural language advising.
-                Your key is stored securely in your browser's localStorage and never leaves your device.
+      {/* Free AI Models & API Key Settings Drawer */}
+      {isAiSettingsOpen && (
+        <Surface className="p-5 border-accent/30 bg-surface shadow-pop fade-in">
+          <div className="flex items-start justify-between border-b border-line pb-3">
+            <div>
+              <h3 className="text-sm font-bold text-ink flex items-center gap-2">
+                <Bot className="h-4 w-4 text-accent" />
+                Select AI Engine & Free Providers
+              </h3>
+              <p className="text-xs text-ink-3 mt-0.5">
+                Every provider is 100% free. Choose Instant AI for zero-setup, or connect your own free key for higher limits and custom models.
               </p>
             </div>
-            <div className="flex items-center gap-2">
-              <input
-                type="password"
-                value={geminiApiKey}
-                onChange={(e) => saveApiKey(e.target.value)}
-                placeholder="AIzaSy..."
-                className="h-9 w-48 sm:w-64 rounded-xl border border-line bg-surface px-3 font-mono text-xs text-ink outline-none focus:border-accent"
-              />
-              {geminiApiKey && (
+            <button
+              onClick={() => setIsAiSettingsOpen(false)}
+              className="rounded-lg p-1.5 text-ink-3 hover:text-ink"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          </div>
+
+          {/* Provider Grid */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-2.5 mt-4">
+            {Object.values(AI_PROVIDERS).map((prov) => {
+              const isSelected = selectedProvider === prov.id;
+              return (
                 <button
-                  onClick={() => saveApiKey('')}
-                  className="rounded-lg p-2 text-ink-3 hover:text-bad"
-                  title="Clear Key"
+                  key={prov.id}
+                  onClick={() => saveProvider(prov.id)}
+                  className={`flex flex-col items-start p-3 rounded-xl border text-left transition-all ${
+                    isSelected
+                      ? 'border-accent bg-accentSoft shadow-sm ring-2 ring-accent/20'
+                      : 'border-line bg-surface2/50 hover:bg-surface2 hover:border-line-strong'
+                  }`}
                 >
-                  <X className="h-4 w-4" />
+                  <div className="flex items-center justify-between w-full">
+                    <span className="font-bold text-xs text-ink">{prov.name}</span>
+                    {isSelected && <Check className="h-3.5 w-3.5 text-accent" />}
+                  </div>
+                  <span className="text-[10px] font-semibold text-accent mt-0.5">{prov.badge}</span>
+                  <p className="text-[10.5px] text-ink-3 mt-1.5 line-clamp-2 leading-snug">
+                    {prov.description}
+                  </p>
                 </button>
+              );
+            })}
+          </div>
+
+          {/* Active Provider Configuration Bar */}
+          <div className="mt-4 rounded-xl border border-line bg-surface2/40 p-4">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
+              <div className="flex-1">
+                <div className="flex items-center gap-2">
+                  <span className="text-xs font-bold text-ink">
+                    Configuring: {activeProviderConfig.name}
+                  </span>
+                  {activeProviderConfig.keyHelpUrl && (
+                    <a
+                      href={activeProviderConfig.keyHelpUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1 text-[11px] font-bold text-accent hover:underline"
+                    >
+                      {activeProviderConfig.keyHelpLabel} <ExternalLink className="h-3 w-3" />
+                    </a>
+                  )}
+                </div>
+
+                {activeProviderConfig.requiresKey && (
+                  <div className="mt-2 flex items-center gap-2">
+                    <input
+                      type="password"
+                      value={providerKeys[selectedProvider] || ''}
+                      onChange={(e) => saveKeyForProvider(selectedProvider, e.target.value)}
+                      placeholder={activeProviderConfig.keyPlaceholder || 'Enter API Key...'}
+                      className="h-9 flex-1 max-w-md rounded-xl border border-line bg-surface px-3 font-mono text-xs text-ink outline-none focus:border-accent"
+                    />
+                    {providerKeys[selectedProvider] && (
+                      <button
+                        onClick={() => saveKeyForProvider(selectedProvider, '')}
+                        className="rounded-lg p-2 text-ink-3 hover:text-bad"
+                        title="Clear Key"
+                      >
+                        <X className="h-4 w-4" />
+                      </button>
+                    )}
+                  </div>
+                )}
+
+                {!activeProviderConfig.requiresKey && (
+                  <p className="text-xs text-ok mt-1 flex items-center gap-1.5">
+                    <CheckCircle2 className="h-3.5 w-3.5 text-ok" />
+                    Zero setup required! Ready to answer all your academic questions right now.
+                  </p>
+                )}
+              </div>
+
+              {/* Model Selector if Provider has choices */}
+              {activeProviderConfig.models?.length > 1 && (
+                <div className="shrink-0 w-full md:w-64">
+                  <label className="block text-[10.5px] font-semibold uppercase tracking-wider text-ink-3 mb-1">
+                    Select Model
+                  </label>
+                  <Select
+                    value={providerModels[selectedProvider] || activeProviderConfig.defaultModel}
+                    onChange={(e) => saveModelForProvider(selectedProvider, e.target.value)}
+                  >
+                    {activeProviderConfig.models.map((m) => (
+                      <option key={m.id} value={m.id}>
+                        {m.name}
+                      </option>
+                    ))}
+                  </Select>
+                </div>
               )}
             </div>
           </div>
@@ -1012,7 +1176,9 @@ export default function AdvisorView({
               </div>
 
               <div className="mt-4 border-t border-line pt-3 flex items-center justify-between text-xs">
-                <span className="text-ink-3">Rule: Minimum 3 courses required</span>
+                <span className="text-ink-3">
+                  Rule: {requiredCount} courses required for specialization
+                </span>
                 <button
                   onClick={() => {
                     setSelectedMajor(name);
@@ -1040,6 +1206,7 @@ export default function AdvisorView({
               'What are the merit waiver requirements?',
               'What should I take for Data Science track?',
               'How to recover from probation?',
+              'What are the installment deadlines?',
             ].map((chip) => (
               <button
                 key={chip}
@@ -1049,6 +1216,21 @@ export default function AdvisorView({
                 {chip}
               </button>
             ))}
+          </div>
+
+          {/* Active Model Indicator Header */}
+          <div className="flex items-center justify-between px-2 text-xs text-ink-3">
+            <span className="flex items-center gap-1.5">
+              <Bot className="h-3.5 w-3.5 text-accent" />
+              Active AI: <b className="text-ink font-semibold">{activeProviderConfig.name}</b>
+              <span className="text-[11px] text-accent">({providerModels[selectedProvider] || activeProviderConfig.defaultModel})</span>
+            </span>
+            <button
+              onClick={() => setIsAiSettingsOpen(true)}
+              className="text-[11px] text-accent hover:underline flex items-center gap-1 font-semibold"
+            >
+              Change Model / Key <Settings2 className="h-3 w-3" />
+            </button>
           </div>
 
           {/* Chat Messages Log */}
@@ -1070,6 +1252,11 @@ export default function AdvisorView({
                       : 'border border-line bg-surface2/60 text-ink shadow-sm'
                   }`}
                 >
+                  {msg.provider && msg.role === 'ai' && (
+                    <div className="text-[10px] font-bold uppercase tracking-wider text-accent mb-1 opacity-80">
+                      {msg.provider}
+                    </div>
+                  )}
                   <div className="whitespace-pre-line">{msg.text}</div>
                 </div>
               </div>
@@ -1080,7 +1267,7 @@ export default function AdvisorView({
                   <Sparkles className="h-full w-full animate-spin" />
                 </div>
                 <div className="rounded-2xl px-4 py-3 text-xs border border-line bg-surface2/60 text-ink-3 italic">
-                  Gemini is analyzing your UIU academic record…
+                  {activeProviderConfig.name} is consulting UIU curriculum & regulations…
                 </div>
               </div>
             )}

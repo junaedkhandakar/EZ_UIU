@@ -49,7 +49,7 @@ export function TuitionView({ courses = [], settings = {}, defaultDept = 'regula
 
   const [dept, setDept] = useState(defaultDept);
   const [credits, setCredits] = useState(12);
-  const [perCreditFee, setPerCreditFee] = useState(settings.tuitionPerCredit ?? 5000);
+  const [perCreditFee, setPerCreditFee] = useState(settings.tuitionPerCredit ?? 6500);
   const [trimesterFee, setTrimesterFee] = useState(settings.perTrimesterFee ?? 6500);
   const [scholarship, setScholarship] = useState(0);
   const [thesisCredits, setThesisCredits] = useState(0);
@@ -172,6 +172,26 @@ export function TuitionView({ courses = [], settings = {}, defaultDept = 'regula
                   onChange={(e) => setPerCreditFee(parseFloat(e.target.value) || 0)}
                   className={`${inputCls} num font-mono`}
                 />
+                <div className="mt-1.5 flex flex-wrap gap-1">
+                  {[
+                    { label: '৳6,500 (2026 Rate)', val: 6500 },
+                    { label: '৳5,525 (English/MSJ)', val: 5525 },
+                    { label: '৳5,000 (Legacy)', val: 5000 },
+                  ].map((p) => (
+                    <button
+                      key={p.val}
+                      type="button"
+                      onClick={() => setPerCreditFee(p.val)}
+                      className={`rounded px-1.5 py-0.5 text-[9.5px] font-semibold transition-colors ${
+                        perCreditFee === p.val
+                          ? 'bg-accentSoft text-accent border border-accent/30'
+                          : 'bg-surface2 text-ink-3 hover:text-ink border border-line'
+                      }`}
+                    >
+                      {p.label}
+                    </button>
+                  ))}
+                </div>
               </div>
               <div>
                 <label className={labelCls}>Trimester Activity Fee (৳)</label>

@@ -7,22 +7,23 @@ import { DEPT_PROFILES, formatBDT } from './cgpaUtils';
 
 export const SCHOLARSHIP_TIERS = [
   { value: 0, label: '0% — No Waiver' },
-  { value: 0.10, label: '10% Merit Waiver' },
-  { value: 0.20, label: '20% Merit Waiver' },
-  { value: 0.25, label: '25% Merit Waiver' },
-  { value: 0.50, label: '50% Merit / Sibling / Freedom Fighter' },
-  { value: 0.75, label: '75% Merit Waiver' },
-  { value: 1.00, label: '100% Full Free Merit Scholarship' },
+  { value: 0.10, label: '10% — Need-based / Special Waiver' },
+  { value: 0.20, label: '20% — Special Quota Waiver' },
+  { value: 0.25, label: '25% — UIU Merit Scholarship (Next 4% of batch, GPA ≥ 3.50)' },
+  { value: 0.50, label: '50% — UIU Merit Scholarship (Next 4% of batch, GPA ≥ 3.50) / Sibling Waiver' },
+  { value: 0.75, label: '75% — Special Academic Distinction' },
+  { value: 1.00, label: '100% — UIU Full Merit Scholarship (Top 2% of batch, GPA ≥ 3.50) / Freedom Fighter' },
 ];
 
 export function calculateTuitionFees({
   dept = 'regular',
   credits = 12,
-  perCreditFee = 5000,
+  perCreditFee = 6500,
   trimesterFee = 6500,
   scholarshipRate = 0,
   thesisCredits = 0,
   retakeCredits = 0,
+  installmentPlan = 'standard', // 'standard' (40/30/30) or 'deposit' (15k deposit + 40/30/30 of balance)
 }) {
   const profile = DEPT_PROFILES[dept] || DEPT_PROFILES.regular;
   

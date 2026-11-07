@@ -25,7 +25,8 @@ export const DEPT_PROFILES = {
     name: 'Regular Program (CSE, BBA, EEE, etc.)',
     minCgpa: 2.00,
     defaultCredits: 138,
-    defaultTuition: 5000,
+    curriculumOptions: [138, 141],
+    defaultTuition: 6500, // Official UIU rate Tk. 6,500/credit
     trimesterFee: 6500,
     minCreditsForScholarship: 9,
     pace: 12,
@@ -35,8 +36,9 @@ export const DEPT_PROFILES = {
     name: 'Pharmacy (B. Pharm.)',
     minCgpa: 2.50,
     defaultCredits: 165,
-    defaultTuition: 5500,
-    trimesterFee: 6500,
+    curriculumOptions: [165],
+    defaultTuition: 6500,
+    trimesterFee: 9750, // Semester Fee for B. Pharm Tk. 9,750
     minCreditsForScholarship: 14,
     pace: 15,
   },
