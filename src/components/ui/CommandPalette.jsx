@@ -268,7 +268,7 @@ export default function CommandPalette({
             {/* Results List */}
             <div
               ref={listRef}
-              className="max-h-[380px] overflow-y-auto p-2"
+              className="max-h-[380px] overflow-y-auto overscroll-contain p-2"
               role="listbox"
             >
               {items.length === 0 ? (

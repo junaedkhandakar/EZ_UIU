@@ -20,6 +20,20 @@
     --ok: #059669;
     --warn: #d97706;
     --bad: #dc2626;
+
+    /* RGB triplets so Tailwind opacity modifiers (bg-ok/15) work with <alpha-value> */
+    --bg-rgb: 248 249 250;
+    --surface-rgb: 255 255 255;
+    --surface-2-rgb: 241 243 245;
+    --line-rgb: 15 23 42;
+    --text-rgb: 15 23 42;
+    --text-2-rgb: 71 85 105;
+    --text-3-rgb: 148 163 184;
+    --accent-rgb: 79 70 229;
+    --accent-2-rgb: 124 58 237;
+    --ok-rgb: 5 150 105;
+    --warn-rgb: 217 119 6;
+    --bad-rgb: 220 38 38;
     color-scheme: light;
   }
 
@@ -40,6 +54,20 @@
     --ok: #34d399;
     --warn: #fbbf24;
     --bad: #f87171;
+
+    /* RGB triplets so Tailwind opacity modifiers (bg-ok/15) work with <alpha-value> */
+    --bg-rgb: 9 9 12;
+    --surface-rgb: 18 18 23;
+    --surface-2-rgb: 27 27 34;
+    --line-rgb: 255 255 255;
+    --text-rgb: 245 245 247;
+    --text-2-rgb: 161 161 172;
+    --text-3-rgb: 107 107 119;
+    --accent-rgb: 124 127 246;
+    --accent-2-rgb: 167 139 250;
+    --ok-rgb: 52 211 153;
+    --warn-rgb: 251 191 36;
+    --bad-rgb: 248 113 113;
     color-scheme: dark;
   }
 
@@ -161,6 +189,33 @@
 }
 .pop-in {
   animation: popIn 0.22s cubic-bezier(0.2, 0, 0, 1) both;
+}
+
+/* Modal / toast / popover entrances (were referenced but never defined) */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+.fade-in {
+  animation: fadeIn 0.18s ease-out both;
+}
+
+@keyframes slideUpIn {
+  from {
+    opacity: 0;
+    transform: translateY(16px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.slide-up-in {
+  animation: slideUpIn 0.28s cubic-bezier(0.2, 0, 0, 1) both;
 }
 
 @keyframes pulseGlow {

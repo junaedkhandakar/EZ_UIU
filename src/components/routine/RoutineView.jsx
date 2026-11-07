@@ -230,7 +230,7 @@ export function RoutineView() {
                     animate={{ opacity: 1, y: 0, scale: 1 }}
                     exit={{ opacity: 0, y: 4, scale: 0.98 }}
                     transition={{ type: 'spring', stiffness: 500, damping: 30 }}
-                    className="absolute inset-x-0 top-full z-30 mt-1.5 max-h-[280px] overflow-y-auto rounded-xl border border-line bg-surface shadow-pop"
+                    className="absolute inset-x-0 top-full z-30 mt-1.5 max-h-[280px] overflow-y-auto overscroll-contain rounded-xl border border-line bg-surface shadow-pop"
                   >
                     {results.length === 0 ? (
                       <div className="px-3.5 py-3 text-xs text-ink-3">No matches found</div>
@@ -321,7 +321,7 @@ export function RoutineView() {
                             )}
                           </div>
                           <motion.button
-                            whileTap={{ scale: 0.9 }}
+                            whileTap={{ scale: 0.96 }}
                             onClick={() => removeCourse(sel.code)}
                             className="rounded-lg p-1.5 text-ink-3 transition-colors hover:bg-bad/10 hover:text-bad"
                             title={`Remove ${sel.code}`}
@@ -362,7 +362,7 @@ export function RoutineView() {
                   return (
                     <motion.button
                       key={d}
-                      whileTap={{ scale: 0.94 }}
+                      whileTap={{ scale: 0.96 }}
                       onClick={() => toggleDayOff(d)}
                       className={`rounded-xl border px-3 py-1.5 text-xs font-bold transition-colors ${
                         on
@@ -416,7 +416,7 @@ export function RoutineView() {
                 transition={{ type: 'spring', stiffness: 400, damping: 25 }}
                 className="grid grid-cols-2 gap-3 sm:grid-cols-4"
               >
-                <Surface hover className="border-accent/25 bg-accentSoft/30 p-3.5 text-center">
+                <Surface hover className="border-accent/25 bg-accentSoft p-3.5 text-center">
                   <div className="text-[9.5px] font-bold uppercase tracking-[0.1em] text-accent">
                     Fit score
                   </div>
@@ -469,12 +469,12 @@ export function RoutineView() {
                 {solvedOptions.map((opt, i) => (
                   <motion.button
                     key={i}
-                    whileTap={{ scale: 0.94 }}
+                    whileTap={{ scale: 0.96 }}
                     onClick={() => {
                       setOptionIndex(i);
                       applyOption(opt);
                     }}
-                    className={`shrink-0 rounded-xl border px-3 py-1.5 text-[11.5px] font-bold transition-all ${
+                    className={`shrink-0 rounded-xl border px-3 py-1.5 text-[11.5px] font-bold transition-[color,background-color,border-color,transform] duration-150 ease-out ${
                       optionIndex === i
                         ? 'border-accent bg-accentSoft text-accent'
                         : 'border-line bg-surface2/70 text-ink-2 hover:text-ink'

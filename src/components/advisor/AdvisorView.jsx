@@ -256,7 +256,7 @@ export default function AdvisorView({
 
       {/* Gemini API Key Bar */}
       {isApiKeyOpen && (
-        <Surface className="p-4 border-accent/30 bg-accentSoft/30">
+        <Surface className="p-4 border-accent/30 bg-accentSoft">
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
             <div className="flex-1">
               <h4 className="text-xs font-bold text-ink flex items-center gap-1.5">
@@ -313,7 +313,7 @@ export default function AdvisorView({
                       <button
                         key={cr}
                         onClick={() => setTargetCredits(cr)}
-                        className={`rounded-xl border py-2 text-xs font-bold transition-all ${
+                        className={`rounded-xl border py-2 text-xs font-bold transition-colors duration-150 ${
                           targetCredits === cr
                             ? 'border-accent bg-accentSoft text-accent'
                             : 'border-line bg-surface2/60 text-ink-3 hover:text-ink'
@@ -708,7 +708,7 @@ export default function AdvisorView({
                       <button
                         key={code}
                         onClick={() => setSelectedTreeCourse(code)}
-                        className={`rounded-lg border px-2 py-1 text-xs font-mono font-bold transition-all ${
+                        className={`rounded-lg border px-2 py-1 text-xs font-mono font-bold transition-colors duration-150 ${
                           selectedTreeCourse === code
                             ? 'border-accent bg-accentSoft text-accent'
                             : 'border-line bg-surface2 text-ink-2 hover:text-ink'
@@ -902,7 +902,7 @@ export default function AdvisorView({
                 </div>
                 <div className="h-2.5 rounded-full bg-surface2 overflow-hidden">
                   <div
-                    className="h-full bg-gradient-to-r from-accent to-accent2 transition-all duration-700"
+                    className="h-full bg-gradient-to-r from-accent to-accent2 transition-[width] duration-700"
                     style={{ width: `${Math.min(100, (timeline.safeCompleted / 100) * 100)}%` }}
                   />
                 </div>
@@ -1044,7 +1044,7 @@ export default function AdvisorView({
               <button
                 key={chip}
                 onClick={() => handleSendQuery(chip)}
-                className="rounded-xl border border-line bg-surface px-3 py-1.5 text-xs font-semibold text-ink-2 shadow-sm transition-all hover:border-accent hover:text-accent active:scale-95"
+                className="rounded-xl border border-line bg-surface px-3 py-1.5 text-xs font-semibold text-ink-2 shadow-sm transition-[color,background-color,border-color,transform] duration-150 ease-out hover:border-accent hover:text-accent active:scale-[0.96]"
               >
                 {chip}
               </button>
@@ -1052,7 +1052,7 @@ export default function AdvisorView({
           </div>
 
           {/* Chat Messages Log */}
-          <Surface className="p-4 sm:p-5 min-h-[340px] max-h-[500px] overflow-y-auto space-y-4">
+          <Surface className="p-4 sm:p-5 min-h-[340px] max-h-[500px] overflow-y-auto overscroll-contain space-y-4">
             {chatMessages.map((msg, i) => (
               <div
                 key={i}

@@ -2,7 +2,7 @@ export default function Stat({ label, value, sub, className = '', accent = false
   return (
     <div
       className={`rounded-2xl border p-4 sm:p-5 ${
-        accent ? 'border-accent/25 bg-accentSoft/40' : 'border-line bg-surface'
+        accent ? 'border-accent/25 bg-accentSoft' : 'border-line bg-surface'
       } shadow-card ${className}`}
     >
       <div className="text-[10.5px] font-semibold uppercase tracking-[0.09em] text-ink-3">

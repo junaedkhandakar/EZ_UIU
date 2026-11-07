@@ -141,7 +141,7 @@ export function AddCourseModal({ isOpen, onClose, onAddCourse, defaultTerm = '25
               <button
                 type="button"
                 onClick={() => setGrade('')}
-                className={`h-9.5 rounded-xl border px-3 text-xs font-bold transition-all active:scale-95 ${
+                className={`h-[38px] rounded-xl border px-3 text-xs font-bold transition-[color,background-color,border-color,transform] duration-150 ease-out active:scale-[0.96] ${
                   grade === ''
                     ? 'border-accent bg-accentSoft text-accent'
                     : 'border-line bg-surface2/70 text-ink-3 hover:text-ink'
@@ -154,7 +154,7 @@ export function AddCourseModal({ isOpen, onClose, onAddCourse, defaultTerm = '25
                   key={g}
                   type="button"
                   onClick={() => setGrade(g)}
-                  className={`num h-9.5 w-9 rounded-xl border text-xs font-bold transition-all active:scale-95 ${
+                  className={`num h-[38px] w-9 rounded-xl border text-xs font-bold transition-[color,background-color,border-color,transform] duration-150 ease-out active:scale-[0.96] ${
                     grade === g
                       ? 'border-accent bg-accentSoft text-accent'
                       : 'border-line bg-surface2/70 text-ink-2 hover:text-ink'

@@ -30,7 +30,7 @@ export default function Sidebar({ active, onChange, onOpenCommandPalette }) {
       <div className="flex items-center gap-3 px-5 pb-5 pt-6">
         <motion.div
           whileHover={{ scale: 1.05, rotate: -4 }}
-          whileTap={{ scale: 0.95 }}
+          whileTap={{ scale: 0.96 }}
           className="rounded-xl bg-gradient-to-br from-accent to-accent2 p-2 shadow-[0_4px_16px_-4px_var(--accent)]"
         >
           <GraduationCap className="h-5 w-5 text-white" strokeWidth={2.4} />

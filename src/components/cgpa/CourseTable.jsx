@@ -81,7 +81,7 @@ export function CourseTable({
       <div className="flex flex-wrap items-center gap-2">
         <button
           onClick={() => setStatus('ALL')}
-          className={`flex items-center gap-1.5 rounded-xl border px-3 py-1.5 text-xs font-semibold transition-all ${
+          className={`flex items-center gap-1.5 rounded-xl border px-3 py-1.5 text-xs font-semibold transition-colors duration-150 ${
             status === 'ALL'
               ? 'border-accent bg-accentSoft text-accent'
               : 'border-line bg-surface text-ink-3 hover:text-ink'
@@ -91,7 +91,7 @@ export function CourseTable({
         </button>
         <button
           onClick={() => setStatus('IN_CGPA')}
-          className={`flex items-center gap-1.5 rounded-xl border px-3 py-1.5 text-xs font-semibold transition-all ${
+          className={`flex items-center gap-1.5 rounded-xl border px-3 py-1.5 text-xs font-semibold transition-colors duration-150 ${
             status === 'IN_CGPA'
               ? 'border-ok/40 bg-ok/10 text-ok'
               : 'border-line bg-surface text-ink-3 hover:text-ink'
@@ -101,7 +101,7 @@ export function CourseTable({
         </button>
         <button
           onClick={() => setStatus('RUNNING')}
-          className={`flex items-center gap-1.5 rounded-xl border px-3 py-1.5 text-xs font-semibold transition-all ${
+          className={`flex items-center gap-1.5 rounded-xl border px-3 py-1.5 text-xs font-semibold transition-colors duration-150 ${
             status === 'RUNNING'
               ? 'border-accent/40 bg-accentSoft text-accent'
               : 'border-line bg-surface text-ink-3 hover:text-ink'
@@ -112,7 +112,7 @@ export function CourseTable({
         {counts.failed > 0 && (
           <button
             onClick={() => setStatus('FAILED')}
-            className={`flex items-center gap-1.5 rounded-xl border px-3 py-1.5 text-xs font-semibold transition-all ${
+            className={`flex items-center gap-1.5 rounded-xl border px-3 py-1.5 text-xs font-semibold transition-colors duration-150 ${
               status === 'FAILED'
                 ? 'border-bad/40 bg-bad/10 text-bad'
                 : 'border-line bg-surface text-ink-3 hover:text-ink'
@@ -132,7 +132,7 @@ export function CourseTable({
             placeholder="Search code (e.g. CSE 1115), title or term…"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="h-9.5 w-full rounded-xl border border-line bg-surface py-2 pl-9 pr-8 text-[13px] text-ink placeholder-ink-3 transition-colors hover:border-line-strong focus:outline-none focus:ring-2 focus:ring-accent/40"
+            className="h-[38px] w-full rounded-xl border border-line bg-surface py-2 pl-9 pr-8 text-[13px] text-ink placeholder-ink-3 transition-colors hover:border-line-strong focus:outline-none focus:ring-2 focus:ring-accent/40"
           />
           {search && (
             <button
@@ -271,7 +271,7 @@ export function CourseTable({
                       <td className="px-2 py-3 text-right">
                         <button
                           onClick={() => onDeleteCourse(c.id)}
-                          className="rounded-lg p-1.5 text-ink-3 opacity-0 transition-all hover:bg-bad/10 hover:text-bad group-hover:opacity-100"
+                          className="rounded-lg p-1.5 text-ink-3 opacity-0 transition-[opacity,color,background-color] duration-150 hover:bg-bad/10 hover:text-bad group-hover:opacity-100"
                           title="Delete course"
                         >
                           <Trash2 className="h-3.5 w-3.5" />

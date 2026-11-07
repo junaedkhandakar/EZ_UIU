@@ -367,7 +367,7 @@ export function TuitionView({ courses = [], settings = {}, defaultDept = 'regula
                 <div className="flex items-center justify-center gap-2">
                   <motion.div
                     whileHover={{ scale: 1.08, rotate: 3 }}
-                    whileTap={{ scale: 0.95 }}
+                    whileTap={{ scale: 0.96 }}
                     className="w-fit rounded-xl bg-gradient-to-br from-accent to-accent2 p-2.5 shadow-[0_4px_16px_-4px_var(--accent)]"
                   >
                     <Receipt className="h-5 w-5 text-white" strokeWidth={2.2} />

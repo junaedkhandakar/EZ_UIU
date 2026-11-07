@@ -10,9 +10,14 @@ export default function Surface({
 }) {
   const cardRef = useRef(null);
   const [mousePos, setMousePos] = useState({ x: 0, y: 0, opacity: 0 });
+  // Spotlight is a hover-only effect: on touch it would latch after a tap
+  const canHover = useRef(
+    typeof window !== 'undefined' &&
+      window.matchMedia('(hover: hover) and (pointer: fine)').matches
+  );
 
   const handleMouseMove = (e) => {
-    if (!spotlight || !cardRef.current) return;
+    if (!spotlight || !canHover.current || !cardRef.current) return;
     const rect = cardRef.current.getBoundingClientRect();
     setMousePos({
       x: e.clientX - rect.left,
@@ -22,7 +27,7 @@ export default function Surface({
   };
 
   const handleMouseLeave = () => {
-    if (!spotlight) return;
+    if (!spotlight || !canHover.current) return;
     setMousePos((prev) => ({ ...prev, opacity: 0 }));
   };
 

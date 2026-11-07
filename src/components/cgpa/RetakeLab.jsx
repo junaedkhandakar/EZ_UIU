@@ -49,7 +49,7 @@ export function RetakeLab({ courses = [], effectiveCourses = [] }) {
           </div>
         </div>
 
-        <div className="relative rounded-2xl border border-accent/30 bg-accentSoft/40 p-5 shadow-card">
+        <div className="relative rounded-2xl border border-accent/30 bg-accentSoft p-5 shadow-card">
           <div className="flex items-center gap-1.5 text-[10.5px] font-semibold uppercase tracking-[0.09em] text-accent">
             <Sparkles className="h-3 w-3" />
             Projected
@@ -126,7 +126,7 @@ export function RetakeLab({ courses = [], effectiveCourses = [] }) {
                 <li
                   key={c.id}
                   className={`flex flex-wrap items-center gap-3 px-4 py-3 transition-colors ${
-                    on ? 'bg-accentSoft/30' : 'hover:bg-surface2/40'
+                    on ? 'bg-accentSoft' : 'hover:bg-surface2/40'
                   }`}
                 >
                   {/* toggle */}
@@ -139,7 +139,7 @@ export function RetakeLab({ courses = [], effectiveCourses = [] }) {
                         return n;
                       })
                     }
-                    className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-md border transition-all active:scale-90 ${
+                    className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-md border transition-[border-color,transform] duration-150 ease-out active:scale-[0.96] ${
                       on ? 'border-accent bg-accent' : 'border-line-strong bg-surface2 hover:border-ink-3'
                     }`}
                     aria-label={`Toggle retake for ${c.courseId}`}

@@ -11,7 +11,7 @@ export function MobileTopBar({ onOpenCommandPalette }) {
       <div className="flex items-center gap-2.5">
         <motion.div
           whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
+          whileTap={{ scale: 0.96 }}
           className="rounded-lg bg-gradient-to-br from-accent to-accent2 p-1.5 shadow-[0_2px_8px_-2px_var(--accent)]"
         >
           <GraduationCap className="h-4 w-4 text-white" strokeWidth={2.4} />
@@ -25,7 +25,7 @@ export function MobileTopBar({ onOpenCommandPalette }) {
       </div>
       <div className="flex items-center gap-1.5">
         <motion.button
-          whileTap={{ scale: 0.92 }}
+          whileTap={{ scale: 0.96 }}
           onClick={onOpenCommandPalette}
           className="rounded-xl border border-line bg-surface/70 p-2 text-ink-2 transition-colors hover:text-ink"
           aria-label="Open Command Palette"
@@ -35,7 +35,7 @@ export function MobileTopBar({ onOpenCommandPalette }) {
         <motion.button
           id="mobile-theme-toggle"
           aria-label="Toggle theme"
-          whileTap={{ scale: 0.92 }}
+          whileTap={{ scale: 0.96 }}
           onClick={toggle}
           className="cursor-pointer rounded-xl border border-line bg-surface/70 p-2 text-ink-2 transition-colors hover:text-ink"
         >

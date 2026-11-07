@@ -79,7 +79,7 @@ export function TargetPlanner({ courses = [], totalDegreeCredits = 138 }) {
             <button
               key={p.value}
               onClick={() => setTarget(p.value)}
-              className={`rounded-lg border px-2.5 py-1.5 text-[11px] font-semibold transition-all active:scale-95 ${
+              className={`rounded-lg border px-2.5 py-1.5 text-[11px] font-semibold transition-[color,background-color,border-color,transform] duration-150 ease-out active:scale-[0.96] ${
                 Math.abs(target - p.value) < 0.005
                   ? 'border-accent bg-accent text-white'
                   : 'border-line bg-surface2/70 text-ink-2 hover:text-ink'
@@ -110,7 +110,7 @@ export function TargetPlanner({ courses = [], totalDegreeCredits = 138 }) {
       <div className="rounded-2xl border border-line bg-surface p-5 shadow-card lg:col-span-5">
         <h3 className="text-[15px] font-bold tracking-tight text-ink">Required pace</h3>
 
-        <div className="mt-4 rounded-2xl border border-accent/25 bg-accentSoft/40 p-4 text-center">
+        <div className="mt-4 rounded-2xl border border-accent/25 bg-accentSoft p-4 text-center">
           <div className="text-[10.5px] font-semibold uppercase tracking-[0.09em] text-accent">
             Needed GPA per trimester
           </div>

@@ -2,7 +2,7 @@ export default function Select({ className = '', children, ...rest }) {
   return (
     <div className={`relative ${className}`}>
       <select
-        className="h-9.5 w-full cursor-pointer appearance-none rounded-xl border border-line bg-surface2/70 py-2 pl-3 pr-8 text-[13px] font-medium text-ink transition-colors hover:border-line-strong focus:outline-none focus:ring-2 focus:ring-accent/40"
+        className="h-[38px] w-full cursor-pointer appearance-none rounded-xl border border-line bg-surface2/70 py-2 pl-3 pr-8 text-[13px] font-medium text-ink transition-colors hover:border-line-strong focus:outline-none focus:ring-2 focus:ring-accent/40"
         {...rest}
       >
         {children}

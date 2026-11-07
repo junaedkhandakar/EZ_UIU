@@ -33,7 +33,7 @@ export default function Modal({ open, onClose, title, sub, width = 'max-w-lg', c
             <X className="h-4 w-4" />
           </button>
         </div>
-        <div className="max-h-[calc(92dvh-64px)] overflow-y-auto p-5">{children}</div>
+        <div className="max-h-[calc(92dvh-64px)] overflow-y-auto overscroll-contain p-5">{children}</div>
       </div>
     </div>
   );

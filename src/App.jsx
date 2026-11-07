@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { AnimatePresence, motion } from 'motion/react';
+import { AnimatePresence, motion, MotionConfig } from 'motion/react';
 import { ThemeProvider } from './context/ThemeContext';
 import { ToastProvider, useToast } from './context/ToastContext';
 import Sidebar from './components/layout/Sidebar';
@@ -161,10 +161,12 @@ export function AppContent() {
 
 export default function App() {
   return (
-    <ThemeProvider>
-      <ToastProvider>
-        <AppContent />
-      </ToastProvider>
-    </ThemeProvider>
+    <MotionConfig reducedMotion="user">
+      <ThemeProvider>
+        <ToastProvider>
+          <AppContent />
+        </ToastProvider>
+      </ThemeProvider>
+    </MotionConfig>
   );
 }

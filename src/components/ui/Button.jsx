@@ -3,7 +3,7 @@ import { motion } from 'motion/react';
 
 const SIZES = {
   sm: 'h-8 px-3 text-[12.5px] gap-1.5 rounded-lg',
-  md: 'h-9.5 px-4 text-[13px] gap-2 rounded-xl py-2',
+  md: 'h-[38px] px-4 text-[13px] gap-2 rounded-xl py-2',
   lg: 'h-11 px-5 text-sm gap-2 rounded-xl',
   icon: 'h-9 w-9 rounded-xl',
 };

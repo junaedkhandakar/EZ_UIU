@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
 import confetti from 'canvas-confetti';
-import { motion, AnimatePresence } from 'motion/react';
+import { motion } from 'motion/react';
 import {
   Upload,
   Download,
@@ -229,14 +229,13 @@ export function CgpaView({
 
       <Tabs tabs={tabs} value={tab} onChange={setTab} layoutId="cgpa-subtabs" />
 
-      {/* ================= TAB PANELS WITH ANIMATION ================= */}
-      <AnimatePresence mode="wait" initial={false}>
+      {/* ================= TAB PANELS (instant swap + CSS/motion entrance) ================= */}
+      {/* AnimatePresence mode="wait" removed: it deadlocked panel swaps (same fix as main tabs, cb888c8) */}
         {tab === 'overview' && (
           <motion.div
             key="overview"
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -6 }}
             transition={{ type: 'spring', stiffness: 450, damping: 30 }}
             className="flex flex-col gap-4"
           >
@@ -379,7 +378,6 @@ export function CgpaView({
             key="courses"
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -6 }}
             transition={{ type: 'spring', stiffness: 450, damping: 30 }}
           >
             <CourseTable
@@ -399,7 +397,6 @@ export function CgpaView({
             key="retake"
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -6 }}
             transition={{ type: 'spring', stiffness: 450, damping: 30 }}
           >
             <RetakeLab courses={courses} effectiveCourses={effective} />
@@ -411,7 +408,6 @@ export function CgpaView({
             key="target"
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -6 }}
             transition={{ type: 'spring', stiffness: 450, damping: 30 }}
           >
             <TargetPlanner courses={courses} totalDegreeCredits={programCredits} />
@@ -423,7 +419,6 @@ export function CgpaView({
             key="probation"
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -6 }}
             transition={{ type: 'spring', stiffness: 450, damping: 30 }}
           >
             <ProbationRecovery courses={courses} minCgpa={deptConfig.minCgpa} dept={settings.dept} />
@@ -435,7 +430,6 @@ export function CgpaView({
             key="settings"
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -6 }}
             transition={{ type: 'spring', stiffness: 450, damping: 30 }}
             className="grid grid-cols-1 gap-4 lg:grid-cols-2"
           >
@@ -501,7 +495,6 @@ export function CgpaView({
             </Surface>
           </motion.div>
         )}
-      </AnimatePresence>
 
       <AddCourseModal
         isOpen={addOpen}
