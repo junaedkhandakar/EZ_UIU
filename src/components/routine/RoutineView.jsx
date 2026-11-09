@@ -19,7 +19,7 @@ import Empty from '../ui/Empty';
 import Timetable from './Timetable';
 import UcamRoutineUploadModal from './UcamRoutineUploadModal';
 import { useToast } from '../../context/ToastContext';
-import { CALENDARS_DATA } from '../../data/calendarData';
+import { CALENDARS_DATA, CALENDAR_SOURCE } from '../../data/calendarData';
 import {
   searchCourses,
   solveRoutine,
@@ -68,6 +68,17 @@ export function RoutineView() {
     () => CALENDARS_DATA.find((c) => c.id === calId) || CALENDARS_DATA[0],
     [calId]
   );
+  const calendarFetched = useMemo(() => {
+    try {
+      return new Date(CALENDAR_SOURCE.fetchedAt).toLocaleDateString('en-US', {
+        month: 'short',
+        day: 'numeric',
+        year: 'numeric',
+      });
+    } catch {
+      return '';
+    }
+  }, []);
 
   const activeSections = useMemo(() => {
     const list = [];
@@ -109,11 +120,6 @@ export function RoutineView() {
     setSolvedOptions([]);
     showToast(`Removed ${code}`, 'info');
   };
-
-  const pickSection = (code, sectionId) =>
-    setSelectedCourses((prev) =>
-      prev.map((c) => (c.code === code ? { ...c, sectionId: sectionId || null } : c))
-    );
 
   const applyOption = (option) => {
     if (!option) return;
@@ -185,7 +191,12 @@ export function RoutineView() {
             Routine Builder
           </h1>
           <p className="mt-0.5 text-xs text-ink-3">
-            {activeCalendar ? `${activeCalendar.term} ${activeCalendar.year}` : 'Fall 2026'} · Conflict-free timetable solver
+            {activeCalendar
+              ? `${activeCalendar.term} ${activeCalendar.year}`.replace(/\b\w/g, (ch) => ch.toUpperCase())
+              : 'Fall 2026'}{' '}
+            · Conflict-free timetable solver · Calendar fetched from{' '}
+            <span className="font-semibold text-ink-2">uiu.ac.bd</span>
+            {calendarFetched ? ` (${calendarFetched})` : ''}
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
@@ -310,7 +321,6 @@ export function RoutineView() {
                 <AnimatePresence initial={false}>
                   {selectedCourses.map((sel) => {
                     const meta = COURSE_BY_CODE[sel.code] || {};
-                    const secs = SECTIONS_BY_CODE[sel.code] || [];
                     const activeSec = sel.sectionId ? SECTION_BY_ID[sel.sectionId] : null;
                     return (
                       <motion.li
@@ -346,18 +356,7 @@ export function RoutineView() {
                             <Trash2 className="h-3.5 w-3.5" />
                           </motion.button>
                         </div>
-                        <Select
-                          value={sel.sectionId || ''}
-                          onChange={(e) => pickSection(sel.code, e.target.value)}
-                          className="mt-2"
-                        >
-                          <option value="">Auto — let solver decide</option>
-                          {secs.map((s) => (
-                            <option key={s.id} value={s.id}>
-                              {sectionSummary(s)}
-                            </option>
-                          ))}
-                        </Select>
+
                       </motion.li>
                     );
                   })}
