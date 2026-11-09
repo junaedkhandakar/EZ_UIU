@@ -56,13 +56,8 @@ const FACULTY_DESIGNATIONS = [
 
 const DOC_TYPES = [
   { id: 'assignment', label: 'Assignment', icon: '📝', defaultTitle: 'Assignment' },
-  { id: 'lab', label: 'Lab Report', icon: '🧪', defaultTitle: 'Lab Report' },
   { id: 'project', label: 'Project Report', icon: '📊', defaultTitle: 'Project Report' },
-  { id: 'termpaper', label: 'Term Paper', icon: '📚', defaultTitle: 'Term Paper' },
-  { id: 'thesis', label: 'Thesis / Internship', icon: '🎓', defaultTitle: 'Thesis Report' },
-  { id: 'presentation', label: 'Presentation Report', icon: '🎤', defaultTitle: 'Presentation' },
-  { id: 'answer', label: 'Answer Script', icon: '✍️', defaultTitle: 'Answer Script' },
-  { id: 'labindex', label: 'Lab Index Page', icon: '🗂️', defaultTitle: 'Lab Index' },
+  { id: 'lab', label: 'Lab Report', icon: '🧪', defaultTitle: 'Lab Report' },
 ];
 
 export default function CoverPageView() {
@@ -92,20 +87,13 @@ export default function CoverPageView() {
     { name: 'Md. Junaed Khandakar', id: '0112330072', section: 'C', program: 'B.Sc. in Computer Science and Engineering' },
   ]);
 
-  // Lab Index specific experiments
-  const [indexRows, setIndexRows] = useState([
-    { name: 'Familiarization with Operating System Commands', date: '2026-10-28', page: '1-6' },
-    { name: 'Implementation of CPU Scheduling Algorithms (FCFS, SJF)', date: '2026-11-04', page: '7-14' },
-    { name: 'Thread Synchronization and Deadlock Avoidance', date: '2026-11-11', page: '15-22' },
-  ]);
-
   // Load saved progress from localStorage
   useEffect(() => {
     try {
       const saved = localStorage.getItem(STORAGE_COVERPAGE_KEY);
       if (saved) {
         const d = JSON.parse(saved);
-        if (d.docType) setDocType(d.docType);
+        if (d.docType && DOC_TYPES.some((t) => t.id === d.docType)) setDocType(d.docType);
         if (d.template) setTemplate(d.template);
         if (d.docNumber) setDocNumber(d.docNumber);
         if (d.topicTitle) setTopicTitle(d.topicTitle);
@@ -119,7 +107,6 @@ export default function CoverPageView() {
         if (d.facultyDept) setFacultyDept(d.facultyDept);
         if (d.isGroup !== undefined) setIsGroup(d.isGroup);
         if (d.students?.length) setStudents(d.students);
-        if (d.indexRows?.length) setIndexRows(d.indexRows);
       }
     } catch {}
   }, []);
@@ -142,7 +129,6 @@ export default function CoverPageView() {
         facultyDept,
         isGroup,
         students,
-        indexRows,
       };
       localStorage.setItem(STORAGE_COVERPAGE_KEY, JSON.stringify(payload));
     } catch {}
@@ -161,7 +147,6 @@ export default function CoverPageView() {
     facultyDept,
     isGroup,
     students,
-    indexRows,
   ]);
 
   const activeDocConfig = useMemo(
@@ -189,25 +174,6 @@ export default function CoverPageView() {
     const updated = [...students];
     updated[idx][field] = val;
     setStudents(updated);
-  };
-
-  const handleAddIndexRow = () => {
-    if (indexRows.length >= 15) {
-      showToast('Maximum 15 experiments on one page', 'info');
-      return;
-    }
-    setIndexRows([...indexRows, { name: '', date: submissionDate, page: '' }]);
-  };
-
-  const handleRemoveIndexRow = (idx) => {
-    if (indexRows.length <= 1) return;
-    setIndexRows(indexRows.filter((_, i) => i !== idx));
-  };
-
-  const handleIndexRowChange = (idx, field, val) => {
-    const updated = [...indexRows];
-    updated[idx][field] = val;
-    setIndexRows(updated);
   };
 
   const handleSelectCatalogCourse = (code) => {
@@ -322,7 +288,7 @@ export default function CoverPageView() {
               </div>
             </div>
 
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5">
+            <div className="grid grid-cols-3 gap-1.5">
               {DOC_TYPES.map((dt) => (
                 <button
                   key={dt.id}
@@ -340,9 +306,8 @@ export default function CoverPageView() {
               ))}
             </div>
 
-            {/* Template Selector (only if not lab index) */}
-            {docType !== 'labindex' && (
-              <div className="pt-2 border-t border-line">
+            {/* Template Selector */}
+            <div className="pt-2 border-t border-line">
                 <label className="block text-[10.5px] font-semibold text-ink-3 uppercase tracking-wider mb-1.5">
                   Design Template
                 </label>
@@ -368,8 +333,7 @@ export default function CoverPageView() {
                     </button>
                   ))}
                 </div>
-              </div>
-            )}
+            </div>
           </Surface>
 
           {/* Course Details */}
@@ -593,53 +557,6 @@ export default function CoverPageView() {
               ))}
             </div>
           </Surface>
-
-          {/* Lab Index Row Manager (if docType === 'labindex') */}
-          {docType === 'labindex' && (
-            <Surface className="space-y-3">
-              <div className="flex items-center justify-between border-b border-line pb-2.5">
-                <h3 className="text-sm font-bold text-ink">Lab Index Experiments</h3>
-                <button
-                  type="button"
-                  onClick={handleAddIndexRow}
-                  className="text-xs font-bold text-accent hover:underline flex items-center gap-1"
-                >
-                  <Plus className="h-3 w-3" /> Add Experiment
-                </button>
-              </div>
-
-              <div className="space-y-2 max-h-60 overflow-y-auto">
-                {indexRows.map((row, rIdx) => (
-                  <div key={rIdx} className="flex items-center gap-2 text-xs">
-                    <span className="w-5 text-center font-bold text-ink-3">{rIdx + 1}</span>
-                    <input
-                      type="text"
-                      value={row.name}
-                      onChange={(e) => handleIndexRowChange(rIdx, 'name', e.target.value)}
-                      placeholder="Experiment Name"
-                      className="h-8 flex-1 rounded-lg border border-line bg-surface px-2 text-xs text-ink outline-none focus:border-accent"
-                    />
-                    <input
-                      type="text"
-                      value={row.page}
-                      onChange={(e) => handleIndexRowChange(rIdx, 'page', e.target.value)}
-                      placeholder="Page"
-                      className="h-8 w-16 rounded-lg border border-line bg-surface px-2 text-xs text-ink outline-none focus:border-accent font-mono text-center"
-                    />
-                    {indexRows.length > 1 && (
-                      <button
-                        type="button"
-                        onClick={() => handleRemoveIndexRow(rIdx)}
-                        className="p-1 text-ink-3 hover:text-bad"
-                      >
-                        <Trash2 className="h-3.5 w-3.5" />
-                      </button>
-                    )}
-                  </div>
-                ))}
-              </div>
-            </Surface>
-          )}
         </div>
 
         {/* ================= RIGHT: LIVE TRUE A4 PRINT PREVIEW ================= */}
@@ -664,7 +581,7 @@ export default function CoverPageView() {
             }}
           >
             {/* Template Variant 1: CLASSIC (Official Faculty Standard) */}
-            {docType !== 'labindex' && template === 'classic' && (
+            {template === 'classic' && (
               <div className="h-full flex flex-col justify-between">
                 {/* Official Logo Header */}
                 <div className="text-center pt-2">
@@ -762,7 +679,7 @@ export default function CoverPageView() {
             )}
 
             {/* Template Variant 2: MODERN (Solid UIU Banner) */}
-            {docType !== 'labindex' && template === 'modern' && (
+            {template === 'modern' && (
               <div className="h-full flex flex-col justify-between -m-10 sm:-m-14">
                 {/* Solid Orange Top Banner */}
                 <div
@@ -835,7 +752,7 @@ export default function CoverPageView() {
             )}
 
             {/* Template Variant 3: PROFESSIONAL (Outer Frame) */}
-            {docType !== 'labindex' && template === 'professional' && (
+            {template === 'professional' && (
               <div
                 className="h-full flex flex-col justify-between p-6 -m-6 sm:-m-10"
                 style={{ border: `2px solid ${THEME_ORANGE}` }}
@@ -891,7 +808,7 @@ export default function CoverPageView() {
             )}
 
             {/* Template Variant 4: ELEGANT (Double Frame) */}
-            {docType !== 'labindex' && template === 'elegant' && (
+            {template === 'elegant' && (
               <div
                 className="h-full flex flex-col justify-between p-6 -m-6 sm:-m-10"
                 style={{ border: `3px double ${THEME_ORANGE}` }}
@@ -945,75 +862,6 @@ export default function CoverPageView() {
                     <div className="text-[10px] text-zinc-500 leading-tight">{facultyDept}</div>
                     <div className="text-[10px] text-zinc-400 mt-1">Date: {formattedSubmissionDate}</div>
                   </div>
-                </div>
-              </div>
-            )}
-
-            {/* Template Variant 5: LAB INDEX TABLE PAGE */}
-            {docType === 'labindex' && (
-              <div className="h-full flex flex-col justify-between text-xs">
-                <div>
-                  <div className="text-center pb-2">
-                    <img
-                      src={UIU_LOGO_BASE64}
-                      alt="UIU Logo"
-                      className="mx-auto h-14 object-contain"
-                    />
-                    <div className="text-sm font-bold uppercase tracking-wider text-orange-600 mt-1">
-                      Lab Index & Performance Sheet
-                    </div>
-                  </div>
-
-                  {/* Course & Student Header Grid */}
-                  <table className="w-full text-xs border-collapse mb-3">
-                    <tbody>
-                      <tr>
-                        <td className="w-1/2 align-top pr-2">
-                          <div><b>Course:</b> {courseCode} · {courseTitle}</div>
-                          <div><b>Section:</b> {courseSection} · <b>Trimester:</b> {trimester}</div>
-                        </td>
-                        <td className="w-1/2 align-top pl-2 text-right">
-                          <div><b>Student:</b> {students[0]?.name} ({students[0]?.id})</div>
-                          <div><b>Faculty:</b> {facultyName} ({facultyDesignation})</div>
-                        </td>
-                      </tr>
-                    </tbody>
-                  </table>
-
-                  {/* Index Table */}
-                  <table className="w-full text-[11px] border-collapse border border-zinc-400">
-                    <thead>
-                      <tr className="bg-orange-500 text-white font-bold text-center">
-                        <th className="border border-zinc-400 py-1 px-1.5 w-10">SL</th>
-                        <th className="border border-zinc-400 py-1 px-2 text-left">Experiment Name</th>
-                        <th className="border border-zinc-400 py-1 px-2 w-24">Date</th>
-                        <th className="border border-zinc-400 py-1 px-1.5 w-14">Page</th>
-                        <th className="border border-zinc-400 py-1 px-2 w-24">Signature</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {Array.from({ length: 14 }).map((_, idx) => {
-                        const r = indexRows[idx] || {};
-                        return (
-                          <tr key={idx} className="h-7 text-center">
-                            <td className="border border-zinc-300 font-bold">{idx + 1}</td>
-                            <td className="border border-zinc-300 text-left px-2 truncate max-w-[200px] font-medium">
-                              {r.name || ''}
-                            </td>
-                            <td className="border border-zinc-300 text-zinc-600 font-mono text-[10px]">
-                              {r.date || ''}
-                            </td>
-                            <td className="border border-zinc-300 font-mono text-[10px]">{r.page || ''}</td>
-                            <td className="border border-zinc-300"></td>
-                          </tr>
-                        );
-                      })}
-                    </tbody>
-                  </table>
-                </div>
-
-                <div className="text-center text-[10px] text-zinc-500 pt-2 border-t border-zinc-200">
-                  {UNIVERSITY_NAME} · {facultyDept}
                 </div>
               </div>
             )}
