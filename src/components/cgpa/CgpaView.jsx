@@ -354,16 +354,6 @@ export function CgpaView({
             <Surface className="p-4 sm:p-5">
               <div className="mb-2 flex items-center justify-between px-1">
                 <h3 className="text-[15px] font-bold tracking-tight text-ink">Progression</h3>
-                <div className="flex items-center gap-4 text-[11px] font-medium text-ink-3">
-                  <span className="flex items-center gap-1.5">
-                    <span className="h-[3px] w-4 rounded-full bg-gradient-to-r from-accent to-accent2" />
-                    CGPA
-                  </span>
-                  <span className="flex items-center gap-1.5">
-                    <span className="h-[2px] w-4 rounded-full bg-ink-3" />
-                    Term GPA
-                  </span>
-                </div>
               </div>
               <GradeChart history={history} />
             </Surface>
