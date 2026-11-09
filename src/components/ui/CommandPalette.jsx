@@ -14,6 +14,7 @@ import {
   Plus,
   CornerDownLeft,
   X,
+  Bus,
 } from 'lucide-react';
 import { COURSE_CATALOG } from '../../data/courseCatalog';
 import { useTheme } from '../../context/ThemeContext';
@@ -102,6 +103,18 @@ export default function CommandPalette({
         icon: Calendar,
         action: () => {
           setActiveTab('routine');
+          onClose();
+        },
+      },
+      {
+        id: 'nav-commute',
+        type: 'action',
+        category: 'Navigation',
+        title: 'Go to Commute & Shuttle Hub',
+        desc: 'Notun Bazar shuttles, live departures, and all 6 student AC bus routes',
+        icon: Bus,
+        action: () => {
+          setActiveTab('commute');
           onClose();
         },
       },

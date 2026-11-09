@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion } from 'motion/react';
-import { GraduationCap, Sun, Moon, Gauge, Receipt, CalendarRange, Search, Sparkles } from 'lucide-react';
+import { GraduationCap, Sun, Moon, Gauge, Receipt, CalendarRange, Search, Sparkles, Bus } from 'lucide-react';
 import { useTheme } from '../../context/ThemeContext';
 import { NAV } from './Sidebar';
 
@@ -54,10 +54,10 @@ export function MobileTopBar({ onOpenCommandPalette }) {
 }
 
 export function MobileTabBar({ active, onChange }) {
-  const icons = { cgpa: Gauge, advisor: Sparkles, routine: CalendarRange, tuition: Receipt };
+  const icons = { cgpa: Gauge, advisor: Sparkles, routine: CalendarRange, tuition: Receipt, commute: Bus };
   return (
     <nav className="glass fixed inset-x-0 bottom-0 z-40 border-t border-line pb-[env(safe-area-inset-bottom)] lg:hidden">
-      <div className="mx-auto grid max-w-md grid-cols-4 gap-1 p-2">
+      <div className="mx-auto grid max-w-md grid-cols-5 gap-0.5 p-1.5">
         {NAV.map((item) => {
           const Icon = icons[item.id];
           const isActive = item.id === active;

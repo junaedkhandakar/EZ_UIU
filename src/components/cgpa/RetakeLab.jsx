@@ -33,6 +33,28 @@ export function RetakeLab({ courses = [], effectiveCourses = [] }) {
   const delta = simulated.cgpa - current.cgpa;
   const activeCount = Object.keys(selections).length;
 
+  // AI Retake ROI Analyzer (CGPA gain per Taka spent under UIU 50% waiver rule)
+  const roiRanking = useMemo(() => {
+    if (!candidates.length || !current.credits) return [];
+    return candidates
+      .map((c) => {
+        const pointDiff = 4.0 - GRADE_POINTS[c.grade];
+        const pointGain = pointDiff * c.credit;
+        const projectedCgpa = ((current.points || 0) + pointGain) / current.credits;
+        const jump = projectedCgpa - current.cgpa;
+        const costWithWaiver = c.credit * 6500 * 0.5; // Official UIU 50% waiver
+        const roiScore = (jump * 1000) / (costWithWaiver / 1000);
+        return {
+          ...c,
+          pointGain,
+          jump: parseFloat(jump.toFixed(2)),
+          costWithWaiver,
+          roiScore,
+        };
+      })
+      .sort((a, b) => b.roiScore - a.roiScore);
+  }, [candidates, current]);
+
   return (
     <div className="flex flex-col gap-4">
       {/* Comparison strip */}
@@ -85,6 +107,35 @@ export function RetakeLab({ courses = [], effectiveCourses = [] }) {
           </div>
         </div>
       </div>
+
+      {/* AI Retake ROI & Financial Efficiency Banner */}
+      {roiRanking.length > 0 && (
+        <div className="rounded-2xl border border-accent/30 bg-accentSoft p-4 shadow-sm flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+          <div className="flex-1">
+            <div className="flex items-center gap-1.5 text-xs font-bold text-accent">
+              <Sparkles className="h-3.5 w-3.5" />
+              Highest Academic & Financial Return (UIU 50% Waiver)
+            </div>
+            <p className="mt-1 text-xs text-ink leading-relaxed">
+              Retaking <b>{roiRanking[0].courseId}</b> ({roiRanking[0].courseName}) yields a{' '}
+              <b className="text-ok font-mono">+{roiRanking[0].jump.toFixed(2)} CGPA</b> boost for only{' '}
+              <b className="font-mono">৳{roiRanking[0].costWithWaiver.toLocaleString()}</b> with UIU's 50% discount!
+            </p>
+          </div>
+          <button
+            onClick={() =>
+              setSelections((prev) => ({
+                ...prev,
+                [roiRanking[0].id]: 'A',
+                ...(roiRanking[1] ? { [roiRanking[1].id]: 'A' } : {}),
+              }))
+            }
+            className="rounded-xl border border-accent bg-surface px-3 py-1.5 text-xs font-bold text-accent hover:bg-accent hover:text-white transition-colors shrink-0 shadow-sm"
+          >
+            Select Top 2 High-ROI Retakes
+          </button>
+        </div>
+      )}
 
       {/* Candidate list */}
       {candidates.length === 0 ? (

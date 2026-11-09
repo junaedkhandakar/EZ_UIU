@@ -11,6 +11,7 @@ import {
   Search,
   Command,
   Sparkles,
+  Bus,
 } from 'lucide-react';
 import { useTheme } from '../../context/ThemeContext';
 
@@ -19,6 +20,7 @@ export const NAV = [
   { id: 'advisor', label: 'AI Advisor', icon: Sparkles, desc: 'Prereqs & planning' },
   { id: 'routine', label: 'Routine', icon: CalendarRange, desc: 'Class schedule' },
   { id: 'tuition', label: 'Tuition', icon: Receipt, desc: 'Fees & waivers' },
+  { id: 'commute', label: 'Commute', icon: Bus, desc: 'Buses & shuttles' },
 ];
 
 export default function Sidebar({ active, onChange, onOpenCommandPalette }) {
