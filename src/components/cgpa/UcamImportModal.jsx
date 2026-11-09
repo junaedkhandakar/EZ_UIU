@@ -8,6 +8,7 @@ export function UcamImportModal({ isOpen, onClose, onImportSuccess }) {
   const [content, setContent] = useState('');
   const [error, setError] = useState('');
   const [preview, setPreview] = useState(null);
+  const [importMode, setImportMode] = useState('merge'); // 'merge' or 'replace'
 
   const handleChange = (text) => {
     setContent(text);
@@ -26,7 +27,7 @@ export function UcamImportModal({ isOpen, onClose, onImportSuccess }) {
     try {
       setError('');
       const result = parseUcamSource(content);
-      onImportSuccess(result.courses, result.dept);
+      onImportSuccess(result.courses, result.dept, importMode);
       setContent('');
       setPreview(null);
       onClose();
@@ -78,6 +79,36 @@ export function UcamImportModal({ isOpen, onClose, onImportSuccess }) {
             </span>
           </div>
         )}
+
+        {/* Merge vs Replace Mode */}
+        <div className="flex items-center justify-between gap-3 rounded-xl border border-line bg-surface p-3 text-xs">
+          <div>
+            <div className="font-semibold text-ink">Merge Mode</div>
+            <div className="text-[11px] text-ink-3">
+              {importMode === 'merge' ? 'Preserve existing terms & update new results' : 'Clear and overwrite full transcript'}
+            </div>
+          </div>
+          <div className="flex gap-1 rounded-lg border border-line bg-surface2 p-0.5">
+            <button
+              type="button"
+              onClick={() => setImportMode('merge')}
+              className={`rounded px-2.5 py-1 text-[11px] font-semibold transition-colors ${
+                importMode === 'merge' ? 'bg-surface text-accent shadow-sm' : 'text-ink-3 hover:text-ink'
+              }`}
+            >
+              Merge & Update
+            </button>
+            <button
+              type="button"
+              onClick={() => setImportMode('replace')}
+              className={`rounded px-2.5 py-1 text-[11px] font-semibold transition-colors ${
+                importMode === 'replace' ? 'bg-surface text-accent shadow-sm' : 'text-ink-3 hover:text-ink'
+              }`}
+            >
+              Replace All
+            </button>
+          </div>
+        </div>
 
         {error && (
           <div className="fade-in flex items-center gap-2.5 rounded-xl border border-bad/25 bg-bad/10 p-3 text-xs font-medium text-bad">

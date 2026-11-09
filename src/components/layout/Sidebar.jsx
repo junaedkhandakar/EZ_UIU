@@ -10,6 +10,7 @@ import {
   Search,
   Sparkles,
   Bus,
+  FileCheck2,
 } from 'lucide-react';
 import { useTheme } from '../../context/ThemeContext';
 
@@ -19,6 +20,7 @@ export const NAV = [
   { id: 'routine', label: 'Routine Builder', icon: CalendarRange },
   { id: 'tuition', label: 'Tuition & Fees', icon: Receipt },
   { id: 'commute', label: 'Shuttle & Commute', icon: Bus },
+  { id: 'coverpage', label: 'Cover Page', icon: FileCheck2 },
 ];
 
 export default function Sidebar({ active, onChange, onOpenCommandPalette }) {

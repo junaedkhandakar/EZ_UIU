@@ -36,6 +36,7 @@ import {
   DEPT_PROFILES,
   exportCSV,
   parseCSV,
+  mergeCourseLists,
 } from '../../utils/cgpaUtils';
 import { useToast } from '../../context/ToastContext';
 
@@ -139,11 +140,16 @@ export function CgpaView({
       return n;
     });
 
-  const importUcam = (imported, dept) => {
-    setCourses(imported);
+  const importUcam = (imported, dept, mode = 'merge') => {
+    const { merged, updatedCount, addedCount } = mergeCourseLists(courses, imported, mode);
+    setCourses(merged);
     setRunningOverrides({});
     if (dept && dept !== settings.dept) setSettings((p) => ({ ...p, dept }));
-    showToast(`Imported ${imported.length} courses from UCam`, 'success');
+    if (mode === 'merge') {
+      showToast(`Merged: ${addedCount} new courses, ${updatedCount} updated!`, 'success');
+    } else {
+      showToast(`Replaced transcript with ${merged.length} courses`, 'success');
+    }
     confetti({ particleCount: 70, spread: 65, origin: { y: 0.55 } });
   };
 
@@ -155,8 +161,9 @@ export function CgpaView({
       try {
         const parsed = parseCSV(String(evt.target?.result || ''));
         if (parsed.length) {
-          setCourses(parsed);
-          showToast(`Imported ${parsed.length} courses from CSV`, 'success');
+          const { merged, updatedCount, addedCount } = mergeCourseLists(courses, parsed, 'merge');
+          setCourses(merged);
+          showToast(`CSV: ${addedCount} new, ${updatedCount} updated courses!`, 'success');
         } else showToast('No courses found in that CSV', 'error');
       } catch {
         showToast('Could not read that CSV file', 'error');

@@ -15,6 +15,7 @@ import {
   CornerDownLeft,
   X,
   Bus,
+  FileCheck2,
 } from 'lucide-react';
 import { COURSE_CATALOG } from '../../data/courseCatalog';
 import { useTheme } from '../../context/ThemeContext';
@@ -115,6 +116,18 @@ export default function CommandPalette({
         icon: Bus,
         action: () => {
           setActiveTab('commute');
+          onClose();
+        },
+      },
+      {
+        id: 'nav-coverpage',
+        type: 'action',
+        category: 'Navigation',
+        title: 'Go to UIU Cover Page Generator',
+        desc: 'Generate assignment and lab report cover pages with official UIU crest',
+        icon: FileCheck2,
+        action: () => {
+          setActiveTab('coverpage');
           onClose();
         },
       },

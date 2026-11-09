@@ -9,6 +9,7 @@ import TuitionView from './components/tuition/TuitionView';
 import RoutineView from './components/routine/RoutineView';
 import AdvisorView from './components/advisor/AdvisorView';
 import CommuteView from './components/commute/CommuteView';
+import CoverPageView from './components/coverpage/CoverPageView';
 import CommandPalette from './components/ui/CommandPalette';
 import { DEMO_TRANSCRIPT_COURSES, exportCSV } from './utils/cgpaUtils';
 
@@ -71,6 +72,7 @@ export function AppContent() {
         else if (e.key === '3') setActiveTab('routine');
         else if (e.key === '4') setActiveTab('tuition');
         else if (e.key === '5') setActiveTab('commute');
+        else if (e.key === '6') setActiveTab('coverpage');
         else if (e.key === '/') {
           e.preventDefault();
           setCommandPaletteOpen(true);
@@ -126,6 +128,7 @@ export function AppContent() {
             <TuitionView courses={courses} settings={settings} defaultDept={settings.dept} />
           )}
           {activeTab === 'commute' && <CommuteView />}
+          {activeTab === 'coverpage' && <CoverPageView />}
         </div>
       </main>
 

@@ -445,3 +445,51 @@ export function exportCSV(courses) {
   a.click();
   URL.revokeObjectURL(url);
 }
+
+/**
+ * Merge newly imported courses with existing user progress.
+ * Preserves user's historical trimesters and updates existing courses when matching courseId & trimester.
+ */
+export function mergeCourseLists(existing = [], incoming = [], mode = 'merge') {
+  if (mode === 'replace') {
+    return {
+      merged: incoming,
+      updatedCount: 0,
+      addedCount: incoming.length,
+    };
+  }
+
+  const existingMap = new Map();
+  // Key by normalized courseId + trimester (e.g. "CSE 2213::223")
+  existing.forEach((c) => {
+    const key = `${(c.courseId || '').trim().toUpperCase()}::${String(c.trimester || '').trim()}`;
+    existingMap.set(key, c);
+  });
+
+  let updatedCount = 0;
+  let addedCount = 0;
+
+  incoming.forEach((inc) => {
+    const key = `${(inc.courseId || '').trim().toUpperCase()}::${String(inc.trimester || '').trim()}`;
+    if (existingMap.has(key)) {
+      // Course exists in same trimester: update grade, status, credit
+      const old = existingMap.get(key);
+      existingMap.set(key, {
+        ...old,
+        ...inc,
+        id: old.id || inc.id, // preserve existing stable ID
+      });
+      updatedCount++;
+    } else {
+      // New course or new trimester: add it!
+      existingMap.set(key, inc);
+      addedCount++;
+    }
+  });
+
+  return {
+    merged: Array.from(existingMap.values()),
+    updatedCount,
+    addedCount,
+  };
+}

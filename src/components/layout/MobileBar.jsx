@@ -1,5 +1,5 @@
 import React from 'react';
-import { GraduationCap, Sun, Moon, Gauge, Receipt, CalendarRange, Search, Sparkles, Bus } from 'lucide-react';
+import { GraduationCap, Sun, Moon, Gauge, Receipt, CalendarRange, Search, Sparkles, Bus, FileCheck2 } from 'lucide-react';
 import { useTheme } from '../../context/ThemeContext';
 import { NAV } from './Sidebar';
 
@@ -35,10 +35,10 @@ export function MobileTopBar({ onOpenCommandPalette }) {
 }
 
 export function MobileTabBar({ active, onChange }) {
-  const icons = { cgpa: Gauge, advisor: Sparkles, routine: CalendarRange, tuition: Receipt, commute: Bus };
+  const icons = { cgpa: Gauge, advisor: Sparkles, routine: CalendarRange, tuition: Receipt, commute: Bus, coverpage: FileCheck2 };
   return (
     <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-line bg-surface/95 backdrop-blur-md pb-[env(safe-area-inset-bottom)] lg:hidden">
-      <div className="mx-auto grid max-w-md grid-cols-5 p-1">
+      <div className="mx-auto grid max-w-lg grid-cols-6 p-1">
         {NAV.map((item) => {
           const Icon = icons[item.id];
           const isActive = item.id === active;
