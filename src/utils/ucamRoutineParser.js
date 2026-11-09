@@ -6,11 +6,12 @@
  */
 
 import * as pdfjsLib from 'pdfjs-dist';
+import pdfWorker from 'pdfjs-dist/build/pdf.worker.mjs?url';
 import { CALENDARS_DATA } from '../data/calendarData';
 
-// Configure PDF.js worker for client-side execution
+// Configure PDF.js worker using local Vite bundled URL
 if (typeof window !== 'undefined' && pdfjsLib.GlobalWorkerOptions) {
-  pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.mjs`;
+  pdfjsLib.GlobalWorkerOptions.workerSrc = pdfWorker;
 }
 
 export const SAMPLE_UCAM_ROUTINE_TEXT = `Formal Code Course Title Day Room Time Slot Section
@@ -70,12 +71,53 @@ Student ID : 0112330072 Session : 263 - Fall 2026 (Trimester)
 Student Name : Md. Junaed Khandakar`;
 
 /**
+ * Fallback direct binary stream extractor for PDF if worker fails
+ */
+function extractRawPdfTextFallback(arrayBuffer) {
+  try {
+    const uint8 = new Uint8Array(arrayBuffer);
+    const decoder = new TextDecoder('latin1');
+    const text = decoder.decode(uint8);
+
+    const strings = [];
+    const textBlockRegex = /BT[\s\S]*?ET/g;
+    const matches = text.match(textBlockRegex) || [];
+
+    for (const block of matches) {
+      const tjMatches = block.matchAll(/\(([^)]*)\)\s*(?:Tj|'|")/g);
+      for (const m of tjMatches) {
+        if (m[1]) strings.push(m[1]);
+      }
+      const tjArrayMatches = block.matchAll(/\[(.*?)\]\s*TJ/g);
+      for (const m of tjArrayMatches) {
+        const inner = m[1].matchAll(/\(([^)]*)\)/g);
+        for (const im of inner) {
+          if (im[1]) strings.push(im[1]);
+        }
+      }
+    }
+
+    if (strings.length > 5) {
+      return strings.join('\n');
+    }
+  } catch {}
+  return '';
+}
+
+/**
  * Extract plain text from an uploaded PDF File or ArrayBuffer
  */
 export async function extractTextFromPdf(file) {
+  const arrayBuffer = await file.arrayBuffer();
+
+  // Strategy 1: PDF.js with local Vite bundled worker
   try {
-    const arrayBuffer = await file.arrayBuffer();
-    const loadingTask = pdfjsLib.getDocument({ data: arrayBuffer });
+    const loadingTask = pdfjsLib.getDocument({
+      data: arrayBuffer,
+      useWorkerFetch: false,
+      isEvalSupported: false,
+      useSystemFonts: true,
+    });
     const pdf = await loadingTask.promise;
     let fullText = '';
 
@@ -86,10 +128,22 @@ export async function extractTextFromPdf(file) {
       fullText += strings.join('\n') + '\n';
     }
 
-    return fullText;
-  } catch (err) {
-    throw new Error(`Failed to read PDF file: ${err.message || 'Worker or format error'}`);
+    if (fullText.trim().length > 20) {
+      return fullText;
+    }
+  } catch (pdfErr) {
+    console.warn('PDF.js worker extraction fallback:', pdfErr);
   }
+
+  // Strategy 2: Direct raw stream text extraction fallback
+  const fallbackText = extractRawPdfTextFallback(arrayBuffer);
+  if (fallbackText.trim().length > 20) {
+    return fallbackText;
+  }
+
+  throw new Error(
+    'Unable to read PDF text streams. Please switch to the "Paste Routine Text / OCR" tab and paste your routine text.'
+  );
 }
 
 /**

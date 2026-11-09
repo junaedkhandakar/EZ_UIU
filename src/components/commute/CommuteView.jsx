@@ -319,7 +319,7 @@ export default function CommuteView() {
                       : 'text-ink-3 hover:text-ink'
                   }`}
                 >
-                  Kuril BRTC ➔ UIU
+                  Kuril ➔ UIU
                 </button>
                 <button
                   onClick={() => setKurilDirection('fromCampus')}
@@ -329,14 +329,14 @@ export default function CommuteView() {
                       : 'text-ink-3 hover:text-ink'
                   }`}
                 >
-                  UIU ➔ Kuril BRTC
+                  UIU ➔ Kuril
                 </button>
               </div>
 
               {/* Next Departure Hero Card */}
               <div className="mt-4 rounded-2xl border border-accent/30 bg-accentSoft p-4 text-center">
                 <span className="text-[10.5px] font-bold uppercase tracking-wider text-accent">
-                  {kurilDirection === 'toCampus' ? 'Next from Kuril BRTC Stand' : 'Next from UIU Campus'}
+                  {kurilDirection === 'toCampus' ? 'Next from Kuril (Biswa Road)' : 'Next from UIU Campus'}
                 </span>
                 <div className="mt-2 text-2xl font-extrabold text-ink font-mono">
                   {nextKurilShuttleInfo.upcoming
@@ -381,7 +381,7 @@ export default function CommuteView() {
           <div className="flex flex-col gap-4 lg:col-span-7">
             <Surface className="p-5">
               <h3 className="text-[15px] font-bold tracking-tight text-ink">
-                All Scheduled Departures ({kurilDirection === 'toCampus' ? 'Kuril BRTC ➔ UIU' : 'UIU ➔ Kuril BRTC'})
+                All Scheduled Departures ({kurilDirection === 'toCampus' ? 'Kuril (Biswa Road) ➔ UIU' : 'UIU ➔ Kuril'})
               </h3>
               <p className="text-xs text-ink-3 mt-0.5">
                 {KURIL_SHUTTLE_SCHEDULE.description}

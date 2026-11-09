@@ -28,8 +28,8 @@ export const SHUTTLE_SCHEDULE = {
 };
 
 export const KURIL_SHUTTLE_SCHEDULE = {
-  title: 'Kuril BRTC Stand ⇄ UIU Campus via 300 Ft & Bashundhara',
-  description: 'Dedicated express shuttle connecting Kuril Biswa Road directly with the UIU campus via 300 Feet Road and Bashundhara City Gold Refinery Gate to bypass traffic.',
+  title: 'Kuril (Biswa Road) ⇄ UIU Campus via 300 Ft & Bashundhara',
+  description: 'Regular UIU shuttle connecting Kuril Biswa Road directly with the UIU campus via 300 Feet Road and Bashundhara Gate.',
   hours: '07:30 AM – 05:00 PM (Continuous Rush Shifts & Regular Service)',
   kurilToUiu: [
     { departure: '07:30', period: '07:30 AM – 08:45 AM (Continuous Morning Rush)' },
@@ -51,10 +51,10 @@ export const KURIL_SHUTTLE_SCHEDULE = {
     { departure: '17:00', period: '05:00 PM (Final Evening Shift)' },
   ],
   stoppages: [
-    'Kuril BRTC Bus Stand (Biswa Road)',
+    'Kuril (Biswa Road Point)',
     'Kuril Flyover Connector',
     '300 Feet Road',
-    'Bashundhara City Gold Refinery Gate',
+    'Bashundhara Gate',
     'UIU Campus',
   ],
 };

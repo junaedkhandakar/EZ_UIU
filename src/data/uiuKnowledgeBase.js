@@ -269,11 +269,11 @@ Advising Workflow:
     source: 'UIU Operations & Logistics Division',
     lastVerified: '2026',
     keywords: ['transport', 'bus', 'shuttle', 'kuril', 'notun bazar', 'ewu', 'route 1', 'route 2', 'route 3', 'route 4', 'route 5', 'route 6', 'ac bus'],
-    summary: 'Official shuttle schedules (Notun Bazar, Kuril BRTC 300ft express, EWU Aftabnagar) and 6 student AC bus routes across Dhaka.',
+    summary: 'Official shuttle schedules (Notun Bazar, Kuril Biswa Road express, EWU Aftabnagar) and 6 student AC bus routes across Dhaka.',
     content: `UIU operates student transportation connecting the Madani Avenue campus across Dhaka:
-1. Kuril Shuttle Express:
-   - Route: UIU Campus ⇄ Bashundhara City Gold Refinery Gate ⇄ 300 Ft Road ⇄ Kuril BRTC Bus Stand.
-   - Frequency: Continuous morning rush shifts starting 07:30 AM, running until 05:00 PM.
+1. Kuril Shuttle Service:
+   - Route: UIU Campus ⇄ Bashundhara Gate ⇄ 300 Ft Road ⇄ Kuril (Biswa Road).
+   - Frequency: Regular service and continuous morning rush shifts starting 07:30 AM, running until 05:00 PM.
 2. Notun Bazar Shuttle:
    - Stoppages: Notun Bazar ➔ Family Bazar ➔ Sayed Nagar ➔ 10 Tala ➔ UIU Campus.
    - Headway: 07:30 AM to 08:45 AM (continuous rush), running until 09:40 PM.
