@@ -103,6 +103,9 @@ export default function UcamRoutineUploadModal({
 
       // Store in localStorage
       localStorage.setItem('ez_routine_selected', JSON.stringify(selectedForRoutine));
+      if (parsedResult.studentId && parsedResult.studentId !== 'Unknown') {
+        localStorage.setItem('ez_student_id', parsedResult.studentId);
+      }
       onApplyToRoutine?.(selectedForRoutine, parsedResult);
       showToast(`Applied ${parsedResult.courses.length} courses to Routine Timetable!`, 'success');
       onClose();

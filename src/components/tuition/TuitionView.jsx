@@ -10,6 +10,7 @@ import {
   Info,
   ShieldCheck,
   CheckCircle2,
+  CalendarRange,
 } from 'lucide-react';
 import Button from '../ui/Button';
 import Surface from '../ui/Surface';
@@ -17,6 +18,11 @@ import Select from '../ui/Select';
 import { calculateTuitionFees, estimateDegreeCost, SCHOLARSHIP_TIERS } from '../../utils/tuitionUtils';
 import { DEPT_PROFILES, formatBDT, getEffectiveCourses, calculateAcademicMetrics } from '../../utils/cgpaUtils';
 import { useToast } from '../../context/ToastContext';
+import {
+  getRoutineSummary,
+  detectStudentBatch,
+  getTuitionRateForBatch,
+} from '../../utils/routineStore';
 
 const inputCls =
   'w-full rounded-xl border border-line bg-surface2/70 px-3.5 py-2.5 text-[13px] text-ink placeholder-ink-3 transition-colors hover:border-line-strong focus:outline-none focus:ring-2 focus:ring-accent/40';
@@ -47,12 +53,26 @@ export function TuitionView({ courses = [], settings = {}, defaultDept = 'regula
   const { showToast } = useToast();
   const profile = DEPT_PROFILES[defaultDept] || DEPT_PROFILES.regular;
 
+  // Auto-derived from saved routine & transcript batch
+  const routineSummary = useMemo(() => getRoutineSummary(), []);
+  const detectedBatch = useMemo(() => detectStudentBatch(courses), [courses]);
+  const batchRate = useMemo(
+    () => (detectedBatch ? getTuitionRateForBatch(detectedBatch.batchNum) : 6500),
+    [detectedBatch]
+  );
+
   const [dept, setDept] = useState(defaultDept);
-  const [credits, setCredits] = useState(12);
-  const [perCreditFee, setPerCreditFee] = useState(settings.tuitionPerCredit ?? 6500);
+  const [credits, setCredits] = useState(() =>
+    routineSummary.totalCredits > 0 ? routineSummary.totalCredits : 12
+  );
+  const [perCreditFee, setPerCreditFee] = useState(
+    () => (detectedBatch ? batchRate : (settings.tuitionPerCredit ?? 6500))
+  );
   const [trimesterFee, setTrimesterFee] = useState(settings.perTrimesterFee ?? 6500);
   const [scholarship, setScholarship] = useState(0);
-  const [thesisCredits, setThesisCredits] = useState(0);
+  const [thesisCredits, setThesisCredits] = useState(() =>
+    routineSummary.fydpCredits > 0 ? routineSummary.fydpCredits : 0
+  );
   const [retakeCredits, setRetakeCredits] = useState(0);
 
   const [avgCredits, setAvgCredits] = useState(12);
@@ -111,6 +131,22 @@ export function TuitionView({ courses = [], settings = {}, defaultDept = 'regula
     );
   };
 
+  const syncFromRoutine = () => {
+    const summary = getRoutineSummary();
+    if (summary.totalCredits > 0) {
+      setCredits(summary.totalCredits);
+      setThesisCredits(summary.fydpCredits);
+      showToast(
+        `Synced ${summary.totalCredits} credits from routine${
+          summary.hasFydp ? ` (${summary.fydpCredits} cr FYDP waiver-exempt)` : ''
+        }`,
+        'success'
+      );
+    } else {
+      showToast('No saved routine found in browser', 'info');
+    }
+  };
+
   const print = () => window.print();
 
   return (
@@ -125,7 +161,17 @@ export function TuitionView({ courses = [], settings = {}, defaultDept = 'regula
             {deptProfile.name} · Fee breakdown, merit waivers & installments
           </p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
+          {routineSummary.totalCredits > 0 && (
+            <Button
+              variant="secondary"
+              icon={CalendarRange}
+              onClick={syncFromRoutine}
+              className="border-accent/40 bg-accentSoft text-accent hover:border-accent"
+            >
+              Sync from Routine
+            </Button>
+          )}
           <Button variant="secondary" icon={RefreshCw} onClick={syncFromCGPA}>
             Sync from CGPA
           </Button>
@@ -162,6 +208,11 @@ export function TuitionView({ courses = [], settings = {}, defaultDept = 'regula
                   onChange={(e) => setCredits(parseFloat(e.target.value) || 0)}
                   className={`${inputCls} num font-mono font-semibold`}
                 />
+                {routineSummary.totalCredits > 0 && (
+                  <p className="mt-1 text-[10px] text-ink-3">
+                    Auto-set from routine · {routineSummary.totalCourses} courses ({routineSummary.totalCredits} cr)
+                  </p>
+                )}
               </div>
               <div>
                 <label className={labelCls}>Per-Credit Tuition (৳)</label>
@@ -174,8 +225,8 @@ export function TuitionView({ courses = [], settings = {}, defaultDept = 'regula
                 />
                 <div className="mt-1.5 flex flex-wrap gap-1">
                   {[
-                    { label: '৳6,500 (2026 Rate)', val: 6500 },
-                    { label: '৳5,525 (English/MSJ)', val: 5525 },
+                    { label: '৳6,500 (Batch ≥ 241)', val: 6500 },
+                    { label: '৳5,525 (Batch < 241)', val: 5525 },
                     { label: '৳5,000 (Legacy)', val: 5000 },
                   ].map((p) => (
                     <button
@@ -192,6 +243,11 @@ export function TuitionView({ courses = [], settings = {}, defaultDept = 'regula
                     </button>
                   ))}
                 </div>
+                {detectedBatch && (
+                  <p className="mt-1 text-[10px] text-accent">
+                    Batch <b>{detectedBatch.batch}</b> detected ({detectedBatch.source === 'transcript' ? '1st term' : 'student ID'}) → ৳{batchRate.toLocaleString()}/cr
+                  </p>
+                )}
               </div>
               <div>
                 <label className={labelCls}>Trimester Activity Fee (৳)</label>
@@ -213,6 +269,11 @@ export function TuitionView({ courses = [], settings = {}, defaultDept = 'regula
                   onChange={(e) => setThesisCredits(parseFloat(e.target.value) || 0)}
                   className={`${inputCls} num font-mono`}
                 />
+                {routineSummary.hasFydp && (
+                  <p className="mt-1 text-[10px] text-warn">
+                    FYDP in routine ({routineSummary.fydpCourses.map((c) => c.code).join(', ')}) · 0% waiver
+                  </p>
+                )}
               </div>
               <div>
                 <label className={labelCls}>Retake Credits (50% off)</label>

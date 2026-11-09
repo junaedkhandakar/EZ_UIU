@@ -549,7 +549,7 @@ export function calculateDegreeTimeline({
     paceColor = 'text-warn';
   }
 
-  const FYDP_MIN_CREDITS = 100;
+  const FYDP_MIN_CREDITS = 80;
   const fydpEligible = safeCompleted >= FYDP_MIN_CREDITS;
   const creditsToFydp = Math.max(0, FYDP_MIN_CREDITS - safeCompleted);
 
@@ -620,14 +620,14 @@ Official UIU Policies (Verified & Strictly Enforced):
    - Incomplete ('I') grade or improvement exams in a term forfeit merit scholarship in the following term.
 7. Final Year Design Project (FYDP):
    - CSE 4000A (FYDP I - 2 cr) and CSE 4000B (FYDP II - 4 cr).
-   - Gatekeeper: Must have at least 100 credits completed before registering for CSE 4000A.
+   - Gatekeeper: Must have at least 80 credits completed before registering for CSE 4000A.
    - Graduation requirement: Must pass FYDP with at least a 'C' grade.
    - Exempt from all tuition waivers (0% waiver).
 8. Attendance & Final Exams:
    - Minimum 80% class attendance required to be eligible for final examinations.
    - Final Exam Slots: T1 (9:00 AM – 11:00 AM), T2 (11:30 AM – 1:30 PM), T3 (2:00 PM – 4:00 PM / 2:30 PM – 4:30 PM).
 9. Tuition & Fees Structure:
-   - Regular/CSE: Tk. 6,500/- per credit; English/MSJ: Tk. 5,525/- per credit.
+   - Regular/CSE: Tk. 6,500/- per credit (Batch ≥ 241) or Tk. 5,525/- (Batch < 241); English/MSJ: Tk. 5,525/- per credit.
    - Trimester Activity Fee: Tk. 6,500/- per trimester.
    - Installment Schedule: 40% (during registration/advising), 30% (before midterm exam), 30% (before final exam).
 
@@ -650,10 +650,10 @@ export function generateAIAnswer(query, context = {}) {
   const completedCr = context.completedCredits || 0;
 
   if (q.includes('fydp') || q.includes('thesis') || q.includes('project')) {
-    if (completedCr >= 100) {
-      return `🎉 **You are eligible for FYDP I (CSE 4000A)!**\n\n• **Requirement:** UIU regulations strictly require **100 credits completed** before registering for Final Year Design Project I.\n• **Passing Grade:** You must achieve at least a **'C' grade** in FYDP to qualify for graduation.\n• **Tuition Policy:** Thesis/FYDP credits are **exempt from all tuition waivers** (0% scholarship applies).\n\n*Tip:* Form your project group and finalize your supervisor early during advising week!`;
+    if (completedCr >= 80) {
+      return `🎉 **You are eligible for FYDP I (CSE 4000A)!**\n\n• **Requirement:** UIU regulations strictly require **80 credits completed** before registering for Final Year Design Project I.\n• **Passing Grade:** You must achieve at least a **'C' grade** in FYDP to qualify for graduation.\n• **Tuition Policy:** Thesis/FYDP credits are **exempt from all tuition waivers** (0% scholarship applies).\n\n*Tip:* Form your project group and finalize your supervisor early during advising week!`;
     }
-    return `⚠️ **FYDP / Thesis Eligibility Gatekeeper:**\n\n• **Your Status:** You currently have **${completedCr} completed credits**.\n• **Requirement:** UIU Department of CSE requires **100 credits completed** before registering for CSE 4000A.\n• **Gap:** You need **${100 - completedCr} more credits** before you can register.\n• **Tuition Note:** Thesis/FYDP credits receive 0% tuition fee waiver under UIU regulations.`;
+    return `⚠️ **FYDP / Thesis Eligibility Gatekeeper:**\n\n• **Your Status:** You currently have **${completedCr} completed credits**.\n• **Requirement:** UIU Department of CSE requires **80 credits completed** before registering for CSE 4000A.\n• **Gap:** You need **${80 - completedCr} more credits** before you can register.\n• **Tuition Note:** Thesis/FYDP credits receive 0% tuition fee waiver under UIU regulations.`;
   }
 
   if (q.includes('retake') || q.includes('repeat')) {
@@ -722,7 +722,7 @@ export function generateAIAnswer(query, context = {}) {
   }
 
   if (q.includes('one does not simply') || q.includes('mordor') || q.includes('lord of the rings') || q.includes('gandalf')) {
-    return `💍 **"One does not simply walk into the UIU Vice Chancellor's office without 100 credits for FYDP!"**\n\nFly, you fools! Clear your Algorithms and Discrete Math prerequisites before stepping into the fires of Mount Doom! 🧙‍♂️🌋`;
+    return `💍 **"One does not simply walk into the UIU Vice Chancellor's office without 80 credits for FYDP!"**\n\nFly, you fools! Clear your Algorithms and Discrete Math prerequisites before stepping into the fires of Mount Doom! 🧙‍♂️🌋`;
   }
 
   return `📚 **Academic Advising Recommendation:** Based on your current CGPA of **${cgpa.toFixed(2)}** and **${completedCr} credits completed**, prioritize clearing all bottleneck prerequisites (Discrete Math, Data Structures, Algorithms) while keeping a balanced mix of 1 Hard Core + 2 Medium Core + 1 Lab to sustain a strong CGPA.\n\n*You can ask me about: FYDP eligibility, retake rules, merit scholarships, exam clash slots, tuition fees, or major tracks!*`;

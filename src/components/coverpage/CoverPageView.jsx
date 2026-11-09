@@ -26,6 +26,7 @@ import Select from '../ui/Select';
 import { useToast } from '../../context/ToastContext';
 import { COURSE_CATALOG } from '../../data/courseCatalog';
 import { UIU_LOGO_BASE64 } from '../../data/uiuLogoBase64';
+import { getSavedRoutine } from '../../utils/routineStore';
 
 const STORAGE_COVERPAGE_KEY = 'ez_uiu_coverpage_v3';
 const THEME_ORANGE = '#f97316';
@@ -64,6 +65,8 @@ export default function CoverPageView() {
   const { showToast } = useToast();
   const printAreaRef = useRef(null);
 
+  const routine = useMemo(() => getSavedRoutine(), []);
+
   const [docType, setDocType] = useState('assignment');
   const [template, setTemplate] = useState('classic'); // 'classic' | 'modern' | 'professional' | 'elegant'
   const [isGroup, setIsGroup] = useState(false);
@@ -74,9 +77,9 @@ export default function CoverPageView() {
   const [submissionDate, setSubmissionDate] = useState(() => new Date().toISOString().slice(0, 10));
   const [performanceDate, setPerformanceDate] = useState(() => new Date().toISOString().slice(0, 10));
 
-  const [courseCode, setCourseCode] = useState('CSE 4451');
-  const [courseTitle, setCourseTitle] = useState('Human Computer Interaction');
-  const [courseSection, setCourseSection] = useState('C');
+  const [courseCode, setCourseCode] = useState(() => routine[0]?.code || 'CSE 4451');
+  const [courseTitle, setCourseTitle] = useState(() => routine[0]?.title || 'Human Computer Interaction');
+  const [courseSection, setCourseSection] = useState(() => routine[0]?.section || 'C');
   const [trimester, setTrimester] = useState('Fall 2026');
 
   const [facultyName, setFacultyName] = useState('Dr. Mohammad Nurul Huda');
@@ -177,6 +180,17 @@ export default function CoverPageView() {
   };
 
   const handleSelectCatalogCourse = (code) => {
+    // 1. Check saved routine first (includes section & custom metadata)
+    const routineMatch = routine.find((item) => item.code === code);
+    if (routineMatch) {
+      setCourseCode(routineMatch.code);
+      setCourseTitle(routineMatch.title);
+      if (routineMatch.section) setCourseSection(routineMatch.section);
+      showToast(`Selected ${routineMatch.code} (Sec ${routineMatch.section})`, 'info');
+      return;
+    }
+
+    // 2. Fallback to general catalog
     const c = COURSE_CATALOG.find((item) => item.course_code === code);
     if (c) {
       setCourseCode(c.course_code);
@@ -338,19 +352,34 @@ export default function CoverPageView() {
 
           {/* Course Details */}
           <Surface className="space-y-3">
-            <div className="flex items-center justify-between border-b border-line pb-2.5">
-              <h3 className="text-sm font-bold text-ink">Course Details</h3>
+            <div className="flex flex-wrap items-center justify-between gap-2 border-b border-line pb-2.5">
+              <div>
+                <h3 className="text-sm font-bold text-ink">Course Details</h3>
+                {routine.length > 0 && (
+                  <p className="text-[10.5px] text-ink-3">
+                    From your saved routine ({routine.length} courses)
+                  </p>
+                )}
+              </div>
               <Select
                 value=""
                 onChange={(e) => handleSelectCatalogCourse(e.target.value)}
-                className="w-[170px]"
+                className="w-[200px]"
               >
-                <option value="">Auto-fill from UIU Catalog…</option>
-                {COURSE_CATALOG.map((c) => (
-                  <option key={c.course_code} value={c.course_code}>
-                    {c.course_code} · {c.course_name}
-                  </option>
-                ))}
+                <option value="">
+                  {routine.length > 0 ? 'Select Routine Course…' : 'Auto-fill from UIU Catalog…'}
+                </option>
+                {routine.length > 0
+                  ? routine.map((c) => (
+                      <option key={`${c.code}-${c.section}`} value={c.code}>
+                        {c.code} · Sec {c.section} ({c.title || 'Course'})
+                      </option>
+                    ))
+                  : COURSE_CATALOG.map((c) => (
+                      <option key={c.course_code} value={c.course_code}>
+                        {c.course_code} · {c.course_name}
+                      </option>
+                    ))}
               </Select>
             </div>
 

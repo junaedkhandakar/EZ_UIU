@@ -189,7 +189,7 @@ Student Question:
 
 Instructions for Response:
 1. Answer the student's question accurately using the retrieved official UIU documents above.
-2. When citing specific facts (such as fee amounts, probation notices, 80% attendance, or FYDP 100 credits), include brief source citations like [Source: ${retrievedDocs[0]?.title}].
+2. When citing specific facts (such as fee amounts, probation notices, 80% attendance, or FYDP 80 credits), include brief source citations like [Source: ${retrievedDocs[0]?.title}].
 3. Format with clean GitHub-flavored Markdown bullet points and bold highlights.
 4. Keep the answer direct, warm, and free of unnecessary fluff.
 `;

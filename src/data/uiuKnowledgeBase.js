@@ -90,11 +90,11 @@ Eligibility & Quotas:
     category: 'Graduation Requirements',
     source: 'UIU Dept of CSE Capstone Guidelines',
     lastVerified: '2026',
-    keywords: ['fydp', 'thesis', 'project', 'capstone', 'cse 4000a', 'cse 4000b', '100 credits', 'supervisor', 'final year project'],
-    summary: 'FYDP eligibility requirements (100 credits prerequisite), CSE 4000A/B registration, passing grade, and waiver exemptions.',
+    keywords: ['fydp', 'thesis', 'project', 'capstone', 'cse 4000a', 'cse 4000b', '80 credits', 'supervisor', 'final year project'],
+    summary: 'FYDP eligibility requirements (80 credits prerequisite), CSE 4000A/B registration, passing grade, and waiver exemptions.',
     content: `The Final Year Design Project (FYDP) is the capstone requirement for the B.Sc. in CSE program.
 Key Rules:
-1. Prerequisites & Gatekeeper: Students must have completed at least 100 credits before registering for FYDP I (CSE 4000A - 2.0 credits).
+1. Prerequisites & Gatekeeper: Students must have completed at least 80 credits before registering for FYDP I (CSE 4000A - 2.0 credits).
 2. FYDP II: CSE 4000B (4.0 credits) is taken in the subsequent trimester upon satisfactory progress in CSE 4000A.
 3. Passing Requirement: A student must obtain at least a 'C' grade (2.00) in the final project defense to be eligible for graduation.
 4. Tuition Waiver Exemption: Under university regulations, Thesis and FYDP credits are 100% exempt from all merit scholarships and tuition waivers (0% discount applies).

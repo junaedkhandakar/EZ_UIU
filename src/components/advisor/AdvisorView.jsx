@@ -1129,7 +1129,7 @@ export default function AdvisorView({
                 )}
               </div>
               <div className="mt-1 text-xs text-ink-3">
-                {timeline.fydpEligible ? 'Ready for CSE 4000A' : 'Credits left to reach 100 cr'}
+                {timeline.fydpEligible ? 'Ready for CSE 4000A' : 'Credits left to reach 80 cr'}
               </div>
             </Surface>
           </div>
@@ -1145,24 +1145,24 @@ export default function AdvisorView({
                   </h3>
                 </div>
                 <p className="mt-1 text-xs text-ink-2 max-w-2xl">
-                  UIU Department of CSE requires **100 credits completed** before enrollment in FYDP I.
+                  UIU Department of CSE requires **80 credits completed** before enrollment in FYDP I.
                   {timeline.fydpEligible
-                    ? ' You have crossed the 100-credit mark! You are authorized to register for CSE 4000A.'
+                    ? ' You have crossed the 80-credit mark! You are authorized to register for CSE 4000A.'
                     : ` You currently need ${timeline.creditsToFydp} more credits to qualify.`}
                 </p>
               </div>
 
               <div className="shrink-0 w-full sm:w-64">
                 <div className="flex justify-between text-xs font-semibold mb-1.5">
-                  <span className="text-ink-3">Progress to 100 cr</span>
+                  <span className="text-ink-3">Progress to 80 cr</span>
                   <span className="num text-accent">
-                    {Math.min(100, timeline.safeCompleted)} / 100 cr
+                    {Math.min(80, timeline.safeCompleted)} / 80 cr
                   </span>
                 </div>
                 <div className="h-2.5 rounded-full bg-surface2 overflow-hidden">
                   <div
                     className="h-full bg-gradient-to-r from-accent to-accent2 transition-[width] duration-700"
-                    style={{ width: `${Math.min(100, (timeline.safeCompleted / 100) * 100)}%` }}
+                    style={{ width: `${Math.min(100, (timeline.safeCompleted / 80) * 100)}%` }}
                   />
                 </div>
               </div>
