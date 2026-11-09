@@ -20,6 +20,8 @@ import {
 import { COURSE_CATALOG } from '../../data/courseCatalog';
 import { useTheme } from '../../context/ThemeContext';
 import { useToast } from '../../context/ToastContext';
+import { POP_CULTURE_EASTER_EGGS } from '../../utils/easterEggs';
+import confetti from 'canvas-confetti';
 
 export default function CommandPalette({
   isOpen,
@@ -214,15 +216,37 @@ export default function CommandPalette({
         },
       }));
 
+    const easterEggActions = POP_CULTURE_EASTER_EGGS.map((egg) => ({
+      id: egg.id,
+      type: 'easter-egg',
+      category: 'Pop Culture Easter Eggs',
+      title: egg.title,
+      desc: egg.desc,
+      triggers: egg.triggers,
+      icon: Sparkles,
+      action: () => {
+        onClose();
+        showToast(egg.quote, 'success');
+        confetti({ particleCount: 75, spread: 65, origin: { y: 0.6 } });
+      },
+    }));
+
     if (!q) {
       return [...navActions, ...quickActions, ...courseMatches.slice(0, 5)];
     }
+
+    const matchedEggs = easterEggActions.filter(
+      (egg) =>
+        egg.triggers.some((t) => t.includes(q) || q.includes(t)) ||
+        egg.title.toLowerCase().includes(q) ||
+        egg.desc.toLowerCase().includes(q)
+    );
 
     const filteredActions = [...navActions, ...quickActions].filter(
       (a) => a.title.toLowerCase().includes(q) || a.desc.toLowerCase().includes(q)
     );
 
-    return [...filteredActions, ...courseMatches];
+    return [...matchedEggs, ...filteredActions, ...courseMatches];
   }, [query, theme, setActiveTab, onClose, toggleTheme, onOpenUcam, onLoadDemo, onExportCSV, onAddCourse, showToast]);
 
   const handleKeyDown = (e) => {

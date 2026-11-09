@@ -12,11 +12,13 @@ import CommuteView from './components/commute/CommuteView';
 import CoverPageView from './components/coverpage/CoverPageView';
 import CommandPalette from './components/ui/CommandPalette';
 import { DEMO_TRANSCRIPT_COURSES, exportCSV } from './utils/cgpaUtils';
+import { handleKonamiKey } from './utils/easterEggs';
 
 const STORAGE_COURSES = 'ez_uiu_courses';
 const STORAGE_SETTINGS = 'ez_uiu_settings';
 
 export function AppContent() {
+  const { showToast } = useToast();
   const [activeTab, setActiveTab] = useState('cgpa');
   const [commandPaletteOpen, setCommandPaletteOpen] = useState(false);
   const [ucamModalTrigger, setUcamModalTrigger] = useState(false);
@@ -54,11 +56,16 @@ export function AppContent() {
     } catch {}
   }, [settings]);
 
-  // Global Keyboard Shortcuts (Cmd+K / Ctrl+K, 1-5 tab navigation, / search)
+  // Global Keyboard Shortcuts (Cmd+K / Ctrl+K, 1-6 tab navigation, / search, Konami Code)
   useEffect(() => {
     const handleKeyDown = (e) => {
       const tag = e.target.tagName;
       const isInput = tag === 'INPUT' || tag === 'TEXTAREA' || e.target.isContentEditable;
+
+      // Secret Konami Code Easter Egg (↑ ↑ ↓ ↓ ← → ← → B A)
+      handleKonamiKey(e.key, () => {
+        showToast('🎮 KONAMI CHEAT CODE ACTIVATED: 30 Extra Lives Granted! Summa Cum Laude achieved!', 'success');
+      });
 
       if ((e.metaKey || e.ctrlKey) && e.key && e.key.toLowerCase() === 'k') {
         e.preventDefault();

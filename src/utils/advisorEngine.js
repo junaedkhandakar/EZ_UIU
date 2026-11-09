@@ -696,6 +696,35 @@ export function generateAIAnswer(query, context = {}) {
     return `🎯 **Major Concentration Tracks in BSCSE:**\n\nUIU Department of CSE offers 5 specialization tracks:\n1. **Software Engineering** (CSE 4451, CSE 4435, CSE 4181, CSE 4495, CSE 4945)\n2. **AI & Data Science** (CSE 4889, CSE 4891, CSE 4817, CSE 4893)\n3. **Network & Cybersecurity** (CSE 4783, CSE 4777, CSE 4791, CSE 4779)\n4. **Systems & Cloud** (CSE 4621, CSE 4587, CSE 4511, CSE 4515)\n5. **Computational Theory** (CSE 4611, CSE 4633, CSE 4635, CSE 4637)\n\n*Rule:* Complete **4 elective courses** (12 credits) from your track for Summer 2026+ curriculum (or 3 courses for legacy batches) to officially declare the specialization on your transcript!`;
   }
 
+  // Pop Culture Easter Eggs
+  if (q.includes('power level') || q.includes('over 9000')) {
+    return `💥 **IT'S OVER 9000!**\n\n*(Scouter shatters)* Wait... Vegeta, look at the screen! UIU CGPA is strictly capped at **4.00**, so your maximum power level is a **4.00 Summa Cum Laude**! Now train for your Discrete Mathematics midterm! 🥋🐉`;
+  }
+
+  if (q.includes('say my name') || q.includes('heisenberg') || q.includes('let him cook')) {
+    return `🧪 **You're Heisenberg.**\n\n"I am not in danger of probation, Skyler. I am the danger. A student gets an F and you think that of me? No. **I am the one who retakes with a 50% waiver!**"\n\nNow put on the hazmat suit and study for Data Structures. Let him cook! 👨‍🔬`;
+  }
+
+  if (q.includes('force') || q.includes('jedi') || q.includes('yoda') || q.includes('high ground')) {
+    return `⚔️ **"It's over Anakin! I have the High Ground (3.90+ Summa Cum Laude)!"**\n\n*"Do or do not, there is no retake... well actually at UIU you CAN retake for 50% off if you get a C+ or below, but master the Force you must!"* — Master Yoda 🧙‍♂️✨`;
+  }
+
+  if (q.includes('winter is coming') || q.includes('game of thrones') || q.includes('stark')) {
+    return `🐺 **Winter is Coming... and so are Midterm Examinations!**\n\nThe night is dark and full of error logs. But fear not, Lord of Winterfell! Review your syllabus, clear your prerequisite bottlenecks, and secure your 3.50 GPA merit waiver before the White Walkers arrive! ⚔️❄️`;
+  }
+
+  if (q.includes('cake is a lie') || q.includes('portal') || q.includes('glados')) {
+    return `🍰 **"The cake is a lie... but the UIU 100% Merit Waiver is NOT a lie!"**\n\n(As long as you stay in the top 2% of your batch with a GPA ≥ 3.50!). Aperture Science thanks you for participating in this academic advising test. 🤖`;
+  }
+
+  if (q.includes('matrix') || q.includes('red pill') || q.includes('neo') || q.includes('morpheus')) {
+    return `🕶️ **"You take the blue pill, the story ends. You wake up in your bed and believe whatever you want. You take the red pill, you stay in UIU, and I show you how deep the CGPA rabbit hole goes."**\n\nWelcome to the Real World, Neo. Remember: there is no spoon, but there ARE 80% mandatory class attendance rules! 🐇`;
+  }
+
+  if (q.includes('one does not simply') || q.includes('mordor') || q.includes('lord of the rings') || q.includes('gandalf')) {
+    return `💍 **"One does not simply walk into the UIU Vice Chancellor's office without 100 credits for FYDP!"**\n\nFly, you fools! Clear your Algorithms and Discrete Math prerequisites before stepping into the fires of Mount Doom! 🧙‍♂️🌋`;
+  }
+
   return `📚 **Academic Advising Recommendation:** Based on your current CGPA of **${cgpa.toFixed(2)}** and **${completedCr} credits completed**, prioritize clearing all bottleneck prerequisites (Discrete Math, Data Structures, Algorithms) while keeping a balanced mix of 1 Hard Core + 2 Medium Core + 1 Lab to sustain a strong CGPA.\n\n*You can ask me about: FYDP eligibility, retake rules, merit scholarships, exam clash slots, tuition fees, or major tracks!*`;
 }
 
