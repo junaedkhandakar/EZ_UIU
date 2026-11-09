@@ -8,13 +8,21 @@ import { useToast } from '../../context/ToastContext';
 
 const HOUR_H = 56; // px per hour
 
-export default function Timetable({ sections = [] }) {
+export default function Timetable({ sections = [], hoveredSection = null }) {
   const { showToast } = useToast();
   const [inspectedSec, setInspectedSec] = useState(null);
   const [copied, setCopied] = useState(false);
 
   const model = useMemo(() => {
-    const meetings = sections.flatMap((s) =>
+    // If previewing a section on hover, temporarily merge it
+    const allSections = hoveredSection
+      ? [
+          ...sections.filter((s) => s.code !== hoveredSection.code),
+          { ...hoveredSection, isPreview: true },
+        ]
+      : sections;
+
+    const meetings = allSections.flatMap((s) =>
       (s.meetings || []).map((m) => ({ ...m, sec: s }))
     );
     if (!meetings.length) return null;
@@ -57,11 +65,12 @@ export default function Timetable({ sections = [] }) {
           height: Math.max(22, y(m[2]) - y(m[1]) - 3),
           color: colourFor(m.sec.code),
           clash: clashIds.has(m.sec.id),
+          isPreview: !!m.sec.isPreview,
         }));
     });
 
     return { hours, height, byDay, hasClash: clashIds.size > 0 };
-  }, [sections]);
+  }, [sections, hoveredSection]);
 
   const handleCopy = (text) => {
     navigator.clipboard?.writeText(text);
@@ -140,23 +149,23 @@ export default function Timetable({ sections = [] }) {
                       title="Click for full course details"
                       className={`group absolute left-1 right-1.5 cursor-pointer overflow-hidden rounded-xl border px-2.5 py-1.5 shadow-sm transition-shadow hover:shadow-lift ${
                         b.clash ? 'z-20 ring-2 ring-bad' : ''
-                      }`}
+                      } ${b.isPreview ? 'z-30 border-2 border-dashed border-accent bg-accentSoft/90 shadow-md animate-pulse' : ''}`}
                       style={{
                         top: b.top,
                         height: b.height,
-                        borderLeftWidth: 3.5,
-                        borderColor: `color-mix(in srgb, ${b.color} 35%, transparent)`,
-                        borderLeftColor: b.color,
-                        background: `color-mix(in srgb, ${b.color} 16%, var(--surface))`,
+                        borderLeftWidth: b.isPreview ? 2 : 3.5,
+                        borderColor: b.isPreview ? 'var(--accent)' : `color-mix(in srgb, ${b.color} 35%, transparent)`,
+                        borderLeftColor: b.isPreview ? 'var(--accent)' : b.color,
+                        background: b.isPreview ? 'var(--accent-soft)' : `color-mix(in srgb, ${b.color} 16%, var(--surface))`,
                       }}
                     >
                       <div className="flex items-center justify-between gap-1">
                         <span className="truncate text-[11.5px] font-bold text-ink">{b.sec.code}</span>
                         <span
                           className="num shrink-0 rounded-md px-1 py-0.5 text-[9px] font-bold"
-                          style={{ background: `color-mix(in srgb, ${b.color} 22%, transparent)` }}
+                          style={{ background: b.isPreview ? 'var(--accent)' : `color-mix(in srgb, ${b.color} 22%, transparent)`, color: b.isPreview ? '#fff' : 'inherit' }}
                         >
-                          {b.sec.section}
+                          {b.isPreview ? `Preview ${b.sec.section}` : b.sec.section}
                         </span>
                       </div>
                       {b.height >= 46 && (

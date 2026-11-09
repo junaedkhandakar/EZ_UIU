@@ -53,12 +53,28 @@ export function AppContent() {
     } catch {}
   }, [settings]);
 
-  // Global Keyboard Shortcuts (Cmd+K / Ctrl+K and 1, 2, 3 tab navigation)
+  // Global Keyboard Shortcuts (Cmd+K / Ctrl+K, 1-5 tab navigation, / search)
   useEffect(() => {
     const handleKeyDown = (e) => {
+      const tag = e.target.tagName;
+      const isInput = tag === 'INPUT' || tag === 'TEXTAREA' || e.target.isContentEditable;
+
       if ((e.metaKey || e.ctrlKey) && e.key && e.key.toLowerCase() === 'k') {
         e.preventDefault();
         setCommandPaletteOpen((prev) => !prev);
+        return;
+      }
+
+      if (!isInput) {
+        if (e.key === '1') setActiveTab('cgpa');
+        else if (e.key === '2') setActiveTab('advisor');
+        else if (e.key === '3') setActiveTab('routine');
+        else if (e.key === '4') setActiveTab('tuition');
+        else if (e.key === '5') setActiveTab('commute');
+        else if (e.key === '/') {
+          e.preventDefault();
+          setCommandPaletteOpen(true);
+        }
       }
     };
     window.addEventListener('keydown', handleKeyDown);

@@ -55,6 +55,7 @@ export function RoutineView() {
   const searchRef = useRef(null);
 
   const [isUcamModalOpen, setIsUcamModalOpen] = useState(false);
+  const [hoveredSection, setHoveredSection] = useState(null);
 
   useEffect(() => {
     try {
@@ -486,6 +487,8 @@ export function RoutineView() {
                   <motion.button
                     key={i}
                     whileTap={{ scale: 0.96 }}
+                    onMouseEnter={() => setHoveredSection(opt.sections?.[0] || null)}
+                    onMouseLeave={() => setHoveredSection(null)}
                     onClick={() => {
                       setOptionIndex(i);
                       applyOption(opt);
@@ -507,7 +510,7 @@ export function RoutineView() {
           {activeSections.length > 0 && <ClashBanner sections={activeSections} />}
 
           {/* timetable */}
-          <Timetable sections={activeSections} />
+          <Timetable sections={activeSections} hoveredSection={hoveredSection} />
 
           {/* legend */}
           {activeSections.length > 0 && (

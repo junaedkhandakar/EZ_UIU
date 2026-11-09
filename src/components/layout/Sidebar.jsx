@@ -55,25 +55,30 @@ export default function Sidebar({ active, onChange, onOpenCommandPalette }) {
 
       {/* Navigation */}
       <nav className="flex flex-1 flex-col gap-0.5 px-2 py-1">
-        {NAV.map((item) => {
+        {NAV.map((item, idx) => {
           const isActive = item.id === active;
           return (
             <button
               key={item.id}
               onClick={() => onChange(item.id)}
-              className={`relative flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-left text-[13px] transition-colors duration-100 ${
+              className={`group relative flex items-center justify-between rounded-lg px-2.5 py-2 text-left text-[13px] transition-colors duration-100 ${
                 isActive
                   ? 'bg-surface2 text-ink font-semibold'
                   : 'text-ink-2 hover:bg-surface2/60 hover:text-ink font-medium'
               }`}
             >
-              <item.icon
-                className={`h-4 w-4 shrink-0 ${
-                  isActive ? 'text-accent' : 'text-ink-3'
-                }`}
-                strokeWidth={2}
-              />
-              <span className="truncate">{item.label}</span>
+              <div className="flex items-center gap-2.5 min-w-0">
+                <item.icon
+                  className={`h-4 w-4 shrink-0 ${
+                    isActive ? 'text-accent' : 'text-ink-3'
+                  }`}
+                  strokeWidth={2}
+                />
+                <span className="truncate">{item.label}</span>
+              </div>
+              <span className="kbd-shortcut font-mono text-[9.5px] opacity-0 group-hover:opacity-100 transition-opacity">
+                {idx + 1}
+              </span>
             </button>
           );
         })}

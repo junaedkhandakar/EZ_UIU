@@ -14,11 +14,11 @@ import {
 export function gradeTone(g) {
   const grade = String(g || '').toUpperCase();
   if (!grade || grade === 'RUNNING') return 'bg-surface2 text-ink-3 border-line';
-  if (grade.startsWith('A')) return 'bg-emerald-500/15 text-emerald-500 border-emerald-500/30 shadow-[0_0_10px_rgba(16,185,129,0.15)]';
-  if (grade.startsWith('B')) return 'bg-sky-500/15 text-sky-500 border-sky-500/30 shadow-[0_0_10px_rgba(14,165,233,0.15)]';
-  if (grade.startsWith('C')) return 'bg-amber-500/15 text-amber-500 border-amber-500/30 shadow-[0_0_10px_rgba(245,158,11,0.15)]';
-  if (grade.startsWith('D')) return 'bg-orange-500/15 text-orange-500 border-orange-500/30 shadow-[0_0_10px_rgba(249,115,22,0.15)]';
-  if (grade === 'F') return 'bg-rose-500/15 text-rose-500 border-rose-500/30 shadow-[0_0_10px_rgba(239,68,68,0.15)]';
+  if (grade.startsWith('A')) return 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/25';
+  if (grade.startsWith('B')) return 'bg-sky-500/10 text-sky-600 dark:text-sky-400 border-sky-500/25';
+  if (grade.startsWith('C')) return 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/25';
+  if (grade.startsWith('D')) return 'bg-orange-500/10 text-orange-600 dark:text-orange-400 border-orange-500/25';
+  if (grade === 'F') return 'bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/25';
   return 'bg-surface2 text-ink-3 border-line';
 }
 
