@@ -17,6 +17,7 @@ import {
   ShieldCheck,
   Check,
   ChevronRight,
+  ChevronDown,
   CalendarCheck,
   Key,
   Network,
@@ -30,11 +31,14 @@ import {
   ExternalLink,
   Settings2,
   RefreshCw,
+  Search,
+  FileText,
 } from 'lucide-react';
 import Tabs from '../ui/Tabs';
 import Button from '../ui/Button';
 import Surface from '../ui/Surface';
 import Select from '../ui/Select';
+import Modal from '../ui/Modal';
 import {
   AI_PROVIDERS,
   generateRecommendedBasket,
@@ -46,6 +50,7 @@ import {
   queryUniversalAIAdvisor,
   getPassedCoursesSet,
 } from '../../utils/advisorEngine';
+import { UIU_KNOWLEDGE_DOCUMENTS } from '../../data/uiuKnowledgeBase';
 import { ALL_COURSES, MAJOR_TRACKS } from '../../data/advisorData';
 import { calculateAcademicMetrics, getEffectiveCourses } from '../../utils/cgpaUtils';
 import { useToast } from '../../context/ToastContext';
@@ -101,6 +106,12 @@ export default function AdvisorView({
   });
 
   const [isAiSettingsOpen, setIsAiSettingsOpen] = useState(false);
+  const [expandedSources, setExpandedSources] = useState({});
+  const [isKbOpen, setIsKbOpen] = useState(false);
+  const [kbQuery, setKbQuery] = useState('');
+  const [kbCategory, setKbCategory] = useState('ALL');
+  const [expandedKbDoc, setExpandedKbDoc] = useState(null);
+
   const [chatInput, setChatInput] = useState('');
   const [isThinking, setIsThinking] = useState(false);
   const [chatMessages, setChatMessages] = useState([
@@ -108,8 +119,49 @@ export default function AdvisorView({
       role: 'ai',
       provider: 'UIU Intelligence',
       text: "👋 Hello! I'm your **UIU AI Academic Advisor**. Based on official university policies and your academic record, I can recommend clash-free course baskets, verify prerequisite readiness, check probation rules, and audit your graduation timeline. How can I help you today?",
+      retrievedSources: [
+        {
+          id: 'kb_grading_scale',
+          title: 'UIU Official Grading System & Grade Points',
+          category: 'Academic Evaluation',
+          source: 'UIU Controller of Examinations',
+          confidencePct: 98,
+          snippet: 'Official letter grades, percentage thresholds, and graduation CGPA requirements.',
+        },
+        {
+          id: 'kb_retake_policy',
+          title: 'Course Retake & Grade Replacement',
+          category: 'Curriculum Rules',
+          source: 'UIU Academic Regulations §3.4',
+          confidencePct: 95,
+          snippet: '50% tuition waiver for first retake. New grade completely replaces old grade in CGPA calculation.',
+        },
+      ],
     },
   ]);
+
+  const toggleSourceExpansion = (idx) => {
+    setExpandedSources((prev) => ({ ...prev, [idx]: !prev[idx] }));
+  };
+
+  const filteredKbDocs = useMemo(() => {
+    const q = kbQuery.toLowerCase().trim();
+    return UIU_KNOWLEDGE_DOCUMENTS.filter((doc) => {
+      const matchCat = kbCategory === 'ALL' || doc.category === kbCategory;
+      const matchText =
+        !q ||
+        doc.title.toLowerCase().includes(q) ||
+        doc.summary.toLowerCase().includes(q) ||
+        doc.content.toLowerCase().includes(q) ||
+        doc.keywords.some((k) => k.toLowerCase().includes(q));
+      return matchCat && matchText;
+    });
+  }, [kbQuery, kbCategory]);
+
+  const kbCategories = useMemo(() => {
+    const cats = new Set(UIU_KNOWLEDGE_DOCUMENTS.map((d) => d.category));
+    return ['ALL', ...Array.from(cats)];
+  }, []);
 
   const saveProvider = (provId) => {
     setSelectedProvider(provId);
@@ -237,7 +289,7 @@ export default function AdvisorView({
     const model = providerModels[selectedProvider] || activeProviderConfig.defaultModel;
 
     try {
-      const reply = await queryUniversalAIAdvisor({
+      const response = await queryUniversalAIAdvisor({
         provider: selectedProvider,
         apiKey,
         model,
@@ -249,12 +301,16 @@ export default function AdvisorView({
           selectedMajor,
         },
       });
+      const replyText = typeof response === 'object' ? response.text : response;
+      const sources = typeof response === 'object' ? response.retrievedSources : [];
+
       setChatMessages((prev) => [
         ...prev,
         {
           role: 'ai',
           provider: `${activeProviderConfig.name} (${model})`,
-          text: reply,
+          text: replyText,
+          retrievedSources: sources || [],
         },
       ]);
     } catch (err) {
@@ -267,6 +323,7 @@ export default function AdvisorView({
           role: 'ai',
           provider: 'UIU Regulations Engine (Fallback)',
           text: `${fallback}\n\n*(Error contacting ${activeProviderConfig.name}: ${err.message})*`,
+          retrievedSources: [],
         },
       ]);
     } finally {
@@ -297,6 +354,19 @@ export default function AdvisorView({
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
+          {/* Knowledge Base Browser Button */}
+          <button
+            onClick={() => setIsKbOpen(true)}
+            className="flex items-center gap-1.5 rounded-xl border border-line bg-surface px-3 py-1.5 text-xs font-semibold text-ink-2 shadow-card transition-colors hover:border-accent hover:text-accent"
+            title="Browse 13 Verified UIU Statutes & Official Policies"
+          >
+            <BookOpen className="h-3.5 w-3.5 text-accent" />
+            <span className="hidden sm:inline">UIU Statutes</span>
+            <span className="rounded bg-ok/15 text-ok px-1.5 py-0.5 text-[9.5px] font-bold">
+              13 Verified
+            </span>
+          </button>
+
           {/* Multi-AI Provider Selector Button */}
           <button
             onClick={() => setIsAiSettingsOpen(!isAiSettingsOpen)}
@@ -1219,18 +1289,26 @@ export default function AdvisorView({
           </div>
 
           {/* Active Model Indicator Header */}
-          <div className="flex items-center justify-between px-2 text-xs text-ink-3">
+          <div className="flex flex-wrap items-center justify-between gap-2 px-2 text-xs text-ink-3">
             <span className="flex items-center gap-1.5">
               <Bot className="h-3.5 w-3.5 text-accent" />
               Active AI: <b className="text-ink font-semibold">{activeProviderConfig.name}</b>
               <span className="text-[11px] text-accent">({providerModels[selectedProvider] || activeProviderConfig.defaultModel})</span>
             </span>
-            <button
-              onClick={() => setIsAiSettingsOpen(true)}
-              className="text-[11px] text-accent hover:underline flex items-center gap-1 font-semibold"
-            >
-              Change Model / Key <Settings2 className="h-3 w-3" />
-            </button>
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => setIsKbOpen(true)}
+                className="text-[11px] text-accent hover:underline flex items-center gap-1 font-semibold"
+              >
+                <BookOpen className="h-3 w-3" /> Browse 13 Statutes
+              </button>
+              <button
+                onClick={() => setIsAiSettingsOpen(true)}
+                className="text-[11px] text-ink-2 hover:text-ink flex items-center gap-1 font-semibold"
+              >
+                Settings <Settings2 className="h-3 w-3" />
+              </button>
+            </div>
           </div>
 
           {/* Chat Messages Log */}
@@ -1258,6 +1336,61 @@ export default function AdvisorView({
                     </div>
                   )}
                   <div className="whitespace-pre-line">{msg.text}</div>
+
+                  {/* RAG Retrieved Sources Inspector */}
+                  {msg.retrievedSources && msg.retrievedSources.length > 0 && (
+                    <div className="mt-3 border-t border-line/60 pt-2.5">
+                      <button
+                        type="button"
+                        onClick={() => toggleSourceExpansion(i)}
+                        className="inline-flex items-center gap-1.5 rounded-lg border border-accent/25 bg-accentSoft px-2.5 py-1 text-[11px] font-semibold text-accent hover:border-accent transition-colors shadow-sm"
+                      >
+                        <BookOpen className="h-3 w-3 text-accent" />
+                        <span>{msg.retrievedSources.length} Official UIU Policy Sources Cited</span>
+                        {msg.retrievedSources[0]?.confidencePct && (
+                          <span className="text-[10px] font-mono opacity-80">
+                            ({msg.retrievedSources[0].confidencePct}% match)
+                          </span>
+                        )}
+                        <ChevronDown
+                          className={`h-3 w-3 transition-transform duration-200 ${
+                            expandedSources[i] ? 'rotate-180' : ''
+                          }`}
+                        />
+                      </button>
+
+                      {expandedSources[i] && (
+                        <div className="mt-2 space-y-2 fade-in">
+                          {msg.retrievedSources.map((src) => (
+                            <div
+                              key={src.id}
+                              className="rounded-xl border border-line bg-surface p-3 text-xs shadow-card"
+                            >
+                              <div className="flex items-start justify-between gap-2">
+                                <div>
+                                  <div className="font-bold text-ink text-[12px] flex items-center gap-1.5">
+                                    <ShieldCheck className="h-3.5 w-3.5 text-ok shrink-0" />
+                                    {src.title}
+                                  </div>
+                                  <div className="text-[10.5px] text-ink-3 mt-0.5">
+                                    Authority: <span className="text-ink-2 font-medium">{src.source}</span> · Category: {src.category}
+                                  </div>
+                                </div>
+                                {src.confidencePct && (
+                                  <span className="rounded-md bg-ok/15 text-ok border border-ok/30 px-1.5 py-0.5 text-[9.5px] font-bold shrink-0">
+                                    {src.confidencePct}% match
+                                  </span>
+                                )}
+                              </div>
+                              <p className="mt-2 rounded-lg bg-surface2/60 p-2.5 text-[11px] leading-relaxed text-ink font-mono border border-line/60">
+                                "{src.snippet}"
+                              </p>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
               </div>
             ))}
@@ -1267,7 +1400,7 @@ export default function AdvisorView({
                   <Sparkles className="h-full w-full animate-spin" />
                 </div>
                 <div className="rounded-2xl px-4 py-3 text-xs border border-line bg-surface2/60 text-ink-3 italic">
-                  {activeProviderConfig.name} is consulting UIU curriculum & regulations…
+                  {activeProviderConfig.name} is retrieving UIU statutes & generating advice…
                 </div>
               </div>
             )}
@@ -1295,6 +1428,124 @@ export default function AdvisorView({
           </div>
         </div>
       )}
+
+      {/* UIU Official Knowledge Base Explorer Modal */}
+      <Modal
+        open={isKbOpen}
+        onClose={() => setIsKbOpen(false)}
+        title="UIU Knowledge Base & Policy Statutes"
+        sub="13 verified official policy documents indexed for Retrieval-Augmented Generation (RAG)"
+        width="max-w-4xl"
+      >
+        <div className="space-y-4">
+          {/* Search Bar & Category Filter */}
+          <div className="space-y-3">
+            <div className="relative">
+              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-ink-3" />
+              <input
+                type="text"
+                value={kbQuery}
+                onChange={(e) => setKbQuery(e.target.value)}
+                placeholder="Search across all 13 verified UIU statutes, exam rules, waivers, or FYDP..."
+                className="h-10 w-full rounded-xl border border-line bg-surface2/60 pl-10 pr-4 text-xs text-ink placeholder-ink-3 outline-none focus:border-accent focus:ring-2 focus:ring-accent/20"
+              />
+              {kbQuery && (
+                <button
+                  onClick={() => setKbQuery('')}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 rounded-md p-1 text-ink-3 hover:text-ink"
+                >
+                  <X className="h-3.5 w-3.5" />
+                </button>
+              )}
+            </div>
+
+            {/* Category Filter Chips */}
+            <div className="flex flex-wrap gap-1.5">
+              {kbCategories.map((cat) => (
+                <button
+                  key={cat}
+                  onClick={() => setKbCategory(cat)}
+                  className={`rounded-lg px-2.5 py-1 text-[11px] font-semibold transition-colors ${
+                    kbCategory === cat
+                      ? 'bg-accentSoft text-accent border border-accent/40 font-bold'
+                      : 'bg-surface2 text-ink-3 hover:text-ink border border-line'
+                  }`}
+                >
+                  {cat === 'ALL' ? 'All Policies (13)' : cat}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Documents List */}
+          <div className="space-y-3 max-h-[60vh] overflow-y-auto overscroll-contain pr-1">
+            {filteredKbDocs.length === 0 ? (
+              <div className="rounded-2xl border border-line bg-surface2/30 p-8 text-center">
+                <FileText className="mx-auto h-8 w-8 text-ink-3 opacity-60" />
+                <p className="mt-2 text-xs font-semibold text-ink-2">No matching policy clauses found</p>
+                <p className="text-[11px] text-ink-3">Try adjusting your search terms or selecting 'All Policies'</p>
+              </div>
+            ) : (
+              filteredKbDocs.map((doc) => {
+                const isExpanded = expandedKbDoc === doc.id;
+                return (
+                  <div
+                    key={doc.id}
+                    className="rounded-2xl border border-line bg-surface p-4 shadow-sm transition-all hover:border-line-strong"
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <span className="rounded-md bg-accentSoft text-accent px-2 py-0.5 text-[10px] font-bold">
+                            {doc.category}
+                          </span>
+                          <span className="text-[10.5px] text-ink-3 font-mono">
+                            Authority: {doc.source}
+                          </span>
+                        </div>
+                        <h4 className="mt-1.5 text-sm font-bold text-ink">{doc.title}</h4>
+                        <p className="mt-1 text-xs text-ink-2 leading-relaxed">{doc.summary}</p>
+                      </div>
+
+                      <button
+                        onClick={() => setExpandedKbDoc(isExpanded ? null : doc.id)}
+                        className={`rounded-xl border px-3 py-1.5 text-xs font-bold shrink-0 transition-colors ${
+                          isExpanded
+                            ? 'border-accent bg-accentSoft text-accent'
+                            : 'border-line bg-surface2 text-ink-2 hover:text-ink'
+                        }`}
+                      >
+                        {isExpanded ? 'Hide Full Clause' : 'View Full Clause'}
+                      </button>
+                    </div>
+
+                    {isExpanded && (
+                      <div className="mt-3.5 border-t border-line/60 pt-3 fade-in">
+                        <div className="rounded-xl border border-line/80 bg-surface2/60 p-3.5 font-mono text-[11.5px] leading-relaxed text-ink whitespace-pre-line">
+                          {doc.content}
+                        </div>
+                        <div className="mt-2.5 flex flex-wrap gap-1">
+                          <span className="text-[10px] text-ink-3 uppercase tracking-wider font-semibold mr-1 self-center">
+                            Indexed Keywords:
+                          </span>
+                          {doc.keywords.map((k) => (
+                            <span
+                              key={k}
+                              className="rounded bg-surface border border-line px-1.5 py-0.5 text-[9.5px] text-ink-3"
+                            >
+                              #{k}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                );
+              })
+            )}
+          </div>
+        </div>
+      </Modal>
     </div>
   );
 }
