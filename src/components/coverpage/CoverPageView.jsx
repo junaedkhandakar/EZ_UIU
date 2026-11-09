@@ -82,7 +82,7 @@ export default function CoverPageView() {
   const [courseSection, setCourseSection] = useState(() => routine[0]?.section || 'C');
   const [trimester, setTrimester] = useState('Fall 2026');
 
-  const [facultyName, setFacultyName] = useState('Dr. Mohammad Nurul Huda');
+  const [facultyName, setFacultyName] = useState('');
   const [facultyDesignation, setFacultyDesignation] = useState('Professor');
   const [facultyDept, setFacultyDept] = useState('Department of Computer Science and Engineering');
 
@@ -105,7 +105,7 @@ export default function CoverPageView() {
         if (d.courseTitle) setCourseTitle(d.courseTitle);
         if (d.courseSection) setCourseSection(d.courseSection);
         if (d.trimester) setTrimester(d.trimester);
-        if (d.facultyName) setFacultyName(d.facultyName);
+        if (d.facultyName && d.facultyName !== 'Dr. Mohammad Nurul Huda') setFacultyName(d.facultyName);
         if (d.facultyDesignation) setFacultyDesignation(d.facultyDesignation);
         if (d.facultyDept) setFacultyDept(d.facultyDept);
         if (d.isGroup !== undefined) setIsGroup(d.isGroup);
@@ -493,6 +493,7 @@ export default function CoverPageView() {
                   type="text"
                   value={facultyName}
                   onChange={(e) => setFacultyName(e.target.value)}
+                  placeholder="e.g. Dr. Mohammad Nurul Huda"
                   className="h-[38px] w-full rounded-xl border border-line bg-surface2/60 px-3 text-xs font-semibold text-ink outline-none focus:border-accent"
                 />
               </div>
@@ -771,7 +772,7 @@ export default function CoverPageView() {
                       <div className="font-bold text-orange-600 border-b border-orange-200 pb-1 mb-2 uppercase tracking-wider text-[11px]">
                         Submitted To
                       </div>
-                      <div className="font-bold text-zinc-900 text-xs">{facultyName}</div>
+                      <div className="font-bold text-zinc-900 text-xs">{facultyName || 'Course Instructor'}</div>
                       <div className="text-[10.5px] text-zinc-700">{facultyDesignation}</div>
                       <div className="text-[10px] text-zinc-500 leading-tight mt-0.5">{facultyDept}</div>
                     </div>
@@ -828,7 +829,7 @@ export default function CoverPageView() {
                     <div className="font-bold uppercase tracking-wider text-xs mb-1.5" style={{ color: THEME_ORANGE }}>
                       Submitted To
                     </div>
-                    <div className="font-bold text-zinc-900">{facultyName}</div>
+                    <div className="font-bold text-zinc-900">{facultyName || 'Course Instructor'}</div>
                     <div className="text-zinc-700">{facultyDesignation}</div>
                     <div className="text-[10.5px] text-zinc-500">{facultyDept}</div>
                   </div>
@@ -886,7 +887,7 @@ export default function CoverPageView() {
                     <div className="font-bold uppercase tracking-widest text-[11px] mb-2" style={{ color: THEME_ORANGE }}>
                       Submitted To:
                     </div>
-                    <div className="font-bold text-zinc-900 text-xs">{facultyName}</div>
+                    <div className="font-bold text-zinc-900 text-xs">{facultyName || 'Course Instructor'}</div>
                     <div className="text-zinc-700 text-[11px]">{facultyDesignation}</div>
                     <div className="text-[10px] text-zinc-500 leading-tight">{facultyDept}</div>
                     <div className="text-[10px] text-zinc-400 mt-1">Date: {formattedSubmissionDate}</div>
