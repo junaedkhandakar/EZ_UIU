@@ -33,6 +33,9 @@ import {
   RefreshCw,
   Search,
   FileText,
+  Copy,
+  Flame,
+  Trash2,
 } from 'lucide-react';
 import Tabs from '../ui/Tabs';
 import Button from '../ui/Button';
@@ -47,6 +50,7 @@ import {
   getPrerequisiteTree,
   calculateDegreeTimeline,
   generateAIAnswer,
+  generateFollowUpSuggestions,
   queryUniversalAIAdvisor,
   getPassedCoursesSet,
 } from '../../utils/advisorEngine';
@@ -72,12 +76,12 @@ export default function AdvisorView({
   // Prerequisite Visualizer State
   const [selectedTreeCourse, setSelectedTreeCourse] = useState('CSE 4889');
 
-  // AI Provider & Settings State
+  // AI Provider & Settings State (OpenRouter with Prompt Caching is Primary)
   const [selectedProvider, setSelectedProvider] = useState(() => {
     try {
-      return localStorage.getItem('ez_ai_provider') || 'instant';
+      return localStorage.getItem('ez_ai_provider') || 'openrouter';
     } catch {
-      return 'instant';
+      return 'openrouter';
     }
   });
 
@@ -85,10 +89,11 @@ export default function AdvisorView({
     try {
       const saved = localStorage.getItem('ez_ai_keys');
       if (saved) return JSON.parse(saved);
+      const legacyOr = localStorage.getItem('ez_openrouter_api_key');
       const legacyGemini = localStorage.getItem('ez_gemini_api_key');
-      return { gemini: legacyGemini || '', groq: '', openrouter: '' };
+      return { openrouter: legacyOr || '', gemini: legacyGemini || '', groq: '' };
     } catch {
-      return { gemini: '', groq: '', openrouter: '' };
+      return { openrouter: '', gemini: '', groq: '' };
     }
   });
 
@@ -98,15 +103,17 @@ export default function AdvisorView({
       if (saved) return JSON.parse(saved);
     } catch {}
     return {
+      openrouter: 'deepseek/deepseek-r1:free',
       gemini: 'gemini-1.5-flash',
       groq: 'llama-3.3-70b-versatile',
-      openrouter: 'deepseek/deepseek-r1:free',
       instant: 'mistral',
     };
   });
 
   const [isAiSettingsOpen, setIsAiSettingsOpen] = useState(false);
+  const [openRouterKeyInput, setOpenRouterKeyInput] = useState('');
   const [expandedSources, setExpandedSources] = useState({});
+  const [copiedIndex, setCopiedIndex] = useState(null);
   const [isKbOpen, setIsKbOpen] = useState(false);
   const [kbQuery, setKbQuery] = useState('');
   const [kbCategory, setKbCategory] = useState('ALL');
@@ -117,8 +124,13 @@ export default function AdvisorView({
   const [chatMessages, setChatMessages] = useState([
     {
       role: 'ai',
-      provider: 'UIU Intelligence',
-      text: "👋 Hello! I'm your **UIU AI Academic Advisor**. Based on official university policies and your academic record, I can recommend clash-free course baskets, verify prerequisite readiness, check probation rules, and audit your graduation timeline. How can I help you today?",
+      provider: 'UIU Knowledge Base',
+      text: "👋 Hello! I'm your **UIU AI Academic Advisor** with Prompt Caching & RAG. Based on official university policies and your academic record, I can recommend clash-free course baskets, verify prerequisite readiness, check probation rules, and audit your graduation timeline. How can I help you today?",
+      followUps: [
+        'When can I start FYDP / Thesis?',
+        'How do retakes affect my CGPA?',
+        'What are the merit waiver requirements?',
+      ],
       retrievedSources: [
         {
           id: 'kb_grading_scale',
@@ -176,11 +188,42 @@ export default function AdvisorView({
     setProviderKeys(updated);
     try {
       localStorage.setItem('ez_ai_keys', JSON.stringify(updated));
+      if (provId === 'openrouter') {
+        localStorage.setItem('ez_openrouter_api_key', keyVal.trim());
+      }
       if (provId === 'gemini') {
         localStorage.setItem('ez_gemini_api_key', keyVal.trim());
       }
       showToast(`${AI_PROVIDERS[provId]?.name} API key updated`, 'info');
     } catch {}
+  };
+
+  const handleCopyAdvice = (text, idx) => {
+    try {
+      navigator.clipboard.writeText(text);
+      setCopiedIndex(idx);
+      showToast('Advice copied to clipboard!', 'success');
+      setTimeout(() => setCopiedIndex(null), 2000);
+    } catch {
+      showToast('Failed to copy text', 'error');
+    }
+  };
+
+  const handleClearChat = () => {
+    setChatMessages([
+      {
+        role: 'ai',
+        provider: 'UIU Knowledge Base',
+        text: "👋 Conversation reset. Ask me anything about UIU courses, FYDP, retakes, or scholarships!",
+        followUps: [
+          'When can I start FYDP / Thesis?',
+          'How do retakes affect my CGPA?',
+          'What are the merit waiver requirements?',
+        ],
+        retrievedSources: [],
+      },
+    ]);
+    showToast('Conversation reset', 'info');
   };
 
   const saveModelForProvider = (provId, modelId) => {
@@ -300,9 +343,15 @@ export default function AdvisorView({
           completedCourseCodes: Array.from(passedCodes),
           selectedMajor,
         },
+        conversationHistory: chatMessages.slice(-6),
       });
       const replyText = typeof response === 'object' ? response.text : response;
       const sources = typeof response === 'object' ? response.retrievedSources : [];
+      const usage = typeof response === 'object' ? response.usage : null;
+      const latencyMs = typeof response === 'object' ? response.latencyMs : null;
+      const isClientCached = typeof response === 'object' ? response.isClientCached : false;
+
+      const followUps = generateFollowUpSuggestions(query, replyText);
 
       setChatMessages((prev) => [
         ...prev,
@@ -311,12 +360,17 @@ export default function AdvisorView({
           provider: `${activeProviderConfig.name} (${model})`,
           text: replyText,
           retrievedSources: sources || [],
+          usage,
+          latencyMs,
+          isClientCached,
+          followUps,
         },
       ]);
     } catch (err) {
       showToast(err.message || 'Error communicating with AI provider', 'error');
       // Automatic smart fallback
       const fallback = generateAIAnswer(query, { cgpa: currentCgpa, completedCredits });
+      const followUps = generateFollowUpSuggestions(query, fallback);
       setChatMessages((prev) => [
         ...prev,
         {
@@ -324,6 +378,7 @@ export default function AdvisorView({
           provider: 'UIU Regulations Engine (Fallback)',
           text: `${fallback}\n\n*(Error contacting ${activeProviderConfig.name}: ${err.message})*`,
           retrievedSources: [],
+          followUps,
         },
       ]);
     } finally {
@@ -1290,17 +1345,32 @@ export default function AdvisorView({
 
           {/* Active Model Indicator Header */}
           <div className="flex flex-wrap items-center justify-between gap-2 px-2 text-xs text-ink-3">
-            <span className="flex items-center gap-1.5">
-              <Bot className="h-3.5 w-3.5 text-accent" />
-              Active AI: <b className="text-ink font-semibold">{activeProviderConfig.name}</b>
-              <span className="text-[11px] text-accent">({providerModels[selectedProvider] || activeProviderConfig.defaultModel})</span>
-            </span>
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="flex items-center gap-1.5">
+                <Bot className="h-3.5 w-3.5 text-accent" />
+                Active AI: <b className="text-ink font-semibold">{activeProviderConfig.name}</b>
+                <span className="text-[11px] text-accent">({providerModels[selectedProvider] || activeProviderConfig.defaultModel})</span>
+              </span>
+              {selectedProvider === 'openrouter' && (
+                <span className="rounded bg-ok/15 text-ok border border-ok/30 px-1.5 py-0.5 text-[9.5px] font-bold flex items-center gap-1">
+                  <Flame className="h-2.5 w-2.5" /> Prompt Caching Ready
+                </span>
+              )}
+            </div>
+
             <div className="flex items-center gap-3">
               <button
                 onClick={() => setIsKbOpen(true)}
                 className="text-[11px] text-accent hover:underline flex items-center gap-1 font-semibold"
               >
-                <BookOpen className="h-3 w-3" /> Browse 13 Statutes
+                <BookOpen className="h-3 w-3" /> 13 UIU Statutes
+              </button>
+              <button
+                onClick={handleClearChat}
+                className="text-[11px] text-ink-3 hover:text-bad flex items-center gap-1 transition-colors"
+                title="Clear conversation history"
+              >
+                <Trash2 className="h-3 w-3" /> Clear
               </button>
               <button
                 onClick={() => setIsAiSettingsOpen(true)}
@@ -1310,6 +1380,43 @@ export default function AdvisorView({
               </button>
             </div>
           </div>
+
+          {/* Dedicated OpenRouter API Key Activation Bar if Empty */}
+          {selectedProvider === 'openrouter' && !providerKeys.openrouter && (
+            <Surface className="p-4 border-accent/40 bg-accentSoft shadow-sm fade-in">
+              <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+                <div className="flex-1">
+                  <h4 className="text-xs font-bold text-ink flex items-center gap-1.5">
+                    <Key className="h-3.5 w-3.5 text-accent" />
+                    Enter Your OpenRouter API Key
+                  </h4>
+                  <p className="text-[11px] text-ink-3 mt-0.5">
+                    Paste your OpenRouter key here to activate high-speed DeepSeek R1 & prompt caching.
+                  </p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="password"
+                    placeholder="sk-or-v1-..."
+                    value={openRouterKeyInput}
+                    onChange={(e) => setOpenRouterKeyInput(e.target.value)}
+                    className="h-9 w-44 sm:w-56 rounded-xl border border-line bg-surface px-3 font-mono text-xs text-ink outline-none focus:border-accent"
+                  />
+                  <Button
+                    variant="primary"
+                    size="sm"
+                    disabled={!openRouterKeyInput.trim()}
+                    onClick={() => {
+                      saveKeyForProvider('openrouter', openRouterKeyInput);
+                      setOpenRouterKeyInput('');
+                    }}
+                  >
+                    Save & Activate
+                  </Button>
+                </div>
+              </div>
+            </Surface>
+          )}
 
           {/* Chat Messages Log */}
           <Surface className="p-4 sm:p-5 min-h-[340px] max-h-[500px] overflow-y-auto overscroll-contain space-y-4">
@@ -1330,16 +1437,67 @@ export default function AdvisorView({
                       : 'border border-line bg-surface2/60 text-ink shadow-sm'
                   }`}
                 >
-                  {msg.provider && msg.role === 'ai' && (
-                    <div className="text-[10px] font-bold uppercase tracking-wider text-accent mb-1 opacity-80">
-                      {msg.provider}
+                  {/* Top Bar for AI Response */}
+                  {msg.role === 'ai' && (
+                    <div className="flex items-center justify-between gap-2 border-b border-line/40 pb-1.5 mb-2">
+                      <div className="flex flex-wrap items-center gap-1.5">
+                        {msg.provider && (
+                          <span className="text-[10px] font-bold uppercase tracking-wider text-accent opacity-90">
+                            {msg.provider}
+                          </span>
+                        )}
+                        {msg.isClientCached && (
+                          <span className="rounded bg-accentSoft text-accent border border-accent/25 px-1.5 py-0.5 text-[9.5px] font-bold">
+                            ⚡ 0ms Cached
+                          </span>
+                        )}
+                        {msg.usage?.cachedTokens > 0 && (
+                          <span className="rounded bg-ok/15 text-ok border border-ok/30 px-1.5 py-0.5 text-[9.5px] font-bold flex items-center gap-0.5">
+                            <Flame className="h-2.5 w-2.5" /> {msg.usage.cachedTokens} Tokens Cached
+                          </span>
+                        )}
+                        {msg.latencyMs != null && !msg.isClientCached && (
+                          <span className="text-[9.5px] text-ink-3 font-mono opacity-80">
+                            {(msg.latencyMs / 1000).toFixed(1)}s
+                          </span>
+                        )}
+                      </div>
+
+                      <button
+                        onClick={() => handleCopyAdvice(msg.text, i)}
+                        className="rounded p-1 text-ink-3 hover:text-accent transition-colors"
+                        title="Copy advice to clipboard"
+                      >
+                        {copiedIndex === i ? (
+                          <Check className="h-3 w-3 text-ok" />
+                        ) : (
+                          <Copy className="h-3 w-3" />
+                        )}
+                      </button>
                     </div>
                   )}
+
                   <div className="whitespace-pre-line">{msg.text}</div>
+
+                  {/* Contextual Suggested Follow-up Chips */}
+                  {msg.followUps && msg.followUps.length > 0 && (
+                    <div className="mt-3 border-t border-line/60 pt-2 flex flex-wrap items-center gap-1">
+                      <span className="text-[10px] text-ink-3 font-semibold mr-1">Follow-up:</span>
+                      {msg.followUps.map((fu, fuIdx) => (
+                        <button
+                          key={fuIdx}
+                          onClick={() => handleSendQuery(fu)}
+                          className="rounded-lg border border-line bg-surface/90 px-2 py-0.5 text-[10.5px] font-medium text-ink-2 hover:border-accent hover:text-accent hover:bg-accentSoft transition-colors"
+                        >
+                          {fu}
+                        </button>
+                      ))}
+                    </div>
+                  )}
 
                   {/* RAG Retrieved Sources Inspector */}
                   {msg.retrievedSources && msg.retrievedSources.length > 0 && (
-                    <div className="mt-3 border-t border-line/60 pt-2.5">
+                    <div className="mt-2.5 border-t border-line/60 pt-2">
                       <button
                         type="button"
                         onClick={() => toggleSourceExpansion(i)}

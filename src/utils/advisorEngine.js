@@ -1,13 +1,33 @@
 import { ALL_COURSES, ADVISOR_COURSE_MAP, MAJOR_TRACKS, GED_ELECTIVES } from '../data/advisorData';
 import { GRADE_POINTS } from './cgpaUtils';
 import { retrieveRelevantDocuments, buildRagAugmentedPrompt } from './ragEngine';
+import { promptCache } from './cacheUtils';
 
 const SLOT_ORDER = ['T1', 'T2', 'T3'];
 
 /**
- * Supported Free AI Providers configuration
+ * Supported Free AI Providers configuration with Prompt Caching Architecture
  */
 export const AI_PROVIDERS = {
+  openrouter: {
+    id: 'openrouter',
+    name: 'OpenRouter AI',
+    badge: 'Prompt Caching · Primary',
+    description: 'High-speed reasoning models with server-side prefix prompt caching and zero setup barrier.',
+    requiresKey: true,
+    keyPlaceholder: 'sk-or-v1-...',
+    keyHelpUrl: 'https://openrouter.ai/keys',
+    keyHelpLabel: 'Get Free OpenRouter Key ↗',
+    models: [
+      { id: 'deepseek/deepseek-r1:free', name: 'DeepSeek R1 (Free Reasoning)' },
+      { id: 'deepseek/deepseek-chat', name: 'DeepSeek V3 (Prompt Caching Enabled)' },
+      { id: 'meta-llama/llama-3.3-70b-instruct:free', name: 'Llama 3.3 70B (Free)' },
+      { id: 'google/gemini-2.0-flash-exp:free', name: 'Gemini 2.0 Flash (Free)' },
+      { id: 'qwen/qwen-2.5-coder-32b-instruct:free', name: 'Qwen 2.5 Coder 32B (Free)' },
+      { id: 'anthropic/claude-3.5-sonnet', name: 'Claude 3.5 Sonnet (Prompt Caching)' },
+    ],
+    defaultModel: 'deepseek/deepseek-r1:free',
+  },
   instant: {
     id: 'instant',
     name: 'Instant Cloud AI',
@@ -48,23 +68,6 @@ export const AI_PROVIDERS = {
       { id: 'mixtral-8x7b-32768', name: 'Mixtral 8x7B' },
     ],
     defaultModel: 'llama-3.3-70b-versatile',
-  },
-  openrouter: {
-    id: 'openrouter',
-    name: 'OpenRouter Free',
-    badge: 'DeepSeek R1 / Free',
-    description: 'Access DeepSeek R1, Llama 3.3, and Qwen free tier models without credit card.',
-    requiresKey: true,
-    keyPlaceholder: 'sk-or-v1-...',
-    keyHelpUrl: 'https://openrouter.ai/keys',
-    keyHelpLabel: 'Get Free OpenRouter Key ↗',
-    models: [
-      { id: 'deepseek/deepseek-r1:free', name: 'DeepSeek R1 (Free)' },
-      { id: 'meta-llama/llama-3.3-70b-instruct:free', name: 'Llama 3.3 70B (Free)' },
-      { id: 'google/gemini-2.0-flash-exp:free', name: 'Gemini 2.0 Flash (Free)' },
-      { id: 'qwen/qwen-2.5-coder-32b-instruct:free', name: 'Qwen 2.5 Coder 32B (Free)' },
-    ],
-    defaultModel: 'deepseek/deepseek-r1:free',
   },
   offline: {
     id: 'offline',
@@ -697,23 +700,47 @@ export function generateAIAnswer(query, context = {}) {
 }
 
 /**
- * Universal Multi-Provider AI Academic Advisor Connector with Full RAG Architecture
- * Supports: Instant Free AI (No key needed), Google Gemini, Groq, OpenRouter, and Offline Engine
+ * Universal Multi-Provider AI Academic Advisor Connector with Full RAG Architecture,
+ * Prompt Caching (OpenRouter prefix cache + Client LRU cache), and Multi-turn Memory.
  */
 export async function queryUniversalAIAdvisor({
-  provider = 'instant',
+  provider = 'openrouter',
   apiKey = '',
   model = '',
   prompt = '',
   studentContext = {},
+  conversationHistory = [],
+  bypassCache = false,
 }) {
   const cleanPrompt = (prompt || '').trim();
   if (!cleanPrompt) throw new Error('Question prompt cannot be empty.');
+  const startTime = Date.now();
 
   // Step 1: Perform RAG Document Retrieval over verified UIU knowledge base
   const retrievedSources = retrieveRelevantDocuments(cleanPrompt, 3);
 
-  // Step 2: Build RAG-augmented prompt embedding verified policy clauses
+  // Step 2: Check Client-side Prompt Cache for instant 0ms response
+  const chosenModel = model || AI_PROVIDERS[provider]?.defaultModel || 'deepseek/deepseek-r1:free';
+  if (!bypassCache && provider !== 'offline') {
+    const cached = promptCache.get({
+      prompt: cleanPrompt,
+      model: chosenModel,
+      provider,
+      cgpa: studentContext.cgpa,
+      completedCredits: studentContext.completedCredits,
+      major: studentContext.selectedMajor,
+    });
+    if (cached) {
+      return {
+        ...cached,
+        retrievedSources,
+        isClientCached: true,
+        latencyMs: 0,
+      };
+    }
+  }
+
+  // Step 3: Build RAG-augmented prompt embedding verified policy clauses
   const augmentedPrompt = buildRagAugmentedPrompt({
     query: cleanPrompt,
     studentContext,
@@ -723,12 +750,103 @@ export async function queryUniversalAIAdvisor({
   // Provider 1: Offline Engine
   if (provider === 'offline') {
     const offlineReply = generateAIAnswer(cleanPrompt, studentContext);
-    return { text: offlineReply, retrievedSources };
+    return {
+      text: offlineReply,
+      retrievedSources,
+      latencyMs: Date.now() - startTime,
+      isClientCached: false,
+    };
   }
 
   const systemInstructions = buildUIUSystemPrompt(studentContext);
 
-  // Provider 2: Instant Cloud AI (Zero Key Needed - Public Free API)
+  // Provider 2: OpenRouter API (Primary Provider with Prompt Caching Optimization)
+  if (provider === 'openrouter') {
+    if (!apiKey || !apiKey.trim()) {
+      throw new Error('Please enter your OpenRouter API Key. You can paste it in the bar above or get one at openrouter.ai/keys.');
+    }
+
+    // Structure messages to maximize OpenRouter prefix prompt caching
+    const messages = [
+      {
+        role: 'system',
+        content: [
+          {
+            type: 'text',
+            text: systemInstructions,
+            cache_control: { type: 'ephemeral' },
+          },
+        ],
+      },
+      ...conversationHistory.slice(-4).map((m) => ({
+        role: m.role === 'user' ? 'user' : 'assistant',
+        content: m.text,
+      })),
+      {
+        role: 'user',
+        content: augmentedPrompt,
+      },
+    ];
+
+    const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${apiKey.trim()}`,
+        'HTTP-Referer': 'https://junaedkhandakar.github.io/EZ_UIU/',
+        'X-Title': 'EZ_UIU Academic Suite',
+      },
+      body: JSON.stringify({
+        model: chosenModel,
+        messages,
+        temperature: 0.35,
+        max_tokens: 850,
+      }),
+    });
+
+    if (!response.ok) {
+      const errData = await response.json().catch(() => ({}));
+      throw new Error(errData?.error?.message || `OpenRouter API error (HTTP ${response.status})`);
+    }
+
+    const data = await response.json();
+    const reply = data?.choices?.[0]?.message?.content;
+    if (!reply) throw new Error('No response text generated by OpenRouter.');
+
+    // Capture prompt caching metrics from OpenRouter
+    const cachedTokens =
+      data.usage?.prompt_tokens_details?.cached_tokens ||
+      data.usage?.cache_read_input_tokens ||
+      0;
+    const promptTokens = data.usage?.prompt_tokens || 0;
+    const completionTokens = data.usage?.completion_tokens || 0;
+    const latencyMs = Date.now() - startTime;
+
+    const resultPayload = {
+      text: reply,
+      retrievedSources,
+      usage: { promptTokens, completionTokens, cachedTokens },
+      latencyMs,
+      isClientCached: false,
+    };
+
+    // Save in prompt cache for instant future retrieval
+    promptCache.set(
+      {
+        prompt: cleanPrompt,
+        model: chosenModel,
+        provider,
+        cgpa: studentContext.cgpa,
+        completedCredits: studentContext.completedCredits,
+        major: studentContext.selectedMajor,
+      },
+      resultPayload
+    );
+
+    return resultPayload;
+  }
+
+  // Provider 3: Instant Cloud AI (Zero Key Needed - Public Free API)
   if (provider === 'instant') {
     try {
       const controller = new AbortController();
@@ -754,32 +872,66 @@ export async function queryUniversalAIAdvisor({
 
       const text = await response.text();
       if (!text || text.includes('Free limit reached') || text.includes('<html')) {
-        // Fall back seamlessly to smart offline UIU engine
         const fallback = generateAIAnswer(cleanPrompt, studentContext);
         return {
           text: `${fallback}\n\n*(Note: Cloud AI busy; verified via offline UIU regulations engine)*`,
           retrievedSources,
+          latencyMs: Date.now() - startTime,
+          isClientCached: false,
         };
       }
 
-      return { text: text.trim(), retrievedSources };
-    } catch {
-      // Graceful fallback to offline rule engine
-      const fallback = generateAIAnswer(cleanPrompt, studentContext);
-      return {
-        text: `${fallback}\n\n*(Note: Instant AI network offline; answered via verified UIU knowledge base)*`,
+      const resultPayload = {
+        text: text.trim(),
         retrievedSources,
+        latencyMs: Date.now() - startTime,
+        isClientCached: false,
       };
+
+      promptCache.set(
+        {
+          prompt: cleanPrompt,
+          model: chosenModel,
+          provider,
+          cgpa: studentContext.cgpa,
+          completedCredits: studentContext.completedCredits,
+          major: studentContext.selectedMajor,
+        },
+        resultPayload
+      );
+
+      return resultPayload;
+    } catch {
+    const latencyMs = Date.now() - startTime;
+    const fallbackPayload = {
+      text: `${fallback}\n\n*(Note: Instant AI network offline; answered via verified UIU knowledge base)*`,
+      retrievedSources,
+      latencyMs,
+      isClientCached: false,
+    };
+
+    promptCache.set(
+      {
+        prompt: cleanPrompt,
+        model: chosenModel,
+        provider,
+        cgpa: studentContext.cgpa,
+        completedCredits: studentContext.completedCredits,
+        major: studentContext.selectedMajor,
+      },
+      fallbackPayload
+    );
+
+    return fallbackPayload;
     }
   }
 
-  // Provider 3: Google Gemini API
+  // Provider 4: Google Gemini API
   if (provider === 'gemini') {
     if (!apiKey || !apiKey.trim()) {
       throw new Error('Please enter a Google Gemini API Key. Click "Get Free Key ↗" above to get one free from Google AI Studio.');
     }
 
-    const chosenModel = model || 'gemini-1.5-flash';
     const url = `https://generativelanguage.googleapis.com/v1beta/models/${chosenModel}:generateContent?key=${apiKey.trim()}`;
 
     const response = await fetch(url, {
@@ -794,7 +946,7 @@ export async function queryUniversalAIAdvisor({
         ],
         generationConfig: {
           temperature: 0.35,
-          maxOutputTokens: 750,
+          maxOutputTokens: 850,
         },
       }),
     });
@@ -807,16 +959,36 @@ export async function queryUniversalAIAdvisor({
     const data = await response.json();
     const reply = data?.candidates?.[0]?.content?.parts?.[0]?.text;
     if (!reply) throw new Error('No response text generated by Gemini.');
-    return { text: reply, retrievedSources };
+
+    const latencyMs = Date.now() - startTime;
+    const resultPayload = {
+      text: reply,
+      retrievedSources,
+      latencyMs,
+      isClientCached: false,
+    };
+
+    promptCache.set(
+      {
+        prompt: cleanPrompt,
+        model: chosenModel,
+        provider,
+        cgpa: studentContext.cgpa,
+        completedCredits: studentContext.completedCredits,
+        major: studentContext.selectedMajor,
+      },
+      resultPayload
+    );
+
+    return resultPayload;
   }
 
-  // Provider 4: Groq API (Ultra-fast Llama 3.3 70B)
+  // Provider 5: Groq API (Ultra-fast Llama 3.3 70B)
   if (provider === 'groq') {
     if (!apiKey || !apiKey.trim()) {
       throw new Error('Please enter a Groq API Key. Click "Get Free Key ↗" above to get one free from Groq Console.');
     }
 
-    const chosenModel = model || 'llama-3.3-70b-versatile';
     const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
       method: 'POST',
       headers: {
@@ -830,7 +1002,7 @@ export async function queryUniversalAIAdvisor({
           { role: 'user', content: augmentedPrompt },
         ],
         temperature: 0.35,
-        max_tokens: 750,
+        max_tokens: 850,
       }),
     });
 
@@ -842,48 +1014,77 @@ export async function queryUniversalAIAdvisor({
     const data = await response.json();
     const reply = data?.choices?.[0]?.message?.content;
     if (!reply) throw new Error('No response text generated by Groq.');
-    return { text: reply, retrievedSources };
-  }
 
-  // Provider 5: OpenRouter API (DeepSeek R1 / Free Tier)
-  if (provider === 'openrouter') {
-    if (!apiKey || !apiKey.trim()) {
-      throw new Error('Please enter an OpenRouter API Key. Click "Get Free Key ↗" above to get one free from OpenRouter.');
-    }
+    const latencyMs = Date.now() - startTime;
+    const resultPayload = {
+      text: reply,
+      retrievedSources,
+      latencyMs,
+      isClientCached: false,
+    };
 
-    const chosenModel = model || 'deepseek/deepseek-r1:free';
-    const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${apiKey.trim()}`,
-        'HTTP-Referer': 'https://junaedkhandakar.github.io/EZ_UIU/',
-        'X-Title': 'EZ_UIU Academic Suite',
-      },
-      body: JSON.stringify({
+    promptCache.set(
+      {
+        prompt: cleanPrompt,
         model: chosenModel,
-        messages: [
-          { role: 'system', content: systemInstructions },
-          { role: 'user', content: augmentedPrompt },
-        ],
-        temperature: 0.35,
-        max_tokens: 750,
-      }),
-    });
+        provider,
+        cgpa: studentContext.cgpa,
+        completedCredits: studentContext.completedCredits,
+        major: studentContext.selectedMajor,
+      },
+      resultPayload
+    );
 
-    if (!response.ok) {
-      const errData = await response.json().catch(() => ({}));
-      throw new Error(errData?.error?.message || `OpenRouter API error (HTTP ${response.status})`);
-    }
-
-    const data = await response.json();
-    const reply = data?.choices?.[0]?.message?.content;
-    if (!reply) throw new Error('No response text generated by OpenRouter.');
-    return { text: reply, retrievedSources };
+    return resultPayload;
   }
 
   // Fallback to offline rule engine
-  return { text: generateAIAnswer(cleanPrompt, studentContext), retrievedSources };
+  return {
+    text: generateAIAnswer(cleanPrompt, studentContext),
+    retrievedSources,
+    latencyMs: Date.now() - startTime,
+    isClientCached: false,
+  };
+}
+
+/**
+ * Generate context-aware follow-up question suggestions
+ */
+export function generateFollowUpSuggestions(query = '', reply = '') {
+  const q = (query + ' ' + reply).toLowerCase();
+  const suggestions = [];
+
+  if (q.includes('fydp') || q.includes('thesis')) {
+    suggestions.push('What grade do I need in FYDP to graduate?');
+    suggestions.push('Can I get a scholarship waiver on FYDP credits?');
+    suggestions.push('What are the prerequisites for CSE 4000B?');
+  } else if (q.includes('retake') || q.includes('repeat')) {
+    suggestions.push('How much is the tuition fee for a retake course?');
+    suggestions.push('Will the old grade show on my transcript?');
+    suggestions.push('Can I retake a course if I got a B-?');
+  } else if (q.includes('waiver') || q.includes('scholarship')) {
+    suggestions.push('What is the minimum credit load for a scholarship?');
+    suggestions.push('Does UIU have a sibling waiver discount?');
+    suggestions.push('What happens if I take an Incomplete grade?');
+  } else if (q.includes('probation') || q.includes('cgpa')) {
+    suggestions.push('How many probation notices can I get before dismissal?');
+    suggestions.push('Can I change my department while on probation?');
+    suggestions.push('What is the maximum credit limit on probation?');
+  } else if (q.includes('fee') || q.includes('tuition') || q.includes('installment')) {
+    suggestions.push('What are the 3 installment payment deadlines?');
+    suggestions.push('What is the per-credit fee for BSCSE?');
+    suggestions.push('Is there a late fee penalty at UIU?');
+  } else if (q.includes('track') || q.includes('major') || q.includes('specialization')) {
+    suggestions.push('How many elective courses do I need for Software Engineering?');
+    suggestions.push('What courses are in the AI & Data Science track?');
+    suggestions.push('Can I take electives from different tracks?');
+  } else {
+    suggestions.push('What are the requirements for Summa Cum Laude?');
+    suggestions.push('When do final exam schedules get published?');
+    suggestions.push('What is the minimum attendance required for finals?');
+  }
+
+  return suggestions.slice(0, 3);
 }
 
 /**
