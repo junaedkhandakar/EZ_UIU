@@ -15,37 +15,6 @@ import { DEMO_TRANSCRIPT_COURSES, exportCSV } from './utils/cgpaUtils';
 const STORAGE_COURSES = 'ez_uiu_courses';
 const STORAGE_SETTINGS = 'ez_uiu_settings';
 
-function Aurora() {
-  return (
-    <div className="pointer-events-none fixed inset-0 -z-10 overflow-hidden" aria-hidden="true">
-      {/* Primary Top Ambient Glow */}
-      <motion.div
-        animate={{
-          scale: [1, 1.12, 1],
-          opacity: [0.15, 0.22, 0.15],
-          x: [0, 15, 0],
-          y: [0, -12, 0],
-        }}
-        transition={{ duration: 14, repeat: Infinity, ease: 'easeInOut' }}
-        className="absolute -top-40 left-1/3 h-[500px] w-[700px] -translate-x-1/2 rounded-full bg-gradient-to-br from-accent/25 via-accent2/20 to-transparent blur-[140px]"
-      />
-      {/* Secondary Top-Right Cyan/Indigo Shimmer */}
-      <motion.div
-        animate={{
-          scale: [1.08, 0.94, 1.08],
-          opacity: [0.1, 0.18, 0.1],
-          x: [0, -20, 0],
-          y: [0, 15, 0],
-        }}
-        transition={{ duration: 16, repeat: Infinity, ease: 'easeInOut' }}
-        className="absolute -top-28 right-[-100px] h-[450px] w-[580px] rounded-full bg-gradient-to-bl from-accent2/20 via-sky-500/15 to-transparent blur-[140px]"
-      />
-      {/* Subtle Bottom Ambient Accent */}
-      <div className="absolute -bottom-48 -left-32 h-[420px] w-[520px] rounded-full bg-accent/[0.08] blur-[150px]" />
-    </div>
-  );
-}
-
 export function AppContent() {
   const [activeTab, setActiveTab] = useState('cgpa');
   const [commandPaletteOpen, setCommandPaletteOpen] = useState(false);
@@ -110,7 +79,6 @@ export function AppContent() {
 
   return (
     <div className="min-h-dvh bg-base text-ink antialiased">
-      <Aurora />
       <Sidebar
         active={activeTab}
         onChange={setActiveTab}

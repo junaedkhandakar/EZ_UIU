@@ -400,12 +400,12 @@ export default function AdvisorView({
       {/* Header */}
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <div className="text-[11px] font-semibold uppercase tracking-[0.14em] text-accent">
-            Curriculum Intelligence & Advising Engine
-          </div>
-          <h1 className="mt-1 text-[26px] font-extrabold tracking-tight text-ink sm:text-3xl">
+          <h1 className="text-xl font-bold tracking-tight text-ink sm:text-2xl">
             AI Academic Advisor
           </h1>
+          <p className="mt-0.5 text-xs text-ink-3">
+            Course recommendations, prerequisite chains, and verified UIU policies
+          </p>
         </div>
 
         <div className="flex flex-wrap items-center gap-2">

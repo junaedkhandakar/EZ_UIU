@@ -180,12 +180,12 @@ export function RoutineView() {
       {/* header */}
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <div className="text-[11px] font-semibold uppercase tracking-[0.14em] text-accent">
-            {activeCalendar ? `${activeCalendar.term} ${activeCalendar.year}` : 'Fall 2026'} · clash-free solver
-          </div>
-          <h1 className="mt-1 text-[26px] font-extrabold tracking-tight text-ink sm:text-3xl">
+          <h1 className="text-xl font-bold tracking-tight text-ink sm:text-2xl">
             Routine Builder
           </h1>
+          <p className="mt-0.5 text-xs text-ink-3">
+            {activeCalendar ? `${activeCalendar.term} ${activeCalendar.year}` : 'Fall 2026'} · Conflict-free timetable solver
+          </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
           <Button

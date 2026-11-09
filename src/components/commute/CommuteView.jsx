@@ -148,12 +148,12 @@ export default function CommuteView() {
       {/* Header */}
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <div className="text-[11px] font-semibold uppercase tracking-[0.14em] text-accent">
-            Campus Logistics & Commute Navigator
-          </div>
-          <h1 className="mt-1 text-[26px] font-extrabold tracking-tight text-ink sm:text-3xl">
-            UIU Transport & Shuttle Hub
+          <h1 className="text-xl font-bold tracking-tight text-ink sm:text-2xl">
+            Shuttle & Campus Commute
           </h1>
+          <p className="mt-0.5 text-xs text-ink-3">
+            Notun Bazar & Kuril shuttles, route navigation, and campus contacts
+          </p>
         </div>
 
         <div className="flex items-center gap-2">
@@ -214,23 +214,18 @@ export default function CommuteView() {
               </div>
 
               {/* Next Departure Hero Card */}
-              <div className="mt-4 rounded-2xl border border-accent/30 bg-accentSoft p-4 text-center">
-                <span className="text-[10.5px] font-bold uppercase tracking-wider text-accent inline-flex items-center gap-1.5">
-                  <span className="relative flex h-2 w-2">
-                    <span className="absolute inline-flex h-full w-full rounded-full bg-ok opacity-75 live-dot" />
-                    <span className="relative inline-flex h-2 w-2 rounded-full bg-ok" />
-                  </span>
+              <div className="mt-4 rounded-xl border border-line bg-surface2/50 p-4 text-center">
+                <span className="text-xs font-semibold text-ink-3">
                   {shuttleDirection === 'toCampus' ? 'Next from Notun Bazar' : 'Next from UIU Campus'}
                 </span>
-                <div className="mt-2 text-2xl font-extrabold text-ink font-mono">
+                <div className="mt-1.5 text-xl font-bold text-ink font-mono">
                   {nextShuttleInfo.upcoming
                     ? nextShuttleInfo.upcoming.period
                     : 'Done for the Day'}
                 </div>
-                <div className="mt-1.5 text-xs font-medium text-ink-2">
+                <div className="mt-1 text-xs text-ink-2">
                   {nextShuttleInfo.minutesAway != null ? (
-                    <span className="inline-flex items-center gap-1 text-accent font-bold">
-                      <Clock className="h-3.5 w-3.5" />
+                    <span className="text-accent font-semibold">
                       Departs in ≈ {nextShuttleInfo.minutesAway} minutes
                     </span>
                   ) : (
@@ -338,23 +333,18 @@ export default function CommuteView() {
               </div>
 
               {/* Next Departure Hero Card */}
-              <div className="mt-4 rounded-2xl border border-accent/30 bg-accentSoft p-4 text-center">
-                <span className="text-[10.5px] font-bold uppercase tracking-wider text-accent inline-flex items-center gap-1.5">
-                  <span className="relative flex h-2 w-2">
-                    <span className="absolute inline-flex h-full w-full rounded-full bg-ok opacity-75 live-dot" />
-                    <span className="relative inline-flex h-2 w-2 rounded-full bg-ok" />
-                  </span>
+              <div className="mt-4 rounded-xl border border-line bg-surface2/50 p-4 text-center">
+                <span className="text-xs font-semibold text-ink-3">
                   {kurilDirection === 'toCampus' ? 'Next from Kuril (Biswa Road)' : 'Next from UIU Campus'}
                 </span>
-                <div className="mt-2 text-2xl font-extrabold text-ink font-mono">
+                <div className="mt-1.5 text-xl font-bold text-ink font-mono">
                   {nextKurilShuttleInfo.upcoming
                     ? nextKurilShuttleInfo.upcoming.period
                     : 'Done for the Day'}
                 </div>
-                <div className="mt-1.5 text-xs font-medium text-ink-2">
+                <div className="mt-1 text-xs text-ink-2">
                   {nextKurilShuttleInfo.minutesAway != null ? (
-                    <span className="inline-flex items-center gap-1 text-accent font-bold">
-                      <Clock className="h-3.5 w-3.5" />
+                    <span className="text-accent font-semibold">
                       Departs in ≈ {nextKurilShuttleInfo.minutesAway} minutes
                     </span>
                   ) : (

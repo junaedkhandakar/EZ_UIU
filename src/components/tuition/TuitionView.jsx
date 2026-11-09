@@ -118,12 +118,12 @@ export function TuitionView({ courses = [], settings = {}, defaultDept = 'regula
       {/* Header */}
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <div className="text-[11px] font-semibold uppercase tracking-[0.14em] text-accent">
-            {deptProfile.name} · official waiver rules
-          </div>
-          <h1 className="mt-1 text-[26px] font-extrabold tracking-tight text-ink sm:text-3xl">
+          <h1 className="text-xl font-bold tracking-tight text-ink sm:text-2xl">
             Tuition & Waivers
           </h1>
+          <p className="mt-0.5 text-xs text-ink-3">
+            {deptProfile.name} · Fee breakdown, merit waivers & installments
+          </p>
         </div>
         <div className="flex gap-2">
           <Button variant="secondary" icon={RefreshCw} onClick={syncFromCGPA}>
@@ -449,30 +449,22 @@ export function TuitionView({ courses = [], settings = {}, defaultDept = 'regula
                 <Leader label="Trimester Activity Fee" value={formatBDT(fees.trimesterFee)} />
               </div>
 
-              {/* Total Banner with physical ticket cutouts */}
-              <div className="relative border-t border-dashed border-line-strong bg-surface2/50 px-6 py-5">
-                <span className="absolute -left-3 -top-3 h-6 w-6 rounded-full bg-base border border-line" aria-hidden="true" />
-                <span className="absolute -right-3 -top-3 h-6 w-6 rounded-full bg-base border border-line" aria-hidden="true" />
+              {/* Net Total Summary */}
+              <div className="border-t border-line bg-surface2/50 px-6 py-5">
                 <div className="flex items-baseline justify-between">
-                  <span className="text-[11px] font-bold uppercase tracking-[0.14em] text-ink-3">
+                  <span className="text-xs font-semibold uppercase tracking-wider text-ink-3">
                     Net Total Due
                   </span>
                   {fees.totalDiscount > 0 && (
-                    <span className="rounded-md bg-ok/15 px-2 py-0.5 text-[10.5px] font-bold text-ok">
+                    <span className="rounded-md bg-ok/15 text-ok px-2 py-0.5 text-xs font-bold">
                       Saving {formatBDT(fees.totalDiscount)}
                     </span>
                   )}
                 </div>
-                <motion.div
-                  key={fees.totalPayable}
-                  initial={{ scale: 0.95 }}
-                  animate={{ scale: 1 }}
-                  transition={{ type: 'spring', stiffness: 450, damping: 20 }}
-                  className="num mt-2 text-[36px] font-extrabold leading-none tracking-tight text-ink"
-                >
+                <div className="num mt-2 text-[32px] font-extrabold leading-none tracking-tight text-ink">
                   ৳{fees.totalPayable.toLocaleString()}
-                </motion.div>
-                <div className="num mt-2 text-xs font-semibold text-ink-3">
+                </div>
+                <div className="num mt-2 text-xs font-medium text-ink-3">
                   ≈ ৳{Math.round(fees.totalPayable / Math.max(1, fees.installments.length)).toLocaleString()} per installment
                 </div>
               </div>
@@ -480,39 +472,17 @@ export function TuitionView({ courses = [], settings = {}, defaultDept = 'regula
               {/* Credit Composition Bar */}
               <div className="grid grid-cols-3 border-t border-line bg-surface text-center">
                 <div className="border-r border-line p-3">
-                  <div className="num text-[16px] font-extrabold text-ink">{fees.regularCredits}</div>
-                  <div className="text-[9.5px] font-bold uppercase tracking-wider text-ink-3">
-                    Regular
-                  </div>
+                  <div className="num text-sm font-bold text-ink">{fees.regularCredits}</div>
+                  <div className="text-[10px] font-medium text-ink-3">Regular</div>
                 </div>
                 <div className="border-r border-line p-3">
-                  <div className="num text-[16px] font-extrabold text-warn">{fees.retakeCredits}</div>
-                  <div className="text-[9.5px] font-bold uppercase tracking-wider text-ink-3">
-                    Retake
-                  </div>
+                  <div className="num text-sm font-bold text-warn">{fees.retakeCredits}</div>
+                  <div className="text-[10px] font-medium text-ink-3">Retake</div>
                 </div>
                 <div className="p-3">
-                  <div className="num text-[16px] font-extrabold text-ink-2">{fees.thesisCredits}</div>
-                  <div className="text-[9.5px] font-bold uppercase tracking-wider text-ink-3">
-                    Thesis
-                  </div>
+                  <div className="num text-sm font-bold text-ink-2">{fees.thesisCredits}</div>
+                  <div className="text-[10px] font-medium text-ink-3">Thesis</div>
                 </div>
-              </div>
-
-              {/* Barcode graphic footer */}
-              <div className="flex flex-col items-center justify-center border-t border-line/60 bg-surface2/30 px-6 py-3.5">
-                <div className="flex h-6 items-center gap-[2px] opacity-40 dark:opacity-30">
-                  {[3, 1, 4, 1, 5, 9, 2, 6, 5, 3, 5, 8, 9, 7, 9, 3, 2, 3, 8, 4, 6, 2, 6, 4, 3, 3, 8, 3, 2, 7, 9].map((w, idx) => (
-                    <span
-                      key={idx}
-                      className="inline-block h-full bg-ink"
-                      style={{ width: `${(w % 3) + 1}px` }}
-                    />
-                  ))}
-                </div>
-                <span className="num mt-1 font-mono text-[9px] uppercase tracking-widest text-ink-3">
-                  UIU-FIN-2026-REG-{credits}CR
-                </span>
               </div>
             </Surface>
           </div>

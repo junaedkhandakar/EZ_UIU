@@ -39,59 +39,40 @@ import {
 } from '../../utils/cgpaUtils';
 import { useToast } from '../../context/ToastContext';
 
-/* ---------- interactive animated gauge ring ---------- */
+/* ---------- Minimalist Apple-grade animated gauge ring ---------- */
 function GaugeRing({ cgpa, probation }) {
-  const R = 68;
+  const R = 64;
   const C = 2 * Math.PI * R;
   const frac = Math.max(0, Math.min(1, cgpa / 4));
-  const size = 160;
+  const size = 150;
 
   return (
     <div className="relative shrink-0" style={{ width: size, height: size }}>
       <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} className="-rotate-90">
-        <defs>
-          <linearGradient id="ringGrad" x1="0" y1="0" x2="1" y2="1">
-            <stop offset="0%" stopColor="var(--accent)" />
-            <stop offset="50%" stopColor="var(--accent-2)" />
-            <stop offset="100%" stopColor="#ec4899" />
-          </linearGradient>
-          <filter id="ringGlow" x="-20%" y="-20%" width="140%" height="140%">
-            <feGaussianBlur stdDeviation="3" result="blur" />
-            <feMerge>
-              <feMergeNode in="blur" />
-              <feMergeNode in="SourceGraphic" />
-            </feMerge>
-          </filter>
-        </defs>
-        <circle cx={size / 2} cy={size / 2} r={R} fill="none" stroke="var(--surface-2)" strokeWidth="11" />
+        <circle cx={size / 2} cy={size / 2} r={R} fill="none" stroke="var(--surface-2)" strokeWidth="8" />
         <motion.circle
           cx={size / 2}
           cy={size / 2}
           r={R}
           fill="none"
-          stroke={probation ? 'var(--bad)' : 'url(#ringGrad)'}
-          strokeWidth="11"
+          stroke={probation ? 'var(--bad)' : 'var(--accent)'}
+          strokeWidth="8"
           strokeLinecap="round"
           strokeDasharray={C}
-          filter="url(#ringGlow)"
           initial={{ strokeDashoffset: C }}
           animate={{ strokeDashoffset: C * (1 - frac) }}
-          transition={{ type: 'spring', stiffness: 200, damping: 25, delay: 0.1 }}
+          transition={{ type: 'spring', stiffness: 220, damping: 28 }}
         />
       </svg>
       <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-        <motion.div
-          key={cgpa}
-          initial={{ scale: 0.9, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
-          transition={{ type: 'spring', stiffness: 400, damping: 20 }}
-          className={`num text-[40px] font-extrabold leading-none tracking-tight ${
+        <div
+          className={`num text-[34px] font-bold leading-none tracking-tight ${
             probation ? 'text-bad' : 'text-ink'
           }`}
         >
           <CountUp value={cgpa} />
-        </motion.div>
-        <div className="mt-1 text-[10px] font-bold uppercase tracking-[0.14em] text-ink-3">
+        </div>
+        <div className="mt-1 text-[10px] font-medium uppercase tracking-wider text-ink-3">
           of 4.00
         </div>
       </div>
@@ -213,12 +194,12 @@ export function CgpaView({
       {/* header */}
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <div className="text-[11px] font-semibold uppercase tracking-[0.14em] text-accent">
-            {deptConfig.name} · {programCredits} credits
-          </div>
-          <h1 className="mt-1 text-[26px] font-extrabold tracking-tight text-ink sm:text-3xl">
-            Academic Standing
+          <h1 className="text-xl font-bold tracking-tight text-ink sm:text-2xl">
+            CGPA & Academic Standing
           </h1>
+          <p className="mt-0.5 text-xs text-ink-3">
+            {deptConfig.name} · {programCredits} Credits
+          </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
           <Button variant="secondary" size="md" icon={Upload} onClick={() => setUcamOpen(true)}>
