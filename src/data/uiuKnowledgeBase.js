@@ -262,4 +262,30 @@ Advising Workflow:
 4. Billing Generation: Once approved by the faculty advisor, registration fees and installment vouchers are automatically generated on UCAM.
 5. Accounts Clearance: Payment must be completed via bank or mobile financial services (bKash/Nagad) to finalize enrollment.`,
   },
+  {
+    id: 'kb_transport_commute',
+    title: 'UIU Student Transportation, Bus Routes & Shuttle Services (Kuril, Notun Bazar, EWU)',
+    category: 'Campus Logistics & Transport',
+    source: 'UIU Operations & Logistics Division',
+    lastVerified: '2026',
+    keywords: ['transport', 'bus', 'shuttle', 'kuril', 'notun bazar', 'ewu', 'route 1', 'route 2', 'route 3', 'route 4', 'route 5', 'route 6', 'ac bus'],
+    summary: 'Official shuttle schedules (Notun Bazar, Kuril BRTC 300ft express, EWU Aftabnagar) and 6 student AC bus routes across Dhaka.',
+    content: `UIU operates student transportation connecting the Madani Avenue campus across Dhaka:
+1. Kuril Shuttle Express:
+   - Route: UIU Campus ⇄ Bashundhara City Gold Refinery Gate ⇄ 300 Ft Road ⇄ Kuril BRTC Bus Stand.
+   - Frequency: Continuous morning rush shifts starting 07:30 AM, running until 05:00 PM.
+2. Notun Bazar Shuttle:
+   - Stoppages: Notun Bazar ➔ Family Bazar ➔ Sayed Nagar ➔ 10 Tala ➔ UIU Campus.
+   - Headway: 07:30 AM to 08:45 AM (continuous rush), running until 09:40 PM.
+3. EWU (Aftabnagar) Shuttle:
+   - Continuous morning shifts (06:50 AM – 09:00 AM) and evening shifts (04:40 PM – 06:00 PM) via Swadesh Property Road.
+4. Student AC Bus Routes (6 Routes):
+   - Route 1: Dhanmondi / Mohammadpur via Elevated Expressway (Return).
+   - Route 2: Dhanmondi Keari / Panthapath / City College.
+   - Route 3: Mirpur (1, 2, 10, 11, 12, ECB Chattar) & Kuril Flyover.
+   - Route 4: Signboard / Jatrabari / Rampura Bridge / Aftabnagar.
+   - Route 5: Palashi / Azimpur / Farmgate via Elevated Expressway (Return).
+   - Route 6: Uttara (Abdullahpur to Airport) / 300 Feet / Bashundhara.
+   - Campus Return Slots: 2:20 PM (Noon Shift) and 4:40 PM (Afternoon Shift).`,
+  },
 ];

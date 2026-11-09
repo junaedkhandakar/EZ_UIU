@@ -22,14 +22,17 @@ import Button from '../ui/Button';
 import Tabs from '../ui/Tabs';
 import {
   SHUTTLE_SCHEDULE,
+  KURIL_SHUTTLE_SCHEDULE,
   EWU_SHUTTLE_SCHEDULE,
   BUS_ROUTES,
   CAMPUS_OFFICE_DIRECTORY,
 } from '../../data/commuteData';
+import { Zap } from 'lucide-react';
 
 export default function CommuteView() {
   const [activeSubTab, setActiveSubTab] = useState('shuttle');
   const [shuttleDirection, setShuttleDirection] = useState('toCampus'); // 'toCampus' or 'fromCampus'
+  const [kurilDirection, setKurilDirection] = useState('toCampus'); // 'toCampus' (Kuril -> UIU) or 'fromCampus' (UIU -> Kuril)
   const [routeSearch, setRouteSearch] = useState('');
   const [selectedRouteId, setSelectedRouteId] = useState('r1');
 
@@ -43,7 +46,7 @@ export default function CommuteView() {
     return () => clearInterval(timer);
   }, []);
 
-  // Compute next upcoming shuttle departure
+  // Compute next upcoming Notun Bazar shuttle departure
   const nextShuttleInfo = useMemo(() => {
     const activeList =
       shuttleDirection === 'toCampus'
@@ -73,13 +76,48 @@ export default function CommuteView() {
       }
     }
 
-    // If all departures for today have passed
     return {
       upcoming: null,
       minutesAway: null,
       status: 'DONE_FOR_DAY',
     };
   }, [shuttleDirection, currentTime]);
+
+  // Compute next upcoming Kuril shuttle departure
+  const nextKurilShuttleInfo = useMemo(() => {
+    const activeList =
+      kurilDirection === 'toCampus'
+        ? KURIL_SHUTTLE_SCHEDULE.kurilToUiu
+        : KURIL_SHUTTLE_SCHEDULE.uiuToKuril;
+
+    const dhakaString = currentTime.toLocaleTimeString('en-US', {
+      timeZone: 'Asia/Dhaka',
+      hour12: false,
+      hour: '2-digit',
+      minute: '2-digit',
+    });
+    const [currentHour, currentMin] = dhakaString.split(':').map(Number);
+    const currentTotalMin = currentHour * 60 + currentMin;
+
+    for (const item of activeList) {
+      const [h, m] = item.departure.split(':').map(Number);
+      const totalMin = h * 60 + m;
+      if (totalMin > currentTotalMin) {
+        const diffMin = totalMin - currentTotalMin;
+        return {
+          upcoming: item,
+          minutesAway: diffMin,
+          status: diffMin <= 15 ? 'DEPARTING_SOON' : 'SCHEDULED',
+        };
+      }
+    }
+
+    return {
+      upcoming: null,
+      minutesAway: null,
+      status: 'DONE_FOR_DAY',
+    };
+  }, [kurilDirection, currentTime]);
 
   const filteredRoutes = useMemo(() => {
     const q = routeSearch.toLowerCase().trim();
@@ -99,6 +137,7 @@ export default function CommuteView() {
 
   const subTabs = [
     { value: 'shuttle', label: 'Notun Bazar Shuttle', icon: Navigation },
+    { value: 'kuril', label: 'Kuril Shuttle (Express)', icon: Zap },
     { value: 'routes', label: 'Student AC Buses (6 Routes)', icon: Bus },
     { value: 'ewu', label: 'EWU Shuttle', icon: Compass },
     { value: 'directory', label: 'Campus Help & CITS', icon: Building2 },
@@ -254,7 +293,127 @@ export default function CommuteView() {
         </div>
       )}
 
-      {/* ================= TAB 2: STUDENT AC BUS ROUTES ================= */}
+      {/* ================= TAB 2: KURIL SHUTTLE (EXPRESS) ================= */}
+      {activeSubTab === 'kuril' && (
+        <div className="grid grid-cols-1 gap-4 lg:grid-cols-12 pop-in">
+          {/* Left Panel: Live Departure Countdown */}
+          <div className="flex flex-col gap-4 lg:col-span-5">
+            <Surface className="p-5">
+              <div className="flex items-center justify-between border-b border-line pb-3">
+                <h3 className="text-[15px] font-bold text-ink flex items-center gap-2">
+                  <Zap className="h-4 w-4 text-accent" />
+                  Kuril Express Shuttle
+                </h3>
+                <span className="rounded-full bg-accentSoft text-accent border border-accent/30 px-2.5 py-0.5 text-[10px] font-bold">
+                  300 Ft Express
+                </span>
+              </div>
+
+              {/* Direction Toggle */}
+              <div className="grid grid-cols-2 gap-1.5 mt-4 p-1 rounded-xl bg-surface2/60 border border-line">
+                <button
+                  onClick={() => setKurilDirection('toCampus')}
+                  className={`rounded-lg py-1.5 text-xs font-bold transition-all ${
+                    kurilDirection === 'toCampus'
+                      ? 'bg-surface text-accent shadow-sm'
+                      : 'text-ink-3 hover:text-ink'
+                  }`}
+                >
+                  Kuril BRTC ➔ UIU
+                </button>
+                <button
+                  onClick={() => setKurilDirection('fromCampus')}
+                  className={`rounded-lg py-1.5 text-xs font-bold transition-all ${
+                    kurilDirection === 'fromCampus'
+                      ? 'bg-surface text-accent shadow-sm'
+                      : 'text-ink-3 hover:text-ink'
+                  }`}
+                >
+                  UIU ➔ Kuril BRTC
+                </button>
+              </div>
+
+              {/* Next Departure Hero Card */}
+              <div className="mt-4 rounded-2xl border border-accent/30 bg-accentSoft p-4 text-center">
+                <span className="text-[10.5px] font-bold uppercase tracking-wider text-accent">
+                  {kurilDirection === 'toCampus' ? 'Next from Kuril BRTC Stand' : 'Next from UIU Campus'}
+                </span>
+                <div className="mt-2 text-2xl font-extrabold text-ink font-mono">
+                  {nextKurilShuttleInfo.upcoming
+                    ? nextKurilShuttleInfo.upcoming.period
+                    : 'Done for the Day'}
+                </div>
+                <div className="mt-1.5 text-xs font-medium text-ink-2">
+                  {nextKurilShuttleInfo.minutesAway != null ? (
+                    <span className="inline-flex items-center gap-1 text-accent font-bold">
+                      <Clock className="h-3.5 w-3.5" />
+                      Departs in ≈ {nextKurilShuttleInfo.minutesAway} minutes
+                    </span>
+                  ) : (
+                    'All scheduled shifts for today have concluded'
+                  )}
+                </div>
+              </div>
+
+              {/* Stoppage Route Points */}
+              <div className="mt-5 border-t border-line pt-4">
+                <span className="text-[11px] font-bold uppercase tracking-wider text-ink-3">
+                  Kuril Route Stoppages (5 Points):
+                </span>
+                <div className="mt-3 relative pl-4 border-l-2 border-accent/40 space-y-3">
+                  {KURIL_SHUTTLE_SCHEDULE.stoppages.map((stop, i) => (
+                    <div key={stop} className="relative flex items-center justify-between text-xs">
+                      <span className="absolute -left-[21px] flex h-4 w-4 items-center justify-center rounded-full bg-surface border-2 border-accent text-[9px] font-bold text-accent">
+                        {i + 1}
+                      </span>
+                      <span className="font-semibold text-ink">{stop}</span>
+                      <span className="text-[10px] text-ink-3">
+                        {i === 0 ? 'Origin' : i === 4 ? 'Destination' : '300ft Transit'}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </Surface>
+          </div>
+
+          {/* Right Panel: Complete Kuril Departures Timeline */}
+          <div className="flex flex-col gap-4 lg:col-span-7">
+            <Surface className="p-5">
+              <h3 className="text-[15px] font-bold tracking-tight text-ink">
+                All Scheduled Departures ({kurilDirection === 'toCampus' ? 'Kuril BRTC ➔ UIU' : 'UIU ➔ Kuril BRTC'})
+              </h3>
+              <p className="text-xs text-ink-3 mt-0.5">
+                {KURIL_SHUTTLE_SCHEDULE.description}
+              </p>
+
+              <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                {(kurilDirection === 'toCampus'
+                  ? KURIL_SHUTTLE_SCHEDULE.kurilToUiu
+                  : KURIL_SHUTTLE_SCHEDULE.uiuToKuril
+                ).map((item, idx) => (
+                  <div
+                    key={idx}
+                    className="flex items-center justify-between rounded-xl border border-line bg-surface2/50 p-3 text-xs"
+                  >
+                    <div className="flex items-center gap-2">
+                      <span className="flex h-6 w-6 items-center justify-center rounded-lg bg-accentSoft text-accent font-bold text-[11px]">
+                        #{idx + 1}
+                      </span>
+                      <span className="font-mono font-bold text-ink">{item.period}</span>
+                    </div>
+                    <span className="rounded bg-surface px-2 py-0.5 text-[10px] font-semibold text-ink-3 border border-line">
+                      300ft Route
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </Surface>
+          </div>
+        </div>
+      )}
+
+      {/* ================= TAB 3: STUDENT AC BUS ROUTES ================= */}
       {activeSubTab === 'routes' && (
         <div className="grid grid-cols-1 gap-4 lg:grid-cols-12 pop-in">
           {/* Route Selector & Search */}

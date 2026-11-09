@@ -27,6 +27,38 @@ export const SHUTTLE_SCHEDULE = {
   stoppages: ['Notun Bazar', 'Family Bazar', 'Sayed Nagar', '10 Tala (দশ তালা)', 'UIU Campus'],
 };
 
+export const KURIL_SHUTTLE_SCHEDULE = {
+  title: 'Kuril BRTC Stand ⇄ UIU Campus via 300 Ft & Bashundhara',
+  description: 'Dedicated express shuttle connecting Kuril Biswa Road directly with the UIU campus via 300 Feet Road and Bashundhara City Gold Refinery Gate to bypass traffic.',
+  hours: '07:30 AM – 05:00 PM (Continuous Rush Shifts & Regular Service)',
+  kurilToUiu: [
+    { departure: '07:30', period: '07:30 AM – 08:45 AM (Continuous Morning Rush)' },
+    { departure: '09:15', period: '09:15 AM – 09:25 AM' },
+    { departure: '10:30', period: '10:30 AM – 10:40 AM' },
+    { departure: '11:45', period: '11:45 AM – 11:55 AM' },
+    { departure: '13:00', period: '01:00 PM – 01:10 PM' },
+    { departure: '14:15', period: '02:15 PM – 02:25 PM' },
+    { departure: '15:30', period: '03:30 PM – 03:40 PM' },
+    { departure: '16:45', period: '04:45 PM' },
+  ],
+  uiuToKuril: [
+    { departure: '09:45', period: '09:45 AM' },
+    { departure: '11:00', period: '11:00 AM' },
+    { departure: '12:15', period: '12:15 PM' },
+    { departure: '13:30', period: '01:30 PM' },
+    { departure: '14:45', period: '02:45 PM' },
+    { departure: '16:00', period: '04:00 PM' },
+    { departure: '17:00', period: '05:00 PM (Final Evening Shift)' },
+  ],
+  stoppages: [
+    'Kuril BRTC Bus Stand (Biswa Road)',
+    'Kuril Flyover Connector',
+    '300 Feet Road',
+    'Bashundhara City Gold Refinery Gate',
+    'UIU Campus',
+  ],
+};
+
 export const EWU_SHUTTLE_SCHEDULE = {
   route: 'UIU Campus ⇄ East West University (EWU) Gate via Swadesh Property Road',
   fromEwu: [
