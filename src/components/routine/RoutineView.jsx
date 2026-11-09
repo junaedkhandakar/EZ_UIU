@@ -9,12 +9,15 @@ import {
   AlertTriangle,
   Check,
   Trophy,
+  FileUp,
+  Sparkles,
 } from 'lucide-react';
 import Button from '../ui/Button';
 import Surface from '../ui/Surface';
 import Select from '../ui/Select';
 import Empty from '../ui/Empty';
 import Timetable from './Timetable';
+import UcamRoutineUploadModal from './UcamRoutineUploadModal';
 import { useToast } from '../../context/ToastContext';
 import { CALENDARS_DATA } from '../../data/calendarData';
 import {
@@ -51,6 +54,8 @@ export function RoutineView() {
   const [calId, setCalId] = useState(CALENDARS_DATA[0]?.id || '');
   const searchRef = useRef(null);
 
+  const [isUcamModalOpen, setIsUcamModalOpen] = useState(false);
+
   useEffect(() => {
     try {
       localStorage.setItem('ez_routine_selected', JSON.stringify(selectedCourses));
@@ -66,8 +71,11 @@ export function RoutineView() {
   const activeSections = useMemo(() => {
     const list = [];
     selectedCourses.forEach((c) => {
-      if (c.sectionId && SECTION_BY_ID[c.sectionId]) list.push(SECTION_BY_ID[c.sectionId]);
-      else {
+      if (c.customSection) {
+        list.push(c.customSection);
+      } else if (c.sectionId && SECTION_BY_ID[c.sectionId]) {
+        list.push(SECTION_BY_ID[c.sectionId]);
+      } else {
         const secs = SECTIONS_BY_CODE[c.code] || [];
         if (secs.length === 1) list.push(secs[0]);
       }
@@ -179,7 +187,15 @@ export function RoutineView() {
             Routine Builder
           </h1>
         </div>
-        <div className="flex flex-wrap gap-2">
+        <div className="flex flex-wrap items-center gap-2">
+          <Button
+            variant="secondary"
+            icon={FileUp}
+            onClick={() => setIsUcamModalOpen(true)}
+            className="border-accent/40 bg-accentSoft text-accent hover:border-accent"
+          >
+            Import UCAM PDF
+          </Button>
           <Select value={calId} onChange={(e) => setCalId(e.target.value)} className="w-[190px]">
             {CALENDARS_DATA.map((c) => (
               <option key={c.id} value={c.id}>
@@ -513,6 +529,18 @@ export function RoutineView() {
           )}
         </div>
       </div>
+
+      <UcamRoutineUploadModal
+        open={isUcamModalOpen}
+        onClose={() => setIsUcamModalOpen(false)}
+        onApplyToRoutine={(selectedList, parsedResult) => {
+          setSelectedCourses(selectedList);
+          if (parsedResult?.matchedCalendar?.id) {
+            setCalId(parsedResult.matchedCalendar.id);
+          }
+          setSolvedOptions([]);
+        }}
+      />
     </div>
   );
 }
