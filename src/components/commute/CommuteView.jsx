@@ -215,7 +215,11 @@ export default function CommuteView() {
 
               {/* Next Departure Hero Card */}
               <div className="mt-4 rounded-2xl border border-accent/30 bg-accentSoft p-4 text-center">
-                <span className="text-[10.5px] font-bold uppercase tracking-wider text-accent">
+                <span className="text-[10.5px] font-bold uppercase tracking-wider text-accent inline-flex items-center gap-1.5">
+                  <span className="relative flex h-2 w-2">
+                    <span className="absolute inline-flex h-full w-full rounded-full bg-ok opacity-75 live-dot" />
+                    <span className="relative inline-flex h-2 w-2 rounded-full bg-ok" />
+                  </span>
                   {shuttleDirection === 'toCampus' ? 'Next from Notun Bazar' : 'Next from UIU Campus'}
                 </span>
                 <div className="mt-2 text-2xl font-extrabold text-ink font-mono">
@@ -335,7 +339,11 @@ export default function CommuteView() {
 
               {/* Next Departure Hero Card */}
               <div className="mt-4 rounded-2xl border border-accent/30 bg-accentSoft p-4 text-center">
-                <span className="text-[10.5px] font-bold uppercase tracking-wider text-accent">
+                <span className="text-[10.5px] font-bold uppercase tracking-wider text-accent inline-flex items-center gap-1.5">
+                  <span className="relative flex h-2 w-2">
+                    <span className="absolute inline-flex h-full w-full rounded-full bg-ok opacity-75 live-dot" />
+                    <span className="relative inline-flex h-2 w-2 rounded-full bg-ok" />
+                  </span>
                   {kurilDirection === 'toCampus' ? 'Next from Kuril (Biswa Road)' : 'Next from UIU Campus'}
                 </span>
                 <div className="mt-2 text-2xl font-extrabold text-ink font-mono">

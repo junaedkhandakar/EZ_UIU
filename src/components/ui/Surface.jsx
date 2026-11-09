@@ -37,9 +37,15 @@ export default function Surface({
       onMouseMove={handleMouseMove}
       onMouseLeave={handleMouseLeave}
       whileHover={hover ? { y: -2, transition: { type: 'spring', stiffness: 400, damping: 25 } } : undefined}
-      className={`relative overflow-hidden rounded-2xl border border-line bg-surface shadow-card transition-shadow duration-200 hover:shadow-lift ${className}`}
+      className={`relative overflow-hidden rounded-2xl border border-line bg-surface shadow-card transition-all duration-200 hover:shadow-lift ${className}`}
       {...rest}
     >
+      {/* Top Specular Bevel Light */}
+      <div
+        className="pointer-events-none absolute inset-x-0 top-0 h-[1px] bg-gradient-to-r from-transparent via-white/25 to-transparent dark:via-white/10"
+        aria-hidden="true"
+      />
+
       {spotlight && (
         <div
           className="pointer-events-none absolute -inset-px rounded-2xl opacity-0 transition-opacity duration-300"

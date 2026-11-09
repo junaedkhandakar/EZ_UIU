@@ -56,8 +56,8 @@ export function MobileTopBar({ onOpenCommandPalette }) {
 export function MobileTabBar({ active, onChange }) {
   const icons = { cgpa: Gauge, advisor: Sparkles, routine: CalendarRange, tuition: Receipt, commute: Bus };
   return (
-    <nav className="glass fixed inset-x-0 bottom-0 z-40 border-t border-line pb-[env(safe-area-inset-bottom)] lg:hidden">
-      <div className="mx-auto grid max-w-md grid-cols-5 gap-0.5 p-1.5">
+    <nav className="fixed inset-x-3 bottom-3 z-40 rounded-2xl border border-line bg-surface/90 backdrop-blur-2xl shadow-pop lg:hidden pb-[env(safe-area-inset-bottom)]">
+      <div className="mx-auto grid max-w-md grid-cols-5 gap-1 p-1.5">
         {NAV.map((item) => {
           const Icon = icons[item.id];
           const isActive = item.id === active;
@@ -65,21 +65,21 @@ export function MobileTabBar({ active, onChange }) {
             <button
               key={item.id}
               onClick={() => onChange(item.id)}
-              className={`relative flex flex-col items-center gap-1 rounded-xl py-2 transition-colors ${
-                isActive ? 'text-accent' : 'text-ink-3'
+              className={`relative flex flex-col items-center gap-0.5 rounded-xl py-1.5 transition-colors ${
+                isActive ? 'text-accent' : 'text-ink-3 hover:text-ink'
               }`}
             >
               {isActive && (
                 <motion.div
                   layoutId="mobile-tab-indicator"
-                  className="absolute inset-0 rounded-xl bg-accentSoft"
+                  className="absolute inset-0 rounded-xl bg-accentSoft border border-accent/25"
                   transition={{ type: 'spring', stiffness: 500, damping: 35 }}
                 />
               )}
-              <span className="relative z-10 p-1">
-                <Icon className="h-5 w-5" strokeWidth={2.2} />
+              <span className="relative z-10 p-0.5">
+                <Icon className="h-[18px] w-[18px]" strokeWidth={2.3} />
               </span>
-              <span className={`relative z-10 text-[10.5px] ${isActive ? 'font-bold' : 'font-medium'}`}>
+              <span className={`relative z-10 text-[10px] ${isActive ? 'font-bold' : 'font-medium'}`}>
                 {item.label}
               </span>
             </button>

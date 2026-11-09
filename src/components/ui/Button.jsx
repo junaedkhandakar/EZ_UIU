@@ -10,11 +10,11 @@ const SIZES = {
 
 const VARIANTS = {
   primary:
-    'bg-accent text-white shadow-[0_1px_3px_rgba(0,0,0,0.2),inset_0_1px_0_rgba(255,255,255,0.22)] hover:brightness-110 active:brightness-95 border border-accent/80',
+    'bg-gradient-to-b from-accent to-[#4338ca] text-white shadow-[0_1px_3px_rgba(0,0,0,0.25),inset_0_1px_0_rgba(255,255,255,0.28)] hover:brightness-105 active:brightness-95 border border-accent/80',
   secondary:
-    'bg-surface2 text-ink border border-line shadow-sm hover:border-line-strong hover:bg-surface2/70',
-  ghost: 'text-ink-2 hover:text-ink hover:bg-surface2/70',
-  danger: 'bg-bad/10 text-bad border border-bad/25 hover:bg-bad/15',
+    'bg-surface2 text-ink border border-line shadow-sm hover:border-line-strong hover:bg-surface2/80 active:bg-surface2',
+  ghost: 'text-ink-2 hover:text-ink hover:bg-surface2/60',
+  danger: 'bg-bad/10 text-bad border border-bad/25 hover:bg-bad/15 active:bg-bad/20',
 };
 
 export default function Button({

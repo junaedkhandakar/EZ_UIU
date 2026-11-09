@@ -52,8 +52,16 @@ function GaugeRing({ cgpa, probation }) {
         <defs>
           <linearGradient id="ringGrad" x1="0" y1="0" x2="1" y2="1">
             <stop offset="0%" stopColor="var(--accent)" />
-            <stop offset="100%" stopColor="var(--accent-2)" />
+            <stop offset="50%" stopColor="var(--accent-2)" />
+            <stop offset="100%" stopColor="#ec4899" />
           </linearGradient>
+          <filter id="ringGlow" x="-20%" y="-20%" width="140%" height="140%">
+            <feGaussianBlur stdDeviation="3" result="blur" />
+            <feMerge>
+              <feMergeNode in="blur" />
+              <feMergeNode in="SourceGraphic" />
+            </feMerge>
+          </filter>
         </defs>
         <circle cx={size / 2} cy={size / 2} r={R} fill="none" stroke="var(--surface-2)" strokeWidth="11" />
         <motion.circle
@@ -65,24 +73,25 @@ function GaugeRing({ cgpa, probation }) {
           strokeWidth="11"
           strokeLinecap="round"
           strokeDasharray={C}
+          filter="url(#ringGlow)"
           initial={{ strokeDashoffset: C }}
           animate={{ strokeDashoffset: C * (1 - frac) }}
           transition={{ type: 'spring', stiffness: 200, damping: 25, delay: 0.1 }}
         />
       </svg>
-      <div className="absolute inset-0 flex flex-col items-center justify-center">
+      <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
         <motion.div
           key={cgpa}
           initial={{ scale: 0.9, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
           transition={{ type: 'spring', stiffness: 400, damping: 20 }}
-          className={`num text-[38px] font-extrabold leading-none tracking-tight ${
+          className={`num text-[40px] font-extrabold leading-none tracking-tight ${
             probation ? 'text-bad' : 'text-ink'
           }`}
         >
           <CountUp value={cgpa} />
         </motion.div>
-        <div className="mt-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-ink-3">
+        <div className="mt-1 text-[10px] font-bold uppercase tracking-[0.14em] text-ink-3">
           of 4.00
         </div>
       </div>

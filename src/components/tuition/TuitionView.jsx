@@ -449,8 +449,10 @@ export function TuitionView({ courses = [], settings = {}, defaultDept = 'regula
                 <Leader label="Trimester Activity Fee" value={formatBDT(fees.trimesterFee)} />
               </div>
 
-              {/* Total Banner */}
-              <div className="border-t border-dashed border-line-strong bg-surface2/50 px-6 py-5">
+              {/* Total Banner with physical ticket cutouts */}
+              <div className="relative border-t border-dashed border-line-strong bg-surface2/50 px-6 py-5">
+                <span className="absolute -left-3 -top-3 h-6 w-6 rounded-full bg-base border border-line" aria-hidden="true" />
+                <span className="absolute -right-3 -top-3 h-6 w-6 rounded-full bg-base border border-line" aria-hidden="true" />
                 <div className="flex items-baseline justify-between">
                   <span className="text-[11px] font-bold uppercase tracking-[0.14em] text-ink-3">
                     Net Total Due

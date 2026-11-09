@@ -19,16 +19,19 @@ export default function Tabs({ tabs, value, onChange, className = '', layoutId =
             role="tab"
             aria-selected={active}
             onClick={() => onChange(t.value)}
-            className={`relative z-10 flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-xl px-3.5 py-2 text-[13px] font-medium transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent ${
-              active ? 'text-ink' : 'text-ink-3 hover:text-ink-2'
+            className={`relative z-10 flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-xl px-3.5 py-2 text-[13px] font-semibold transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent ${
+              active ? 'text-ink' : 'text-ink-3 hover:text-ink'
             }`}
           >
             {active && (
               <motion.div
                 layoutId={layoutId}
                 className="absolute inset-0 rounded-xl border border-line bg-surface shadow-sm"
+                style={{
+                  zIndex: -1,
+                  boxShadow: '0 1px 3px rgba(0,0,0,0.1), inset 0 1px 0 var(--border-specular)',
+                }}
                 transition={{ type: 'spring', stiffness: 500, damping: 35 }}
-                style={{ zIndex: -1 }}
               />
             )}
             {t.icon && <t.icon className="h-3.5 w-3.5" strokeWidth={2.2} />}

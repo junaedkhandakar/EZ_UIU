@@ -4,12 +4,13 @@
 
 @layer base {
   :root {
-    --bg: #f8f9fa;
+    --bg: #f6f7fb;
     --surface: #ffffff;
-    --surface-2: #f1f3f5;
+    --surface-2: #edf0f7;
+    --surface-3: #e2e6f0;
     --border: rgba(15, 23, 42, 0.08);
-    --border-strong: rgba(15, 23, 42, 0.15);
-    --border-specular: rgba(255, 255, 255, 0.8);
+    --border-strong: rgba(15, 23, 42, 0.16);
+    --border-specular: rgba(255, 255, 255, 0.9);
     --text: #0f172a;
     --text-2: #475569;
     --text-3: #94a3b8;
@@ -21,10 +22,10 @@
     --warn: #d97706;
     --bad: #dc2626;
 
-    /* RGB triplets so Tailwind opacity modifiers (bg-ok/15) work with <alpha-value> */
-    --bg-rgb: 248 249 250;
+    /* RGB triplets for Tailwind opacity modifiers */
+    --bg-rgb: 246 247 251;
     --surface-rgb: 255 255 255;
-    --surface-2-rgb: 241 243 245;
+    --surface-2-rgb: 237 240 247;
     --line-rgb: 15 23 42;
     --text-rgb: 15 23 42;
     --text-2-rgb: 71 85 105;
@@ -38,42 +39,44 @@
   }
 
   .dark {
-    --bg: #09090c;
-    --surface: #121217;
-    --surface-2: #1b1b22;
+    --bg: #070709;
+    --surface: #0e0e13;
+    --surface-2: #16161f;
+    --surface-3: #1f1f2c;
     --border: rgba(255, 255, 255, 0.08);
     --border-strong: rgba(255, 255, 255, 0.16);
-    --border-specular: rgba(255, 255, 255, 0.12);
+    --border-specular: rgba(255, 255, 255, 0.14);
     --text: #f5f5f7;
     --text-2: #a1a1ac;
     --text-3: #6b6b77;
-    --accent: #7c7ff6;
-    --accent-2: #a78bfa;
-    --accent-soft: rgba(124, 127, 246, 0.15);
-    --accent-glow: rgba(124, 127, 246, 0.4);
-    --ok: #34d399;
-    --warn: #fbbf24;
-    --bad: #f87171;
+    --accent: #6366f1;
+    --accent-2: #a855f7;
+    --accent-soft: rgba(99, 102, 241, 0.14);
+    --accent-glow: rgba(99, 102, 241, 0.4);
+    --ok: #10b981;
+    --warn: #f59e0b;
+    --bad: #ef4444;
 
-    /* RGB triplets so Tailwind opacity modifiers (bg-ok/15) work with <alpha-value> */
-    --bg-rgb: 9 9 12;
-    --surface-rgb: 18 18 23;
-    --surface-2-rgb: 27 27 34;
+    /* RGB triplets for Tailwind opacity modifiers */
+    --bg-rgb: 7 7 9;
+    --surface-rgb: 14 14 19;
+    --surface-2-rgb: 22 22 31;
     --line-rgb: 255 255 255;
     --text-rgb: 245 245 247;
     --text-2-rgb: 161 161 172;
     --text-3-rgb: 107 107 119;
-    --accent-rgb: 124 127 246;
-    --accent-2-rgb: 167 139 250;
-    --ok-rgb: 52 211 153;
-    --warn-rgb: 251 191 36;
-    --bad-rgb: 248 113 113;
+    --accent-rgb: 99 102 241;
+    --accent-2-rgb: 168 85 247;
+    --ok-rgb: 16 185 129;
+    --warn-rgb: 245 158 11;
+    --bad-rgb: 239 68 68;
     color-scheme: dark;
   }
 
   html {
     -webkit-tap-highlight-color: transparent;
     scroll-behavior: smooth;
+    letter-spacing: -0.011em;
   }
 
   body {
@@ -82,31 +85,50 @@
     min-height: 100vh;
   }
 
-  /* Subtle film grain / noise texture for organic Apple Vision / Linear depth */
+  /* Subtle film grain & dot matrix for tactile Apple Vision / Linear depth */
   body::before {
     content: '';
     position: fixed;
     inset: 0;
     pointer-events: none;
     z-index: 9999;
-    opacity: 0.012;
+    opacity: 0.015;
     background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
   }
 
   .dark body::before {
-    opacity: 0.028;
+    opacity: 0.03;
+  }
+
+  /* Background subtle technical grid */
+  body::after {
+    content: '';
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: -9;
+    background-image: linear-gradient(to right, var(--border) 1px, transparent 1px),
+      linear-gradient(to bottom, var(--border) 1px, transparent 1px);
+    background-size: 40px 40px;
+    opacity: 0.35;
+    mask-image: radial-gradient(circle at 50% 30%, black, transparent 80%);
+    -webkit-mask-image: radial-gradient(circle at 50% 30%, black, transparent 80%);
+  }
+
+  .dark body::after {
+    opacity: 0.25;
   }
 
   ::-webkit-scrollbar {
-    width: 8px;
-    height: 8px;
+    width: 7px;
+    height: 7px;
   }
   ::-webkit-scrollbar-track {
     background: transparent;
   }
   ::-webkit-scrollbar-thumb {
     background: var(--border-strong);
-    border-radius: 8px;
+    border-radius: 9999px;
     border: 2px solid transparent;
     background-clip: content-box;
   }
@@ -127,15 +149,15 @@
   }
 
   .glass {
-    background: color-mix(in srgb, var(--surface) 72%, transparent);
-    backdrop-filter: blur(24px) saturate(180%);
-    -webkit-backdrop-filter: blur(24px) saturate(180%);
+    background: color-mix(in srgb, var(--surface) 75%, transparent);
+    backdrop-filter: blur(28px) saturate(190%);
+    -webkit-backdrop-filter: blur(28px) saturate(190%);
   }
 
   .glass-card {
     background: color-mix(in srgb, var(--surface) 88%, transparent);
-    backdrop-filter: blur(20px) saturate(160%);
-    -webkit-backdrop-filter: blur(20px) saturate(160%);
+    backdrop-filter: blur(24px) saturate(170%);
+    -webkit-backdrop-filter: blur(24px) saturate(170%);
     border-top: 1px solid var(--border-specular);
   }
 
@@ -156,9 +178,40 @@
     padding: 2px 6px;
     font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
     font-size: 10px;
-    font-weight: 600;
+    font-weight: 700;
     color: var(--text-3);
-    box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
+  }
+
+  /* Linear-grade card specular depth */
+  .card-depth {
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12),
+      0 0 0 1px var(--border),
+      inset 0 1px 0 var(--border-specular);
+  }
+
+  .card-depth:hover {
+    box-shadow: 0 8px 30px -4px rgba(0, 0, 0, 0.3),
+      0 0 0 1px var(--border-strong),
+      inset 0 1px 0 var(--border-specular);
+  }
+
+  /* Perforated ticket notch helper for tuition receipt */
+  .ticket-cutout-left {
+    position: relative;
+  }
+  .ticket-cutout-left::before {
+    content: '';
+    position: absolute;
+    left: -10px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 20px;
+    height: 20px;
+    border-radius: 9999px;
+    background-color: var(--bg);
+    border: 1px solid var(--border);
+    clip-path: polygon(50% 0%, 100% 0%, 100% 100%, 50% 100%);
   }
 }
 
@@ -174,13 +227,13 @@
   }
 }
 .view-in {
-  animation: viewIn 0.28s cubic-bezier(0.2, 0, 0, 1) both;
+  animation: viewIn 0.28s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
 @keyframes popIn {
   from {
     opacity: 0;
-    transform: scale(0.96) translateY(6px);
+    transform: scale(0.97) translateY(4px);
   }
   to {
     opacity: 1;
@@ -188,10 +241,10 @@
   }
 }
 .pop-in {
-  animation: popIn 0.22s cubic-bezier(0.2, 0, 0, 1) both;
+  animation: popIn 0.24s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
-/* Modal / toast / popover entrances (were referenced but never defined) */
+/* Modal / toast / popover entrances */
 @keyframes fadeIn {
   from {
     opacity: 0;
@@ -207,7 +260,7 @@
 @keyframes slideUpIn {
   from {
     opacity: 0;
-    transform: translateY(16px) scale(0.98);
+    transform: translateY(14px) scale(0.98);
   }
   to {
     opacity: 1;
@@ -215,7 +268,7 @@
   }
 }
 .slide-up-in {
-  animation: slideUpIn 0.28s cubic-bezier(0.2, 0, 0, 1) both;
+  animation: slideUpIn 0.28s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
 @keyframes pulseGlow {
@@ -223,11 +276,25 @@
     box-shadow: 0 0 15px -3px var(--accent-glow);
   }
   50% {
-    box-shadow: 0 0 28px 2px var(--accent-glow);
+    box-shadow: 0 0 32px 3px var(--accent-glow);
   }
 }
 .pulse-glow {
   animation: pulseGlow 3s ease-in-out infinite;
+}
+
+@keyframes livePulse {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.35);
+    opacity: 0.5;
+  }
+}
+.live-dot {
+  animation: livePulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 }
 
 @keyframes shimmer {

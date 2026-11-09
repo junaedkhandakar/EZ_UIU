@@ -13,6 +13,15 @@ export default function Timetable({ sections = [] }) {
   const [inspectedSec, setInspectedSec] = useState(null);
   const [copied, setCopied] = useState(false);
 
+  const currentDhakaInfo = useMemo(() => {
+    const now = new Date();
+    const dayStr = now.toLocaleDateString('en-US', { timeZone: 'Asia/Dhaka', weekday: 'short' });
+    const timeStr = now.toLocaleTimeString('en-US', { timeZone: 'Asia/Dhaka', hour12: false, hour: '2-digit', minute: '2-digit' });
+    const [h, m] = timeStr.split(':').map(Number);
+    const mins = h * 60 + m;
+    return { dayStr, mins };
+  }, []);
+
   const model = useMemo(() => {
     const meetings = sections.flatMap((s) =>
       (s.meetings || []).map((m) => ({ ...m, sec: s }))
@@ -126,6 +135,19 @@ export default function Timetable({ sections = [] }) {
                     style={{ top: ((h - hours[0]) / 60) * HOUR_H }}
                   />
                 ))}
+
+                {/* Live Current Time Laser Indicator */}
+                {currentDhakaInfo.dayStr === d &&
+                  currentDhakaInfo.mins >= hours[0] &&
+                  currentDhakaInfo.mins <= hours[hours.length - 1] + 60 && (
+                    <div
+                      className="pointer-events-none absolute inset-x-0 z-30 flex items-center"
+                      style={{ top: ((currentDhakaInfo.mins - hours[0]) / 60) * HOUR_H }}
+                    >
+                      <div className="h-2 w-2 -ml-1 rounded-full bg-accent ring-4 ring-accent/30 shadow-[0_0_8px_var(--accent)]" />
+                      <div className="h-[2px] flex-1 bg-accent shadow-[0_0_8px_var(--accent)]" />
+                    </div>
+                )}
                 <AnimatePresence>
                   {byDay[d].map((b, i) => (
                     <motion.div
