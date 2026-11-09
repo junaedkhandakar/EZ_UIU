@@ -124,11 +124,7 @@ export function AppContent() {
             />
           )}
           {activeTab === 'advisor' && (
-            <AdvisorView
-              courses={courses}
-              settings={settings}
-              onNavigateToRoutine={() => setActiveTab('routine')}
-            />
+            <AdvisorView courses={courses} settings={settings} />
           )}
           {activeTab === 'routine' && <RoutineView />}
           {activeTab === 'tuition' && (

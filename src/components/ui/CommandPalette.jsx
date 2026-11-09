@@ -101,8 +101,8 @@ export default function CommandPalette({
         id: 'nav-routine',
         type: 'action',
         category: 'Navigation',
-        title: 'Go to Routine Builder',
-        desc: 'Clash-free schedule solver & calendar sync',
+        title: 'Go to Class Routine',
+        desc: 'Upload routine PDF → timetable preview & .ics',
         icon: Calendar,
         action: () => {
           setActiveTab('routine');

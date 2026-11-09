@@ -18,7 +18,6 @@ import {
   Check,
   ChevronRight,
   ChevronDown,
-  CalendarCheck,
   Key,
   Network,
   ListCheck,
@@ -62,7 +61,6 @@ import { useToast } from '../../context/ToastContext';
 export default function AdvisorView({
   courses = [],
   settings = {},
-  onNavigateToRoutine,
 }) {
   const { showToast } = useToast();
   const [activeTab, setActiveTab] = useState('basket');
@@ -304,20 +302,6 @@ export default function AdvisorView({
       };
     });
   }, [passedCodes]);
-
-  const handlePushToRoutine = () => {
-    try {
-      const selectedForRoutine = basketAnalysis.basket.map((c) => ({
-        code: c.course_code,
-        sectionId: null,
-      }));
-      localStorage.setItem('ez_routine_selected', JSON.stringify(selectedForRoutine));
-      showToast(`Pushed ${selectedForRoutine.length} courses to Routine Builder!`, 'success');
-      onNavigateToRoutine?.();
-    } catch {
-      showToast('Error syncing with Routine Builder', 'error');
-    }
-  };
 
   const handleSendQuery = async (textToSend) => {
     const query = textToSend || chatInput;
@@ -656,20 +640,6 @@ export default function AdvisorView({
                 )}
               </div>
 
-              {/* Push to routine builder action */}
-              <div className="mt-5 border-t border-line pt-4">
-                <Button
-                  variant="primary"
-                  className="w-full justify-center shadow-lg"
-                  icon={CalendarCheck}
-                  onClick={handlePushToRoutine}
-                >
-                  Push Basket to Routine Builder
-                </Button>
-                <p className="mt-2 text-center text-[11px] text-ink-3">
-                  Transfers these recommended courses directly into the clash-free schedule solver.
-                </p>
-              </div>
             </Surface>
           </div>
 

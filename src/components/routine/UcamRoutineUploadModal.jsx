@@ -87,7 +87,7 @@ export default function UcamRoutineUploadModal({
   const handleApplyToTimetable = () => {
     if (!parsedResult) return;
     try {
-      // Map parsed courses into format required by routine solver
+      // Map parsed courses into the format the routine view stores
       const selectedForRoutine = parsedResult.courses.map((c) => ({
         code: c.code,
         sectionId: `BSCSE-${c.code}-${c.section}`,

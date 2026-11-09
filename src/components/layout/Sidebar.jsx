@@ -17,7 +17,7 @@ import { useTheme } from '../../context/ThemeContext';
 export const NAV = [
   { id: 'cgpa', label: 'CGPA & Standing', icon: Gauge },
   { id: 'advisor', label: 'AI Advisor', icon: Sparkles },
-  { id: 'routine', label: 'Routine Builder', icon: CalendarRange },
+  { id: 'routine', label: 'Class Routine', icon: CalendarRange },
   { id: 'tuition', label: 'Tuition & Fees', icon: Receipt },
   { id: 'commute', label: 'Shuttle & Commute', icon: Bus },
   { id: 'coverpage', label: 'Cover Page', icon: FileCheck2 },
