@@ -123,7 +123,7 @@ export default function AdvisorView({
     {
       role: 'ai',
       provider: 'UIU Knowledge Base',
-      text: "👋 Hello! I'm your **UIU AI Academic Advisor** with Prompt Caching & RAG. Based on official university policies and your academic record, I can recommend clash-free course baskets, verify prerequisite readiness, check probation rules, and audit your graduation timeline. How can I help you today?",
+      text: "Hello! I'm your **UIU AI Academic Advisor** with Prompt Caching & RAG. Based on official university policies and your academic record, I can recommend clash-free course baskets, verify prerequisite readiness, check probation rules, and audit your graduation timeline. How can I help you today?",
       followUps: [
         'When can I start FYDP / Thesis?',
         'How do retakes affect my CGPA?',
@@ -212,7 +212,7 @@ export default function AdvisorView({
       {
         role: 'ai',
         provider: 'UIU Knowledge Base',
-        text: "👋 Conversation reset. Ask me anything about UIU courses, FYDP, retakes, or scholarships!",
+        text: "Conversation reset. Ask me anything about UIU courses, FYDP, retakes, or scholarships!",
         followUps: [
           'When can I start FYDP / Thesis?',
           'How do retakes affect my CGPA?',
@@ -634,8 +634,9 @@ export default function AdvisorView({
                   </span>
                 </div>
                 {basketAnalysis.tightExams?.length > 0 && (
-                  <div className="text-[11px] text-warn">
-                    ⚠️ {basketAnalysis.tightExams[0].desc}
+                  <div className="text-[11px] text-warn flex items-center gap-1.5">
+                    <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
+                    <span>{basketAnalysis.tightExams[0].desc}</span>
                   </div>
                 )}
               </div>
@@ -1046,7 +1047,11 @@ export default function AdvisorView({
                                   node.isPassed ? 'bg-ok text-white' : 'bg-bad text-white'
                                 }`}
                               >
-                                {node.isPassed ? '✓' : '!'}
+                                {node.isPassed ? (
+                                  <Check className="h-3 w-3 stroke-[2.5]" />
+                                ) : (
+                                  <X className="h-3 w-3 stroke-[2.5]" />
+                                )}
                               </span>
                               <div>
                                 <span className="font-mono font-bold text-accent mr-2">
@@ -1417,8 +1422,8 @@ export default function AdvisorView({
                           </span>
                         )}
                         {msg.isClientCached && (
-                          <span className="rounded bg-accentSoft text-accent border border-accent/25 px-1.5 py-0.5 text-[9.5px] font-bold">
-                            ⚡ 0ms Cached
+                          <span className="rounded bg-accentSoft text-accent border border-accent/25 px-1.5 py-0.5 text-[9.5px] font-bold flex items-center gap-1">
+                            <Zap className="h-2.5 w-2.5" /> 0ms Cached
                           </span>
                         )}
                         {msg.usage?.cachedTokens > 0 && (

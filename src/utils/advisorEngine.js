@@ -260,12 +260,12 @@ export function generateRecommendedBasket({
 
     const reasons = [];
     if (candidate.unlockingScore >= 6) {
-      reasons.push(`⚡ Key Bottleneck (Unlocks ${Math.round(candidate.unlockingScore / 3)}+ courses)`);
+      reasons.push(`Key Bottleneck (Unlocks ${Math.round(candidate.unlockingScore / 3)}+ courses)`);
     }
-    if (candidate.type === 'Core') reasons.push('📘 Required Core');
-    if (candidate.type === 'Lab') reasons.push('🧪 Practical Lab');
+    if (candidate.type === 'Core') reasons.push('Required Core');
+    if (candidate.type === 'Lab') reasons.push('Practical Lab');
     if (selectedMajor && MAJOR_TRACKS[selectedMajor]?.courses.some((c) => normalizeCode(c.course_code) === normalizeCode(candidate.course_code))) {
-      reasons.push(`🎯 ${selectedMajor} Elective`);
+      reasons.push(`${selectedMajor} Elective`);
     }
 
     basket.push({
@@ -651,81 +651,81 @@ export function generateAIAnswer(query, context = {}) {
 
   if (q.includes('fydp') || q.includes('thesis') || q.includes('project')) {
     if (completedCr >= 80) {
-      return `🎉 **You are eligible for FYDP I (CSE 4000A)!**\n\n• **Requirement:** UIU regulations strictly require **80 credits completed** before registering for Final Year Design Project I.\n• **Passing Grade:** You must achieve at least a **'C' grade** in FYDP to qualify for graduation.\n• **Tuition Policy:** Thesis/FYDP credits are **exempt from all tuition waivers** (0% scholarship applies).\n\n*Tip:* Form your project group and finalize your supervisor early during advising week!`;
+      return `**You are eligible for FYDP I (CSE 4000A)!**\n\n• **Requirement:** UIU regulations strictly require **80 credits completed** before registering for Final Year Design Project I.\n• **Passing Grade:** You must achieve at least a **'C' grade** in FYDP to qualify for graduation.\n• **Tuition Policy:** Thesis/FYDP credits are **exempt from all tuition waivers** (0% scholarship applies).\n\n*Tip:* Form your project group and finalize your supervisor early during advising week!`;
     }
-    return `⚠️ **FYDP / Thesis Eligibility Gatekeeper:**\n\n• **Your Status:** You currently have **${completedCr} completed credits**.\n• **Requirement:** UIU Department of CSE requires **80 credits completed** before registering for CSE 4000A.\n• **Gap:** You need **${80 - completedCr} more credits** before you can register.\n• **Tuition Note:** Thesis/FYDP credits receive 0% tuition fee waiver under UIU regulations.`;
+    return `**FYDP / Thesis Eligibility Gatekeeper:**\n\n• **Your Status:** You currently have **${completedCr} completed credits**.\n• **Requirement:** UIU Department of CSE requires **80 credits completed** before registering for CSE 4000A.\n• **Gap:** You need **${80 - completedCr} more credits** before you can register.\n• **Tuition Note:** Thesis/FYDP credits receive 0% tuition fee waiver under UIU regulations.`;
   }
 
   if (q.includes('retake') || q.includes('repeat')) {
-    return `💡 **Official UIU Retake & Repeat Policy:**\n\n• **Eligibility:** You can retake any course where you earned a grade of **C+, C, C-, D+, D, or F**.\n• **Grade Replacement:** The **new grade completely replaces** the old grade in your CGPA calculation! (The previous attempt remains marked with 'R' on your transcript, but its grade points are zeroed out).\n• **50% Tuition Discount:** UIU provides an **automatic 50% waiver on the course fee** for the first time you retake a course!\n• **Scholarship Restriction:** Merit waivers do not stack with retakes.`;
+    return `**Official UIU Retake & Repeat Policy:**\n\n• **Eligibility:** You can retake any course where you earned a grade of **C+, C, C-, D+, D, or F**.\n• **Grade Replacement:** The **new grade completely replaces** the old grade in your CGPA calculation! (The previous attempt remains marked with 'R' on your transcript, but its grade points are zeroed out).\n• **50% Tuition Discount:** UIU provides an **automatic 50% waiver on the course fee** for the first time you retake a course!\n• **Scholarship Restriction:** Merit waivers do not stack with retakes.`;
   }
 
   if (q.includes('waiver') || q.includes('scholarship') || q.includes('merit')) {
-    return `💰 **Official UIU Merit Scholarship & Waiver Policy:**\n\n• **Minimum GPA Requirement:** You must obtain at least **GPA 3.50** in the preceding trimester examination.\n• **Distribution by Rank:**\n  - 🥇 **Top 2% of batch:** **100% Tuition Fee Waiver**\n  - 🥈 **Next 4% of batch:** **50% Tuition Fee Waiver**\n  - 🥉 **Next 4% of batch:** **25% Tuition Fee Waiver**\n• **Minimum Credit Load:** You must register for at least **9 credits** in the term (14 credits for Pharmacy).\n• **Exclusions:** Waivers do NOT apply to Thesis/FYDP, Projects, Internships, Retakes, or Repeat courses.\n• **Single Highest Policy:** Only the single best waiver can be availed; multiple scholarships do not stack.`;
+    return `**Official UIU Merit Scholarship & Waiver Policy:**\n\n• **Minimum GPA Requirement:** You must obtain at least **GPA 3.50** in the preceding trimester examination.\n• **Distribution by Rank:**\n  - Top 2% of batch: **100% Tuition Fee Waiver**\n  - Next 4% of batch: **50% Tuition Fee Waiver**\n  - Next 4% of batch: **25% Tuition Fee Waiver**\n• **Minimum Credit Load:** You must register for at least **9 credits** in the term (14 credits for Pharmacy).\n• **Exclusions:** Waivers do NOT apply to Thesis/FYDP, Projects, Internships, Retakes, or Repeat courses.\n• **Single Highest Policy:** Only the single best waiver can be availed; multiple scholarships do not stack.`;
   }
 
   if (q.includes('probation') || cgpa < 2.0) {
-    return `🚨 **UIU Academic Probation Regulations:**\n\n• **Threshold:** Maintaining a CGPA below **2.00** places a student on academic probation.\n• **Notice Limit:** Students with under 60 completed credits get a maximum of **3 probation notices** in consecutive trimesters.\n• **3rd Probation Rule:** If you score a Term GPA $\\ge$ 2.00 during your 3rd probation, you may continue on extended probation; if Term GPA < 2.00, you face academic dismissal.\n• **Registration Cap:** Strictly limited to **9 to 12 credits** per trimester.\n• **Department Transfers:** Department transfers are strictly forbidden while on probation.\n• **Fast Recovery:** Retake low-credit 'F' or 'D' courses first — new grades replace old points directly in the cumulative formula!`;
+    return `**UIU Academic Probation Regulations:**\n\n• **Threshold:** Maintaining a CGPA below **2.00** places a student on academic probation.\n• **Notice Limit:** Students with under 60 completed credits get a maximum of **3 probation notices** in consecutive trimesters.\n• **3rd Probation Rule:** If you score a Term GPA $\\ge$ 2.00 during your 3rd probation, you may continue on extended probation; if Term GPA < 2.00, you face academic dismissal.\n• **Registration Cap:** Strictly limited to **9 to 12 credits** per trimester.\n• **Department Transfers:** Department transfers are strictly forbidden while on probation.\n• **Fast Recovery:** Retake low-credit 'F' or 'D' courses first — new grades replace old points directly in the cumulative formula!`;
   }
 
   if (q.includes('honors') || q.includes('laude') || q.includes('summa') || q.includes('magna') || q.includes('convocation')) {
-    return `🎓 **UIU Convocation Latin Honors Criteria:**\n\n• 🏆 **Summa Cum Laude:** CGPA $\\ge$ **3.90**\n• 🥇 **Magna Cum Laude:** CGPA $\\ge$ **3.80**\n• 🥈 **Cum Laude:** CGPA $\\ge$ **3.75**\n• 📜 **Good Standing:** CGPA $\\ge$ **2.00** (Minimum required for graduation)\n• ⚠️ **Probation:** CGPA < **2.00**\n\n*Note:* Clear academic record without disciplinary sanctions is required for convocation honors.`;
+    return `**UIU Convocation Latin Honors Criteria:**\n\n• **Summa Cum Laude:** CGPA $\\ge$ **3.90**\n• **Magna Cum Laude:** CGPA $\\ge$ **3.80**\n• **Cum Laude:** CGPA $\\ge$ **3.75**\n• **Good Standing:** CGPA $\\ge$ **2.00** (Minimum required for graduation)\n• **Probation:** CGPA < **2.00**\n\n*Note:* Clear academic record without disciplinary sanctions is required for convocation honors.`;
   }
 
   if (q.includes('fee') || q.includes('cost') || q.includes('tuition') || q.includes('installment')) {
-    return `💳 **Official UIU Tuition Fees & Payment Schedule:**\n\n• **Per-Credit Rate:** **Tk. 6,500/-** per credit for BSCSE, BBA, EEE (Tk. 5,525/- for English/MSJ).\n• **Trimester Activity Fee:** **Tk. 6,500/-** per trimester (Tk. 9,750/- per semester for B. Pharm).\n• **Installment Schedule (3 Installments):**\n  - **1st Installment (40%):** Payable during course registration / advising week.\n  - **2nd Installment (30%):** Payable before Midterm Examinations.\n  - **3rd Installment (30%):** Payable before Final Examinations.\n• **Down Payment Plan:** Initial down payment of Tk. 15,000 at registration + 40/30/30 of remaining balance.`;
+    return `**Official UIU Tuition Fees & Payment Schedule:**\n\n• **Per-Credit Rate:** **Tk. 6,500/-** per credit for BSCSE, BBA, EEE (Tk. 5,525/- for English/MSJ).\n• **Trimester Activity Fee:** **Tk. 6,500/-** per trimester (Tk. 9,750/- per semester for B. Pharm).\n• **Installment Schedule (3 Installments):**\n  - **1st Installment (40%):** Payable during course registration / advising week.\n  - **2nd Installment (30%):** Payable before Midterm Examinations.\n  - **3rd Installment (30%):** Payable before Final Examinations.\n• **Down Payment Plan:** Initial down payment of Tk. 15,000 at registration + 40/30/30 of remaining balance.`;
   }
 
   if (q.includes('grade') || q.includes('grading') || q.includes('scale') || q.includes('marks')) {
-    return `📊 **Official UIU Grading Scale:**\n\n| Numerical Score | Letter Grade | Grade Point | Assessment |\n| :--- | :---: | :---: | :--- |\n| 90% – 100% | **A** | 4.00 | Outstanding |\n| 86% – <90% | **A-** | 3.67 | Excellent |\n| 82% – <86% | **B+** | 3.33 | Good |\n| 78% – <82% | **B** | 3.00 | Average |\n| 74% – <78% | **B-** | 2.67 | Below Average |\n| 70% – <74% | **C+** | 2.33 | Satisfactory |\n| 66% – <70% | **C** | 2.00 | Pass |\n| 62% – <66% | **C-** | 1.67 | Pass |\n| 58% – <62% | **D+** | 1.33 | Pass |\n| 55% – <58% | **D** | 1.00 | Lowest Passing Grade |\n| Below 55% | **F** | 0.00 | Fail |\n\nMinimum passing grade is **D (1.00)**. Graduation requires a cumulative CGPA $\\ge$ **2.00**.`;
+    return `**Official UIU Grading Scale:**\n\n| Numerical Score | Letter Grade | Grade Point | Assessment |\n| :--- | :---: | :---: | :--- |\n| 90% – 100% | **A** | 4.00 | Outstanding |\n| 86% – <90% | **A-** | 3.67 | Excellent |\n| 82% – <86% | **B+** | 3.33 | Good |\n| 78% – <82% | **B** | 3.00 | Average |\n| 74% – <78% | **B-** | 2.67 | Below Average |\n| 70% – <74% | **C+** | 2.33 | Satisfactory |\n| 66% – <70% | **C** | 2.00 | Pass |\n| 62% – <66% | **C-** | 1.67 | Pass |\n| 58% – <62% | **D+** | 1.33 | Pass |\n| 55% – <58% | **D** | 1.00 | Lowest Passing Grade |\n| Below 55% | **F** | 0.00 | Fail |\n\nMinimum passing grade is **D (1.00)**. Graduation requires a cumulative CGPA $\\ge$ **2.00**.`;
   }
 
   if (q.includes('attendance') || q.includes('absence')) {
-    return `📋 **UIU Class Attendance Regulation:**\n\n• UIU strictly enforces an **80% minimum class attendance** rule for all undergraduate programs.\n• Students with attendance below 80% without approved medical documentation are **debarred from sitting for the final examination** in that course.`;
+    return `**UIU Class Attendance Regulation:**\n\n• UIU strictly enforces an **80% minimum class attendance** rule for all undergraduate programs.\n• Students with attendance below 80% without approved medical documentation are **debarred from sitting for the final examination** in that course.`;
   }
 
   if (q.includes('exam slot') || q.includes('exam time') || q.includes('t1') || q.includes('t2') || q.includes('t3')) {
-    return `⏰ **Official UIU Final Exam Time Slots:**\n\n• **T1 Slot:** 9:00 AM – 11:00 AM\n• **T2 Slot:** 11:30 AM – 1:30 PM\n• **T3 Slot:** 2:00 PM – 4:00 PM (or 2:30 PM – 4:30 PM)\n\n*Tip:* Use the **Schedule Auditor** tab to stress-test your courses and ensure you have zero same-day slot collisions!`;
+    return `**Official UIU Final Exam Time Slots:**\n\n• **T1 Slot:** 9:00 AM – 11:00 AM\n• **T2 Slot:** 11:30 AM – 1:30 PM\n• **T3 Slot:** 2:00 PM – 4:00 PM (or 2:30 PM – 4:30 PM)\n\n*Tip:* Use the **Schedule Auditor** tab to stress-test your courses and ensure you have zero same-day slot collisions!`;
   }
 
   if (q.includes('incomplete') || q.includes('withdraw') || q.includes('grade change')) {
-    return `📝 **UIU Academic Status Rules:**\n\n• **'W' (Withdrawn):** Course dropped within the official withdrawal window. Does not impact CGPA or count toward attempted grade points.\n• **'I' (Incomplete):** Permitted only under documented medical emergencies. Must be cleared by sitting for the exam in the next term, otherwise it automatically converts to an **F**.\n• **Grade Change Deadline:** Grade change petitions must be submitted to the department head within the first week of the subsequent trimester.`;
+    return `**UIU Academic Status Rules:**\n\n• **'W' (Withdrawn):** Course dropped within the official withdrawal window. Does not impact CGPA or count toward attempted grade points.\n• **'I' (Incomplete):** Permitted only under documented medical emergencies. Must be cleared by sitting for the exam in the next term, otherwise it automatically converts to an **F**.\n• **Grade Change Deadline:** Grade change petitions must be submitted to the department head within the first week of the subsequent trimester.`;
   }
 
   if (q.includes('data science') || q.includes('software') || q.includes('major') || q.includes('track') || q.includes('specialization')) {
-    return `🎯 **Major Concentration Tracks in BSCSE:**\n\nUIU Department of CSE offers 5 specialization tracks:\n1. **Software Engineering** (CSE 4451, CSE 4435, CSE 4181, CSE 4495, CSE 4945)\n2. **AI & Data Science** (CSE 4889, CSE 4891, CSE 4817, CSE 4893)\n3. **Network & Cybersecurity** (CSE 4783, CSE 4777, CSE 4791, CSE 4779)\n4. **Systems & Cloud** (CSE 4621, CSE 4587, CSE 4511, CSE 4515)\n5. **Computational Theory** (CSE 4611, CSE 4633, CSE 4635, CSE 4637)\n\n*Rule:* Complete **4 elective courses** (12 credits) from your track for Summer 2026+ curriculum (or 3 courses for legacy batches) to officially declare the specialization on your transcript!`;
+    return `**Major Concentration Tracks in BSCSE:**\n\nUIU Department of CSE offers 5 specialization tracks:\n1. **Software Engineering** (CSE 4451, CSE 4435, CSE 4181, CSE 4495, CSE 4945)\n2. **AI & Data Science** (CSE 4889, CSE 4891, CSE 4817, CSE 4893)\n3. **Network & Cybersecurity** (CSE 4783, CSE 4777, CSE 4791, CSE 4779)\n4. **Systems & Cloud** (CSE 4621, CSE 4587, CSE 4511, CSE 4515)\n5. **Computational Theory** (CSE 4611, CSE 4633, CSE 4635, CSE 4637)\n\n*Rule:* Complete **4 elective courses** (12 credits) from your track for Summer 2026+ curriculum (or 3 courses for legacy batches) to officially declare the specialization on your transcript!`;
   }
 
   // Pop Culture Easter Eggs
   if (q.includes('power level') || q.includes('over 9000')) {
-    return `💥 **IT'S OVER 9000!**\n\n*(Scouter shatters)* Wait... Vegeta, look at the screen! UIU CGPA is strictly capped at **4.00**, so your maximum power level is a **4.00 Summa Cum Laude**! Now train for your Discrete Mathematics midterm! 🥋🐉`;
+    return `**IT'S OVER 9000!**\n\n*(Scouter shatters)* Wait... Vegeta, look at the screen! UIU CGPA is strictly capped at **4.00**, so your maximum power level is a **4.00 Summa Cum Laude**! Now train for your Discrete Mathematics midterm!`;
   }
 
   if (q.includes('say my name') || q.includes('heisenberg') || q.includes('let him cook')) {
-    return `🧪 **You're Heisenberg.**\n\n"I am not in danger of probation, Skyler. I am the danger. A student gets an F and you think that of me? No. **I am the one who retakes with a 50% waiver!**"\n\nNow put on the hazmat suit and study for Data Structures. Let him cook! 👨‍🔬`;
+    return `**You're Heisenberg.**\n\n"I am not in danger of probation, Skyler. I am the danger. A student gets an F and you think that of me? No. **I am the one who retakes with a 50% waiver!**"\n\nNow put on the hazmat suit and study for Data Structures. Let him cook!`;
   }
 
   if (q.includes('force') || q.includes('jedi') || q.includes('yoda') || q.includes('high ground')) {
-    return `⚔️ **"It's over Anakin! I have the High Ground (3.90+ Summa Cum Laude)!"**\n\n*"Do or do not, there is no retake... well actually at UIU you CAN retake for 50% off if you get a C+ or below, but master the Force you must!"* — Master Yoda 🧙‍♂️✨`;
+    return `**"It's over Anakin! I have the High Ground (3.90+ Summa Cum Laude)!"**\n\n*"Do or do not, there is no retake... well actually at UIU you CAN retake for 50% off if you get a C+ or below, but master the Force you must!"* — Master Yoda`;
   }
 
   if (q.includes('winter is coming') || q.includes('game of thrones') || q.includes('stark')) {
-    return `🐺 **Winter is Coming... and so are Midterm Examinations!**\n\nThe night is dark and full of error logs. But fear not, Lord of Winterfell! Review your syllabus, clear your prerequisite bottlenecks, and secure your 3.50 GPA merit waiver before the White Walkers arrive! ⚔️❄️`;
+    return `**Winter is Coming... and so are Midterm Examinations!**\n\nThe night is dark and full of error logs. But fear not, Lord of Winterfell! Review your syllabus, clear your prerequisite bottlenecks, and secure your 3.50 GPA merit waiver before the White Walkers arrive!`;
   }
 
   if (q.includes('cake is a lie') || q.includes('portal') || q.includes('glados')) {
-    return `🍰 **"The cake is a lie... but the UIU 100% Merit Waiver is NOT a lie!"**\n\n(As long as you stay in the top 2% of your batch with a GPA ≥ 3.50!). Aperture Science thanks you for participating in this academic advising test. 🤖`;
+    return `**"The cake is a lie... but the UIU 100% Merit Waiver is NOT a lie!"**\n\n(As long as you stay in the top 2% of your batch with a GPA ≥ 3.50!). Aperture Science thanks you for participating in this academic advising test.`;
   }
 
   if (q.includes('matrix') || q.includes('red pill') || q.includes('neo') || q.includes('morpheus')) {
-    return `🕶️ **"You take the blue pill, the story ends. You wake up in your bed and believe whatever you want. You take the red pill, you stay in UIU, and I show you how deep the CGPA rabbit hole goes."**\n\nWelcome to the Real World, Neo. Remember: there is no spoon, but there ARE 80% mandatory class attendance rules! 🐇`;
+    return `**"You take the blue pill, the story ends. You wake up in your bed and believe whatever you want. You take the red pill, you stay in UIU, and I show you how deep the CGPA rabbit hole goes."**\n\nWelcome to the Real World, Neo. Remember: there is no spoon, but there ARE 80% mandatory class attendance rules!`;
   }
 
   if (q.includes('one does not simply') || q.includes('mordor') || q.includes('lord of the rings') || q.includes('gandalf')) {
-    return `💍 **"One does not simply walk into the UIU Vice Chancellor's office without 80 credits for FYDP!"**\n\nFly, you fools! Clear your Algorithms and Discrete Math prerequisites before stepping into the fires of Mount Doom! 🧙‍♂️🌋`;
+    return `**"One does not simply walk into the UIU Vice Chancellor's office without 80 credits for FYDP!"**\n\nFly, you fools! Clear your Algorithms and Discrete Math prerequisites before stepping into the fires of Mount Doom!`;
   }
 
-  return `📚 **Academic Advising Recommendation:** Based on your current CGPA of **${cgpa.toFixed(2)}** and **${completedCr} credits completed**, prioritize clearing all bottleneck prerequisites (Discrete Math, Data Structures, Algorithms) while keeping a balanced mix of 1 Hard Core + 2 Medium Core + 1 Lab to sustain a strong CGPA.\n\n*You can ask me about: FYDP eligibility, retake rules, merit scholarships, exam clash slots, tuition fees, or major tracks!*`;
+  return `**Academic Advising Recommendation:** Based on your current CGPA of **${cgpa.toFixed(2)}** and **${completedCr} credits completed**, prioritize clearing all bottleneck prerequisites (Discrete Math, Data Structures, Algorithms) while keeping a balanced mix of 1 Hard Core + 2 Medium Core + 1 Lab to sustain a strong CGPA.\n\n*You can ask me about: FYDP eligibility, retake rules, merit scholarships, exam clash slots, tuition fees, or major tracks!*`;
 }
 
 /**

@@ -64,7 +64,7 @@ export function AppContent() {
 
       // Secret Konami Code Easter Egg (↑ ↑ ↓ ↓ ← → ← → B A)
       handleKonamiKey(e.key, () => {
-        showToast('🎮 KONAMI CHEAT CODE ACTIVATED: 30 Extra Lives Granted! Summa Cum Laude achieved!', 'success');
+        showToast('KONAMI CODE ACTIVATED: 30 Extra Lives Granted! Summa Cum Laude achieved!', 'success');
       });
 
       if ((e.metaKey || e.ctrlKey) && e.key && e.key.toLowerCase() === 'k') {

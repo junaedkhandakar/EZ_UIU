@@ -275,7 +275,7 @@ Advising Workflow:
    - Route: UIU Campus ⇄ Bashundhara Gate ⇄ 300 Ft Road ⇄ Kuril (Biswa Road).
    - Frequency: Regular service and continuous morning rush shifts starting 07:30 AM, running until 05:00 PM.
 2. Notun Bazar Shuttle:
-   - Stoppages: Notun Bazar ➔ Family Bazar ➔ Sayed Nagar ➔ 10 Tala ➔ UIU Campus.
+   - Stoppages: Notun Bazar → Family Bazar → Sayed Nagar → 10 Tala → UIU Campus.
    - Headway: 07:30 AM to 08:45 AM (continuous rush), running until 09:40 PM.
 3. EWU (Aftabnagar) Shuttle:
    - Continuous morning shifts (06:50 AM – 09:00 AM) and evening shifts (04:40 PM – 06:00 PM) via Swadesh Property Road.

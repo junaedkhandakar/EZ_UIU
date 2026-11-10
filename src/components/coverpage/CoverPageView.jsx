@@ -18,6 +18,8 @@ import {
   BookOpen,
   Eye,
   FileCheck2,
+  FolderKanban,
+  FlaskConical,
   X,
 } from 'lucide-react';
 import Button from '../ui/Button';
@@ -56,9 +58,9 @@ const FACULTY_DESIGNATIONS = [
 ];
 
 const DOC_TYPES = [
-  { id: 'assignment', label: 'Assignment', icon: '📝', defaultTitle: 'Assignment' },
-  { id: 'project', label: 'Project Report', icon: '📊', defaultTitle: 'Project Report' },
-  { id: 'lab', label: 'Lab Report', icon: '🧪', defaultTitle: 'Lab Report' },
+  { id: 'assignment', label: 'Assignment', icon: FileText, defaultTitle: 'Assignment' },
+  { id: 'project', label: 'Project Report', icon: FolderKanban, defaultTitle: 'Project Report' },
+  { id: 'lab', label: 'Lab Report', icon: FlaskConical, defaultTitle: 'Lab Report' },
 ];
 
 export default function CoverPageView() {
@@ -303,21 +305,24 @@ export default function CoverPageView() {
             </div>
 
             <div className="grid grid-cols-3 gap-1.5">
-              {DOC_TYPES.map((dt) => (
-                <button
-                  key={dt.id}
-                  type="button"
-                  onClick={() => setDocType(dt.id)}
-                  className={`flex items-center gap-1.5 p-2 rounded-xl border text-xs font-semibold text-left transition-all ${
-                    docType === dt.id
-                      ? 'border-accent bg-accentSoft text-accent font-bold shadow-sm'
-                      : 'border-line bg-surface2/50 text-ink-3 hover:text-ink hover:bg-surface2'
-                  }`}
-                >
-                  <span className="text-sm">{dt.icon}</span>
-                  <span className="truncate">{dt.label}</span>
-                </button>
-              ))}
+              {DOC_TYPES.map((dt) => {
+                const Icon = dt.icon;
+                return (
+                  <button
+                    key={dt.id}
+                    type="button"
+                    onClick={() => setDocType(dt.id)}
+                    className={`flex items-center gap-1.5 p-2 rounded-xl border text-xs font-semibold text-left transition-all ${
+                      docType === dt.id
+                        ? 'border-accent bg-accentSoft text-accent font-bold shadow-sm'
+                        : 'border-line bg-surface2/50 text-ink-3 hover:text-ink hover:bg-surface2'
+                    }`}
+                  >
+                    <Icon className="h-3.5 w-3.5 shrink-0" />
+                    <span className="truncate">{dt.label}</span>
+                  </button>
+                );
+              })}
             </div>
 
             {/* Template Selector */}

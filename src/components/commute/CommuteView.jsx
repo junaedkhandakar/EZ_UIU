@@ -199,7 +199,7 @@ export default function CommuteView() {
                       : 'text-ink-3 hover:text-ink'
                   }`}
                 >
-                  Notun Bazar ➔ UIU
+                  Notun Bazar → UIU
                 </button>
                 <button
                   onClick={() => setShuttleDirection('fromCampus')}
@@ -209,7 +209,7 @@ export default function CommuteView() {
                       : 'text-ink-3 hover:text-ink'
                   }`}
                 >
-                  UIU ➔ Notun Bazar
+                  UIU → Notun Bazar
                 </button>
               </div>
 
@@ -260,7 +260,7 @@ export default function CommuteView() {
           <div className="flex flex-col gap-4 lg:col-span-7">
             <Surface className="p-5">
               <h3 className="text-[15px] font-bold tracking-tight text-ink">
-                All Scheduled Departures ({shuttleDirection === 'toCampus' ? 'Notun Bazar ➔ UIU' : 'UIU ➔ Notun Bazar'})
+                All Scheduled Departures ({shuttleDirection === 'toCampus' ? 'Notun Bazar → UIU' : 'UIU → Notun Bazar'})
               </h3>
               <p className="text-xs text-ink-3 mt-0.5">
                 Shuttles run on dynamic headway during peak morning rush (07:30 AM – 08:45 AM).
@@ -318,7 +318,7 @@ export default function CommuteView() {
                       : 'text-ink-3 hover:text-ink'
                   }`}
                 >
-                  Kuril ➔ UIU
+                  Kuril → UIU
                 </button>
                 <button
                   onClick={() => setKurilDirection('fromCampus')}
@@ -328,7 +328,7 @@ export default function CommuteView() {
                       : 'text-ink-3 hover:text-ink'
                   }`}
                 >
-                  UIU ➔ Kuril
+                  UIU → Kuril
                 </button>
               </div>
 
@@ -379,7 +379,7 @@ export default function CommuteView() {
           <div className="flex flex-col gap-4 lg:col-span-7">
             <Surface className="p-5">
               <h3 className="text-[15px] font-bold tracking-tight text-ink">
-                All Scheduled Departures ({kurilDirection === 'toCampus' ? 'Kuril (Biswa Road) ➔ UIU' : 'UIU ➔ Kuril'})
+                All Scheduled Departures ({kurilDirection === 'toCampus' ? 'Kuril (Biswa Road) → UIU' : 'UIU → Kuril'})
               </h3>
               <p className="text-xs text-ink-3 mt-0.5">
                 {KURIL_SHUTTLE_SCHEDULE.description}
@@ -547,7 +547,7 @@ export default function CommuteView() {
             <Surface className="p-5">
               <h3 className="text-base font-bold text-ink flex items-center gap-2">
                 <Compass className="h-4 w-4 text-accent" />
-                From East West University (EWU) Gate ➔ UIU
+                From East West University (EWU) Gate → UIU
               </h3>
               <p className="text-xs text-ink-3 mt-1">
                 Departs from EWU Aftabnagar gate via Swadesh Property Road.
@@ -573,7 +573,7 @@ export default function CommuteView() {
             <Surface className="p-5">
               <h3 className="text-base font-bold text-ink flex items-center gap-2">
                 <Compass className="h-4 w-4 text-accent" />
-                From UIU Campus ➔ EWU Gate (Return)
+                From UIU Campus → EWU Gate (Return)
               </h3>
               <p className="text-xs text-ink-3 mt-1">
                 Afternoon return shuttles back to Aftabnagar / Rampura Bridge connection.
