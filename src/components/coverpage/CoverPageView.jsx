@@ -42,6 +42,17 @@ const STORAGE_COVERPAGE_KEY = 'ez_uiu_coverpage_v3';
 const THEME_ORANGE = '#f97316';
 const UNIVERSITY_NAME = 'United International University';
 
+/**
+ * Returns today's current date formatted as YYYY-MM-DD in the user's browser timezone
+ */
+export function getBrowserLocalDate() {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, '0');
+  const day = String(now.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
 const DEPARTMENTS = [
   'Department of Computer Science and Engineering',
   'Department of Electrical and Electronic Engineering',
@@ -84,8 +95,8 @@ export default function CoverPageView() {
   // Form Fields
   const [docNumber, setDocNumber] = useState('');
   const [topicTitle, setTopicTitle] = useState('');
-  const [submissionDate, setSubmissionDate] = useState(() => new Date().toISOString().slice(0, 10));
-  const [performanceDate, setPerformanceDate] = useState(() => new Date().toISOString().slice(0, 10));
+  const [submissionDate, setSubmissionDate] = useState(() => getBrowserLocalDate());
+  const [performanceDate, setPerformanceDate] = useState(() => getBrowserLocalDate());
 
   const [courseCode, setCourseCode] = useState(() => routine[0]?.code || '');
   const [courseTitle, setCourseTitle] = useState(() => routine[0]?.title || '');
@@ -127,7 +138,9 @@ export default function CoverPageView() {
         if (d.topicTitle && d.topicTitle !== 'Heuristic Evaluation of User Interfaces') {
           setTopicTitle(d.topicTitle);
         }
-        if (d.submissionDate) setSubmissionDate(d.submissionDate);
+        if (d.submissionDate && d.submissionDate >= getBrowserLocalDate()) {
+          setSubmissionDate(d.submissionDate);
+        }
         if (d.courseCode && d.courseCode !== 'CSE 4451') setCourseCode(d.courseCode);
         if (d.courseTitle && d.courseTitle !== 'Human Computer Interaction') setCourseTitle(d.courseTitle);
         if (d.courseSection && d.courseSection !== 'C') setCourseSection(d.courseSection);
@@ -363,9 +376,14 @@ export default function CoverPageView() {
   };
 
   const formattedSubmissionDate = useMemo(() => {
+    if (!submissionDate) return '';
     try {
-      const d = new Date(submissionDate + 'T00:00:00');
-      return d.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+      const parts = String(submissionDate).split('-');
+      if (parts.length === 3) {
+        const d = new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]));
+        return d.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+      }
+      return submissionDate;
     } catch {
       return submissionDate;
     }
@@ -720,9 +738,20 @@ export default function CoverPageView() {
             </div>
 
             <div>
-              <label className="block text-[10.5px] font-semibold text-ink-3 uppercase tracking-wider mb-1">
-                Submission Date
-              </label>
+              <div className="flex items-center justify-between mb-1">
+                <label className="block text-[10.5px] font-semibold text-ink-3 uppercase tracking-wider">
+                  Submission Date
+                </label>
+                {submissionDate !== getBrowserLocalDate() && (
+                  <button
+                    type="button"
+                    onClick={() => setSubmissionDate(getBrowserLocalDate())}
+                    className="text-[10px] font-semibold text-accent hover:underline"
+                  >
+                    Set to Today
+                  </button>
+                )}
+              </div>
               <input
                 type="date"
                 value={submissionDate}
