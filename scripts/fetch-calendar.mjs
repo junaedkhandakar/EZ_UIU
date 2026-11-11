@@ -136,15 +136,17 @@ function clampToTerm(dateStr, [winStart, winEnd], log) {
   return d;
 }
 
-/** "Fall 2026 Trimester Undergraduate Programs [Revised]" -> id/term/year/kind/program */
+/** "Fall 2026 Trimester Undergraduate Programs [Revised]" -> id/term/year/kind/program/isRevised/label */
 function metaFromTitle(rawTitle) {
-  const title = rawTitle.replace(/\s*\[Revised\]\s*/gi, ' ').replace(/\s+/g, ' ').trim();
-  const m = title.match(/^(Fall|Spring|Summer)\s+(\d{4})\s+(Trimester|Semester)\s+(.+)$/i);
+  const isRevised = /\[\s*Revised\s*\]/i.test(rawTitle);
+  const cleanTitle = rawTitle.replace(/\[\s*Revised\s*\]/gi, ' ').replace(/\s+/g, ' ').trim();
+  const m = cleanTitle.match(/^(Fall|Spring|Summer)\s+(\d{4})\s+(Trimester|Semester)\s+(.+)$/i);
   if (!m) return null;
   const term = m[1].toLowerCase();
   const year = Number(m[2]);
-  const kind = m[3].toLowerCase();
+  const kind = m[3].toLowerCase(); // 'trimester' | 'semester'
   const progRaw = m[4].trim();
+
   let program;
   let slug;
   if (/undergraduate/i.test(progRaw)) {
@@ -153,14 +155,30 @@ function metaFromTitle(rawTitle) {
   } else if (/graduate/i.test(progRaw)) {
     program = 'Graduate';
     slug = 'graduate';
-  } else if (/pharmacy/i.test(progRaw)) {
+  } else if (/pharm/i.test(progRaw)) {
     program = 'B. Pharm';
     slug = 'b-pharm';
   } else {
     program = progRaw;
     slug = progRaw.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
   }
-  return { id: `${term}-${year}-${slug}`, title, term, year, kind, program };
+
+  const termCapital = term.charAt(0).toUpperCase() + term.slice(1);
+  const kindCapital = kind.charAt(0).toUpperCase() + kind.slice(1);
+  const revisedTag = isRevised ? ' [Revised]' : '';
+  const label = `${termCapital} ${year} — ${kindCapital} (${program})${revisedTag}`;
+  const fullTitle = `${termCapital} ${year} ${kindCapital} ${program}${revisedTag}`;
+
+  return {
+    id: `${term}-${year}-${slug}`,
+    title: fullTitle,
+    label,
+    term,
+    year,
+    kind,
+    program,
+    isRevised,
+  };
 }
 
 function parseFeed(xml) {

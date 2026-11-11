@@ -119,10 +119,14 @@ export function RoutineView() {
   );
 
   const calendarSelect = (
-    <Select value={calId} onChange={(e) => setCalId(e.target.value)} className="w-[190px]">
+    <Select
+      value={calId}
+      onChange={(e) => setCalId(e.target.value)}
+      className="min-w-[240px] sm:w-[360px]"
+    >
       {CALENDARS_DATA.map((c) => (
         <option key={c.id} value={c.id}>
-          {`${c.term} ${c.year}`.replace(/\b\w/g, (ch) => ch.toUpperCase())}
+          {c.label || c.title || `${c.term} ${c.year} (${c.program || c.kind})`}
         </option>
       ))}
     </Select>
@@ -135,9 +139,9 @@ export function RoutineView() {
         <div>
           <h1 className="text-xl font-bold tracking-tight text-ink sm:text-2xl">Class Routine</h1>
           <p className="mt-0.5 text-xs text-ink-3">
-            {activeCalendar
-              ? `${activeCalendar.term} ${activeCalendar.year}`.replace(/\b\w/g, (ch) => ch.toUpperCase())
-              : 'UIU'}{' '}
+            <span className="font-semibold text-ink-2">
+              {activeCalendar?.label || activeCalendar?.title || 'UIU Academic Calendar'}
+            </span>{' '}
             · Upload your class routine PDF → timetable preview &amp; .ics
             {calendarFetched && (
               <>

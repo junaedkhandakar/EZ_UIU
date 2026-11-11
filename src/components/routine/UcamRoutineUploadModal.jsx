@@ -265,7 +265,7 @@ export default function UcamRoutineUploadModal({
                   </span>
                 </div>
                 <div className="mt-1 text-xs text-ink-2 font-medium">
-                  Session: <b>{parsedResult.session}</b> · Matched: <b>{parsedResult.matchedCalendar?.title}</b>
+                  Session: <b>{parsedResult.session}</b> · Matched: <b>{parsedResult.matchedCalendar?.label || parsedResult.matchedCalendar?.title}</b>
                 </div>
               </div>
 
