@@ -63,7 +63,7 @@ export function TuitionView({ courses = [], settings = {}, defaultDept = 'regula
 
   const [dept, setDept] = useState(defaultDept);
   const [credits, setCredits] = useState(() =>
-    routineSummary.totalCredits > 0 ? routineSummary.totalCredits : 12
+    routineSummary.totalCredits > 0 ? routineSummary.totalCredits : 0
   );
   const [perCreditFee, setPerCreditFee] = useState(
     () => (detectedBatch ? batchRate : (settings.tuitionPerCredit ?? 6500))
@@ -208,9 +208,13 @@ export function TuitionView({ courses = [], settings = {}, defaultDept = 'regula
                   onChange={(e) => setCredits(parseFloat(e.target.value) || 0)}
                   className={`${inputCls} num font-mono font-semibold`}
                 />
-                {routineSummary.totalCredits > 0 && (
+                {routineSummary.totalCredits > 0 ? (
                   <p className="mt-1 text-[10px] text-ink-3">
                     Auto-set from routine · {routineSummary.totalCourses} courses ({routineSummary.totalCredits} cr)
+                  </p>
+                ) : (
+                  <p className="mt-1 text-[10px] text-ink-3">
+                    Upload your class routine in Class Routine tab to auto-fill credits, or enter manually.
                   </p>
                 )}
               </div>

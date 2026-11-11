@@ -933,9 +933,11 @@ export default function CoverPageView() {
                   </div>
 
                   <div className="inline-block text-left text-xs sm:text-sm font-semibold space-y-1.5 text-zinc-800 pt-2">
-                    <div>
-                      <span className="text-zinc-500">Course Code:</span> {courseCode}
-                    </div>
+                    {courseCode && (
+                      <div>
+                        <span className="text-zinc-500">Course Code:</span> {courseCode}
+                      </div>
+                    )}
                     {courseSection && (
                       <div>
                         <span className="text-zinc-500">Course Section:</span> {courseSection}
@@ -949,9 +951,9 @@ export default function CoverPageView() {
                         {docNumber}
                       </div>
                     )}
-                    {topicTitle && (
+                    {topicTitle?.trim() && (
                       <div className="max-w-md">
-                        <span className="text-zinc-500">Topic:</span> {topicTitle}
+                        <span className="text-zinc-500">Topic:</span> {topicTitle.trim()}
                       </div>
                     )}
                     <div>
@@ -970,21 +972,27 @@ export default function CoverPageView() {
                     >
                       Submitted By:
                     </div>
-                    {students.map((st, i) => (
-                      <div key={i} className="mb-2.5 last:mb-0">
-                        <div className="font-bold text-zinc-950 text-sm sm:text-[14.5px]">
-                          {st.name || ''}
-                        </div>
-                        {st.id && (
-                          <div className="font-mono text-zinc-700 text-xs">
-                            Student ID: {st.id}
+                    {students.some((st) => st.name || st.id) ? (
+                      students.map((st, i) => (
+                        <div key={i} className="mb-2.5 last:mb-0">
+                          {st.name && (
+                            <div className="font-bold text-zinc-950 text-sm sm:text-[14.5px]">
+                              {st.name}
+                            </div>
+                          )}
+                          {st.id && (
+                            <div className="font-mono text-zinc-700 text-xs">
+                              Student ID: {st.id}
+                            </div>
+                          )}
+                          <div className="text-zinc-600 text-[11px] leading-tight">
+                            {st.program || 'B.Sc. in CSE'}
                           </div>
-                        )}
-                        <div className="text-zinc-600 text-[11px] leading-tight">
-                          {st.program || 'B.Sc. in CSE'}
                         </div>
-                      </div>
-                    ))}
+                      ))
+                    ) : (
+                      <div className="text-zinc-400 text-xs italic">Student details not entered</div>
+                    )}
                     <div className="text-zinc-500 text-[11px] mt-1.5">{UNIVERSITY_NAME}</div>
                   </div>
 
@@ -996,11 +1004,17 @@ export default function CoverPageView() {
                     >
                       Submitted To:
                     </div>
-                    <div className="font-bold text-zinc-950 text-sm sm:text-[14.5px]">
-                      {facultyName || 'Course Instructor'}
-                    </div>
-                    <div className="text-zinc-700 text-xs">{facultyDesignation}</div>
-                    <div className="text-zinc-600 text-[11px] leading-tight mt-0.5">{facultyDept}</div>
+                    {facultyName ? (
+                      <>
+                        <div className="font-bold text-zinc-950 text-sm sm:text-[14.5px]">
+                          {facultyName}
+                        </div>
+                        <div className="text-zinc-700 text-xs">{facultyDesignation}</div>
+                        <div className="text-zinc-600 text-[11px] leading-tight mt-0.5">{facultyDept}</div>
+                      </>
+                    ) : (
+                      <div className="text-zinc-400 text-xs italic">Faculty name not entered</div>
+                    )}
                     <div className="text-zinc-500 text-[11px] mt-1.5">{UNIVERSITY_NAME}</div>
                   </div>
                 </div>
@@ -1037,12 +1051,18 @@ export default function CoverPageView() {
                     </div>
 
                     <div className="rounded-xl border border-orange-200 bg-orange-50/60 p-4 max-w-md mx-auto space-y-1 text-xs sm:text-sm">
-                      <div className="text-base font-bold text-zinc-900 leading-tight">
-                        {courseTitle}
-                      </div>
-                      <div className="font-semibold text-zinc-700">
-                        {courseCode} · Section {courseSection} · {trimester}
-                      </div>
+                      {courseTitle && (
+                        <div className="text-base font-bold text-zinc-900 leading-tight">
+                          {courseTitle}
+                        </div>
+                      )}
+                      {(courseCode || courseSection) && (
+                        <div className="font-semibold text-zinc-700">
+                          {[courseCode, courseSection ? `Section ${courseSection}` : '', trimester]
+                            .filter(Boolean)
+                            .join(' · ')}
+                        </div>
+                      )}
                       {topicTitle?.trim() ? (
                         <div className="text-zinc-600 italic text-xs pt-1">"{topicTitle.trim()}"</div>
                       ) : null}
@@ -1058,12 +1078,16 @@ export default function CoverPageView() {
                       <div className="font-bold text-orange-600 border-b border-orange-200 pb-1 mb-2 uppercase tracking-wider text-[11px]">
                         Submitted By
                       </div>
-                      {students.map((st, i) => (
-                        <div key={i} className="mb-1.5 last:mb-0">
-                          <div className="font-bold text-zinc-900 text-xs">{st.name}</div>
-                          {st.id && <div className="text-[10.5px] font-mono text-zinc-600">ID: {st.id}</div>}
-                        </div>
-                      ))}
+                      {students.some((st) => st.name || st.id) ? (
+                        students.map((st, i) => (
+                          <div key={i} className="mb-1.5 last:mb-0">
+                            {st.name && <div className="font-bold text-zinc-900 text-xs">{st.name}</div>}
+                            {st.id && <div className="text-[10.5px] font-mono text-zinc-600">ID: {st.id}</div>}
+                          </div>
+                        ))
+                      ) : (
+                        <div className="text-zinc-400 text-xs italic">Student details not entered</div>
+                      )}
                       <div className="text-[10px] text-zinc-500 mt-1">{students[0]?.program}</div>
                     </div>
 
@@ -1071,9 +1095,15 @@ export default function CoverPageView() {
                       <div className="font-bold text-orange-600 border-b border-orange-200 pb-1 mb-2 uppercase tracking-wider text-[11px]">
                         Submitted To
                       </div>
-                      <div className="font-bold text-zinc-900 text-xs">{facultyName || 'Course Instructor'}</div>
-                      <div className="text-[10.5px] text-zinc-700">{facultyDesignation}</div>
-                      <div className="text-[10px] text-zinc-500 leading-tight mt-0.5">{facultyDept}</div>
+                      {facultyName ? (
+                        <>
+                          <div className="font-bold text-zinc-900 text-xs">{facultyName}</div>
+                          <div className="text-[10.5px] text-zinc-700">{facultyDesignation}</div>
+                          <div className="text-[10px] text-zinc-500 leading-tight mt-0.5">{facultyDept}</div>
+                        </>
+                      ) : (
+                        <div className="text-zinc-400 text-xs italic">Faculty name not entered</div>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -1103,9 +1133,9 @@ export default function CoverPageView() {
                   </div>
                   <div className="text-lg font-bold text-zinc-900">{courseTitle || courseCode || ''}</div>
                   <div className="rounded-lg bg-orange-50/70 p-3 inline-block text-left text-xs space-y-1 border border-orange-200/80">
-                    <div><b>Course Code:</b> {courseCode} (Section {courseSection})</div>
+                    {courseCode && <div><b>Course Code:</b> {courseCode}{courseSection ? ` (Section ${courseSection})` : ''}</div>}
                     {docNumber && <div><b>No:</b> {docNumber}</div>}
-                    {topicTitle && <div><b>Topic:</b> {topicTitle}</div>}
+                    {topicTitle?.trim() && <div><b>Topic:</b> {topicTitle.trim()}</div>}
                     <div><b>Date:</b> {formattedSubmissionDate}</div>
                   </div>
                 </div>
@@ -1115,12 +1145,16 @@ export default function CoverPageView() {
                     <div className="font-bold uppercase tracking-wider text-xs mb-1.5" style={{ color: THEME_ORANGE }}>
                       Submitted By
                     </div>
-                    {students.map((st, i) => (
-                      <div key={i} className="mb-1.5">
-                        <div className="font-bold text-zinc-900">{st.name}</div>
-                        {st.id && <div className="font-mono text-zinc-600">ID: {st.id}</div>}
-                      </div>
-                    ))}
+                    {students.some((st) => st.name || st.id) ? (
+                      students.map((st, i) => (
+                        <div key={i} className="mb-1.5">
+                          {st.name && <div className="font-bold text-zinc-900">{st.name}</div>}
+                          {st.id && <div className="font-mono text-zinc-600">ID: {st.id}</div>}
+                        </div>
+                      ))
+                    ) : (
+                      <div className="text-zinc-400 text-xs italic">Student details not entered</div>
+                    )}
                     <div className="text-[10.5px] text-zinc-500">{students[0]?.program}</div>
                   </div>
 
@@ -1128,9 +1162,15 @@ export default function CoverPageView() {
                     <div className="font-bold uppercase tracking-wider text-xs mb-1.5" style={{ color: THEME_ORANGE }}>
                       Submitted To
                     </div>
-                    <div className="font-bold text-zinc-900">{facultyName || 'Course Instructor'}</div>
-                    <div className="text-zinc-700">{facultyDesignation}</div>
-                    <div className="text-[10.5px] text-zinc-500">{facultyDept}</div>
+                    {facultyName ? (
+                      <>
+                        <div className="font-bold text-zinc-900">{facultyName}</div>
+                        <div className="text-zinc-700">{facultyDesignation}</div>
+                        <div className="text-[10.5px] text-zinc-500">{facultyDept}</div>
+                      </>
+                    ) : (
+                      <div className="text-zinc-400 text-xs italic">Faculty name not entered</div>
+                    )}
                   </div>
                 </div>
               </div>
@@ -1158,12 +1198,16 @@ export default function CoverPageView() {
                   <div className="text-base font-bold" style={{ color: THEME_ORANGE }}>
                     {courseTitle || courseCode || ''}
                   </div>
-                  <div className="text-xs text-zinc-600">
-                    {courseCode} · Section {courseSection} · {trimester}
-                  </div>
-                  {topicTitle && (
+                  {(courseCode || courseSection) && (
+                    <div className="text-xs text-zinc-600">
+                      {[courseCode, courseSection ? `Section ${courseSection}` : '', trimester]
+                        .filter(Boolean)
+                        .join(' · ')}
+                    </div>
+                  )}
+                  {topicTitle?.trim() && (
                     <div className="text-xs italic font-serif text-zinc-800 max-w-sm mx-auto pt-1">
-                      "{topicTitle}"
+                      "{topicTitle.trim()}"
                     </div>
                   )}
                 </div>
@@ -1173,12 +1217,16 @@ export default function CoverPageView() {
                     <div className="font-bold uppercase tracking-widest text-[11px] mb-2" style={{ color: THEME_ORANGE }}>
                       Submitted By:
                     </div>
-                    {students.map((st, i) => (
-                      <div key={i} className="mb-2">
-                        <div className="font-bold text-zinc-900 text-xs">{st.name}</div>
-                        {st.id && <div className="font-mono text-zinc-600 text-[11px]">ID: {st.id}</div>}
-                      </div>
-                    ))}
+                    {students.some((st) => st.name || st.id) ? (
+                      students.map((st, i) => (
+                        <div key={i} className="mb-2">
+                          {st.name && <div className="font-bold text-zinc-900 text-xs">{st.name}</div>}
+                          {st.id && <div className="font-mono text-zinc-600 text-[11px]">ID: {st.id}</div>}
+                        </div>
+                      ))
+                    ) : (
+                      <div className="text-zinc-400 text-xs italic">Student details not entered</div>
+                    )}
                     <div className="text-[10px] text-zinc-500">{students[0]?.program}</div>
                   </div>
 
@@ -1186,9 +1234,15 @@ export default function CoverPageView() {
                     <div className="font-bold uppercase tracking-widest text-[11px] mb-2" style={{ color: THEME_ORANGE }}>
                       Submitted To:
                     </div>
-                    <div className="font-bold text-zinc-900 text-xs">{facultyName || 'Course Instructor'}</div>
-                    <div className="text-zinc-700 text-[11px]">{facultyDesignation}</div>
-                    <div className="text-[10px] text-zinc-500 leading-tight">{facultyDept}</div>
+                    {facultyName ? (
+                      <>
+                        <div className="font-bold text-zinc-900 text-xs">{facultyName}</div>
+                        <div className="text-zinc-700 text-[11px]">{facultyDesignation}</div>
+                        <div className="text-[10px] text-zinc-500 leading-tight">{facultyDept}</div>
+                      </>
+                    ) : (
+                      <div className="text-zinc-400 text-xs italic">Faculty name not entered</div>
+                    )}
                     <div className="text-[10px] text-zinc-400 mt-1">Date: {formattedSubmissionDate}</div>
                   </div>
                 </div>

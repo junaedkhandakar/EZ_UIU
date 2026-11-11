@@ -636,23 +636,27 @@ export default function AdvisorView({
               <div className="mt-5 border-t border-line pt-4 space-y-2.5">
                 <div className="flex items-center justify-between text-xs">
                   <span className="text-ink-2">Workload Assessment:</span>
-                  <span className={`font-bold ${basketAnalysis.workloadColor}`}>
-                    {basketAnalysis.workloadGrade}
+                  <span className={`font-bold ${courses.length === 0 ? 'text-ink-3' : basketAnalysis.workloadColor}`}>
+                    {courses.length === 0 ? '—' : basketAnalysis.workloadGrade}
                   </span>
                 </div>
                 <div className="flex items-center justify-between text-xs">
                   <span className="text-ink-2">Eligible Unlocked Courses:</span>
-                  <span className="num font-bold text-ink">{basketAnalysis.eligibleCount} courses</span>
+                  <span className="num font-bold text-ink">
+                    {courses.length === 0 ? '0 courses' : `${basketAnalysis.eligibleCount} courses`}
+                  </span>
                 </div>
                 <div className="flex items-center justify-between text-xs">
                   <span className="text-ink-2">Final Exam Slot Conflicts:</span>
                   <span className="num font-bold text-ok">
-                    {basketAnalysis.examConflicts.length === 0
+                    {courses.length === 0
+                      ? '—'
+                      : basketAnalysis.examConflicts.length === 0
                       ? '0 Clashes (Safe)'
                       : `${basketAnalysis.examConflicts.length} Clashes`}
                   </span>
                 </div>
-                {basketAnalysis.tightExams?.length > 0 && (
+                {courses.length > 0 && basketAnalysis.tightExams?.length > 0 && (
                   <div className="text-[11px] text-warn flex items-center gap-1.5">
                     <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
                     <span>{basketAnalysis.tightExams[0].desc}</span>
@@ -677,7 +681,15 @@ export default function AdvisorView({
               </span>
             </div>
 
-            {basketAnalysis.basket.length === 0 ? (
+            {courses.length === 0 ? (
+              <Surface className="p-8 text-center flex flex-col items-center justify-center border-accent/30 bg-accentSoft/20">
+                <GraduationCap className="h-8 w-8 text-accent mb-2" />
+                <p className="text-sm font-bold text-ink">No academic transcript connected</p>
+                <p className="mt-1 text-xs text-ink-3 max-w-sm">
+                  Import your UCAM grade report in the CGPA tab to calculate your personalized next-term course recommendations and prerequisite paths.
+                </p>
+              </Surface>
+            ) : basketAnalysis.basket.length === 0 ? (
               <Surface className="p-8 text-center">
                 <p className="text-sm font-semibold text-ink-2">No remaining eligible courses</p>
                 <p className="mt-1 text-xs text-ink-3">
@@ -1225,8 +1237,17 @@ export default function AdvisorView({
               </span>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-              {fullDegreeRoadmap.map((sem) => (
+            {courses.length === 0 ? (
+              <Surface className="p-8 text-center flex flex-col items-center justify-center border-accent/30 bg-accentSoft/20">
+                <GraduationCap className="h-8 w-8 text-accent mb-2" />
+                <p className="text-sm font-bold text-ink">No academic transcript connected</p>
+                <p className="mt-1 text-xs text-ink-3 max-w-sm">
+                  Connect your completed transcript in the CGPA tab to calculate your personalized degree roadmap and milestone timeline.
+                </p>
+              </Surface>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                {fullDegreeRoadmap.map((sem) => (
                 <Surface hover key={sem.trimesterNum} className="p-4">
                   <div className="flex items-center justify-between border-b border-line pb-2 mb-3">
                     <span className="font-bold text-accent text-sm">{sem.title}</span>
@@ -1253,6 +1274,7 @@ export default function AdvisorView({
                 </Surface>
               ))}
             </div>
+            )}
           </div>
         </div>
       )}
@@ -1260,6 +1282,13 @@ export default function AdvisorView({
       {/* ================= MODE 5: MAJOR CONCENTRATIONS ================= */}
       {activeTab === 'majors' && (
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2 pop-in">
+          {courses.length === 0 && (
+            <Surface className="col-span-1 md:col-span-2 p-4 text-center border-accent/30 bg-accentSoft/20">
+              <p className="text-xs text-ink-2 font-semibold">
+                No transcript connected yet. Import your UCAM report in the CGPA tab to track which track electives you have already completed.
+              </p>
+            </Surface>
+          )}
           {majorStats.map(({ name, track, completedCount, requiredCount, isCompleted }) => (
             <Surface hover key={name} className="p-5 flex flex-col justify-between">
               <div>

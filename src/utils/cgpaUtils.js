@@ -228,6 +228,14 @@ export function getCourseInCgpaStatus(course, effectiveCourses, runningOverrides
  * Determine Honors Designation based on UIU Convocation Regulations
  */
 export function getHonorsStanding(cgpa, earnedCredits, minRequiredCredits = 138) {
+  if (!earnedCredits || earnedCredits === 0) {
+    return {
+      tier: 'No Grades Yet',
+      badgeColor: 'bg-zinc-100 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300 border-zinc-200 dark:border-zinc-700',
+      progressPercent: 0,
+      description: 'Import your UCAM grade report to compute your standing and CGPA.',
+    };
+  }
   if (cgpa >= 3.90) {
     return {
       tier: 'Summa Cum Laude',
