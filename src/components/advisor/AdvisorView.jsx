@@ -68,7 +68,7 @@ export default function AdvisorView({
   const [selectedMajor, setSelectedMajor] = useState('Software Engineering');
 
   // Custom Schedule Auditor State
-  const [auditSelectedCodes, setAuditSelectedCodes] = useState(['CSE 2215', 'CSE 2213', 'MATH 2205']);
+  const [auditSelectedCodes, setAuditSelectedCodes] = useState([]);
   const [auditCourseToAdd, setAuditCourseToAdd] = useState('');
 
   // Prerequisite Visualizer State
@@ -772,24 +772,30 @@ export default function AdvisorView({
                 <div className="text-[11px] font-bold uppercase tracking-wider text-ink-3">
                   Courses Selected for Audit ({auditSelectedCodes.length}):
                 </div>
-                <div className="flex flex-wrap gap-1.5">
-                  {auditSelectedCodes.map((code) => (
-                    <span
-                      key={code}
-                      className="flex items-center gap-1.5 rounded-xl border border-line bg-surface2 px-2.5 py-1 text-xs font-bold text-ink"
-                    >
-                      {code}
-                      <button
-                        onClick={() =>
-                          setAuditSelectedCodes(auditSelectedCodes.filter((c) => c !== code))
-                        }
-                        className="text-ink-3 hover:text-bad"
+                {auditSelectedCodes.length === 0 ? (
+                  <p className="text-xs text-ink-3 py-1">
+                    No courses added yet. Pick a course above to audit exam slots and prerequisites.
+                  </p>
+                ) : (
+                  <div className="flex flex-wrap gap-1.5">
+                    {auditSelectedCodes.map((code) => (
+                      <span
+                        key={code}
+                        className="flex items-center gap-1.5 rounded-xl border border-line bg-surface2 px-2.5 py-1 text-xs font-bold text-ink"
                       >
-                        <X className="h-3 w-3" />
-                      </button>
-                    </span>
-                  ))}
-                </div>
+                        {code}
+                        <button
+                          onClick={() =>
+                            setAuditSelectedCodes(auditSelectedCodes.filter((c) => c !== code))
+                          }
+                          className="text-ink-3 hover:text-bad"
+                        >
+                          <X className="h-3 w-3" />
+                        </button>
+                      </span>
+                    ))}
+                  </div>
+                )}
               </div>
 
               {/* Quick Presets */}

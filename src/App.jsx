@@ -11,7 +11,7 @@ import AdvisorView from './components/advisor/AdvisorView';
 import CommuteView from './components/commute/CommuteView';
 import CoverPageView from './components/coverpage/CoverPageView';
 import CommandPalette from './components/ui/CommandPalette';
-import { DEMO_TRANSCRIPT_COURSES, exportCSV } from './utils/cgpaUtils';
+import { exportCSV } from './utils/cgpaUtils';
 import { handleKonamiKey } from './utils/easterEggs';
 
 const STORAGE_COURSES = 'ez_uiu_courses';
@@ -26,9 +26,16 @@ export function AppContent() {
   const [courses, setCourses] = useState(() => {
     try {
       const saved = localStorage.getItem(STORAGE_COURSES);
-      if (saved) return JSON.parse(saved);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed)) {
+          // If storage contains the old initial 27 demo courses, clear it to start clean
+          const isOldDemo = parsed.length === 27 && parsed[0]?.id === 'c1' && parsed[0]?.courseId === 'CSE 2213';
+          if (!isOldDemo) return parsed;
+        }
+      }
     } catch {}
-    return DEMO_TRANSCRIPT_COURSES;
+    return [];
   });
 
   const [settings, setSettings] = useState(() => {
@@ -94,10 +101,6 @@ export function AppContent() {
     setCourses((prev) => [newCourse, ...prev]);
   }, []);
 
-  const handleLoadDemo = useCallback(() => {
-    setCourses(DEMO_TRANSCRIPT_COURSES);
-  }, []);
-
   const handleExportCSV = useCallback(() => {
     exportCSV(courses);
   }, [courses]);
@@ -147,7 +150,6 @@ export function AppContent() {
           setActiveTab('cgpa');
           setUcamModalTrigger(true);
         }}
-        onLoadDemo={handleLoadDemo}
         onExportCSV={handleExportCSV}
       />
     </div>

@@ -25,7 +25,6 @@ import {
   extractTextFromPdf,
   parseUcamRoutineText,
   formatMinutes,
-  SAMPLE_UCAM_ROUTINE_TEXT,
 } from '../../utils/ucamRoutineParser';
 import { generateICS } from '../../utils/icsGenerator';
 import { useToast } from '../../context/ToastContext';
@@ -77,11 +76,6 @@ export default function UcamRoutineUploadModal({
     } finally {
       setIsProcessing(false);
     }
-  };
-
-  const handleLoadSample = () => {
-    setPasteText(SAMPLE_UCAM_ROUTINE_TEXT);
-    handleProcessText(SAMPLE_UCAM_ROUTINE_TEXT);
   };
 
   const handleApplyToTimetable = () => {
@@ -186,14 +180,6 @@ export default function UcamRoutineUploadModal({
               Paste Routine Text / OCR
             </button>
           </div>
-
-          <button
-            onClick={handleLoadSample}
-            className="flex items-center gap-1.5 rounded-xl border border-accent/40 bg-accentSoft px-3 py-1.5 text-xs font-bold text-accent hover:border-accent transition-colors"
-          >
-            <Sparkles className="h-3.5 w-3.5" />
-            Load Sample (Junaed - Fall 2026)
-          </button>
         </div>
 
         {/* Tab 1: PDF Dropzone */}

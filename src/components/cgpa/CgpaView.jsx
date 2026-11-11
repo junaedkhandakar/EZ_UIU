@@ -32,7 +32,6 @@ import {
   calculateTrimesterHistory,
   getEffectiveCourses,
   getHonorsStanding,
-  DEMO_TRANSCRIPT_COURSES,
   DEPT_PROFILES,
   exportCSV,
   parseCSV,
@@ -173,12 +172,6 @@ export function CgpaView({
     e.target.value = '';
   };
 
-  const loadDemo = () => {
-    setCourses(DEMO_TRANSCRIPT_COURSES);
-    setRunningOverrides({});
-    showToast('Loaded demo transcript', 'info');
-  };
-
   const resetAll = () => {
     if (window.confirm('Clear every course from your transcript?')) {
       setCourses([]);
@@ -219,7 +212,6 @@ export function CgpaView({
           <Button variant="secondary" size="md" icon={Download} onClick={() => exportCSV(courses)}>
             Export
           </Button>
-          <Button variant="ghost" size="icon" icon={Sparkles} onClick={loadDemo} title="Load demo transcript" />
           <Button variant="ghost" size="icon" icon={RotateCcw} onClick={resetAll} title="Clear transcript" />
         </div>
       </div>
@@ -236,6 +228,28 @@ export function CgpaView({
             transition={{ type: 'spring', stiffness: 450, damping: 30 }}
             className="flex flex-col gap-4"
           >
+            {courses.length === 0 && (
+              <Surface className="p-4 sm:p-5 border-accent/40 bg-accentSoft/30 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-sm">
+                <div>
+                  <h3 className="text-sm font-bold text-ink flex items-center gap-2">
+                    <Upload className="h-4 w-4 text-accent" />
+                    No transcript loaded yet
+                  </h3>
+                  <p className="text-xs text-ink-3 mt-0.5">
+                    Import your course grades from UCAM or CSV to compute your cumulative CGPA, standing, and degree progress.
+                  </p>
+                </div>
+                <div className="flex items-center gap-2 shrink-0">
+                  <Button variant="primary" size="sm" icon={Upload} onClick={() => setUcamOpen(true)}>
+                    Import from UCam
+                  </Button>
+                  <Button variant="secondary" size="sm" icon={Upload} onClick={() => fileRef.current?.click()}>
+                    Upload CSV
+                  </Button>
+                </div>
+              </Surface>
+            )}
+
             {/* bento row */}
             <div className="grid grid-cols-1 gap-4 xl:grid-cols-12">
               {/* hero gauge card */}

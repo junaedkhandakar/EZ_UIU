@@ -44,35 +44,7 @@ export const DEPT_PROFILES = {
   },
 };
 
-export const DEMO_TRANSCRIPT_COURSES = [
-  { id: 'c1', trimester: '223', courseId: 'CSE 2213', courseName: 'Discrete Mathematics', credit: 3, grade: 'D+', status: '' },
-  { id: 'c2', trimester: '223', courseId: 'CSE 1110', courseName: 'Introduction to Computer Systems', credit: 1, grade: 'A', status: '' },
-  { id: 'c3', trimester: '223', courseId: 'ENG 1011', courseName: 'English I', credit: 3, grade: 'C+', status: '' },
-  { id: 'c4', trimester: '223', courseId: 'URC 1103', courseName: 'Life Skills for Success', credit: 2, grade: 'A', status: '' },
-  { id: 'c5', trimester: '231', courseId: 'CSE 1111', courseName: 'Structured Programming Language', credit: 3, grade: 'C', status: '' },
-  { id: 'c6', trimester: '231', courseId: 'CSE 1112', courseName: 'Structured Programming Language Laboratory', credit: 1, grade: 'A', status: '' },
-  { id: 'c7', trimester: '231', courseId: 'CSE 1325', courseName: 'Digital Logic Design', credit: 3, grade: 'F', status: '' },
-  { id: 'c8', trimester: '231', courseId: 'CSE 1326', courseName: 'Digital Logic Design Laboratory', credit: 1, grade: 'C+', status: '' },
-  { id: 'c9', trimester: '231', courseId: 'ENG 1013', courseName: 'English II', credit: 3, grade: 'C', status: '' },
-  { id: 'c10', trimester: '231', courseId: 'BDS 1201', courseName: 'History of the Emergence of Bangladesh', credit: 2, grade: 'A-', status: '' },
-  { id: 'c11', trimester: '232', courseId: 'CSE 1115', courseName: 'Object Oriented Programming', credit: 3, grade: 'A', status: '' },
-  { id: 'c12', trimester: '232', courseId: 'CSE 1116', courseName: 'Object Oriented Programming Laboratory', credit: 1, grade: 'A', status: '' },
-  { id: 'c13', trimester: '232', courseId: 'MATH 1151', courseName: 'Fundamental Calculus', credit: 3, grade: 'W', status: 'Withdraw' },
-  { id: 'c14', trimester: '233', courseId: 'CSE 2215', courseName: 'Data Structure and Algorithms I', credit: 3, grade: '', status: 'Dp' },
-  { id: 'c15', trimester: '233', courseId: 'CSE 2216', courseName: 'Data Structure and Algorithms I Laboratory', credit: 1, grade: '', status: 'Dp' },
-  { id: 'c16', trimester: '233', courseId: 'MATH 1151', courseName: 'Fundamental Calculus', credit: 3, grade: '', status: 'Dp' },
-  { id: 'c17', trimester: '242', courseId: 'CSE 1325', courseName: 'Digital Logic Design', credit: 3, grade: 'B', status: '' },
-  { id: 'c18', trimester: '242', courseId: 'CSE 2215', courseName: 'Data Structure and Algorithms I', credit: 3, grade: 'B+', status: '' },
-  { id: 'c19', trimester: '242', courseId: 'CSE 2216', courseName: 'Data Structure and Algorithms I Laboratory', credit: 1, grade: 'A', status: '' },
-  { id: 'c20', trimester: '242', courseId: 'MATH 1151', courseName: 'Fundamental Calculus', credit: 3, grade: 'C+', status: '' },
-  { id: 'c21', trimester: '243', courseId: 'CSE 2217', courseName: 'Data Structure and Algorithms II', credit: 3, grade: 'A-', status: '' },
-  { id: 'c22', trimester: '243', courseId: 'CSE 2218', courseName: 'Data Structure and Algorithms II Laboratory', credit: 1, grade: 'A-', status: '' },
-  { id: 'c23', trimester: '243', courseId: 'CSE 2118', courseName: 'Advanced Object Oriented Programming Laboratory', credit: 1, grade: 'B+', status: '' },
-  { id: 'c24', trimester: '251', courseId: 'CSE 3521', courseName: 'Database Management Systems', credit: 3, grade: '', status: 'Running Course' },
-  { id: 'c25', trimester: '251', courseId: 'CSE 3522', courseName: 'Database Management Systems Laboratory', credit: 1, grade: '', status: 'Running Course' },
-  { id: 'c26', trimester: '251', courseId: 'CSE 4000A', courseName: 'Final Year Design Project - I', credit: 2, grade: '', status: 'Running Course' },
-  { id: 'c27', trimester: '251', courseId: 'CSE 3411', courseName: 'System Analysis and Design', credit: 3, grade: '', status: 'Running Course' },
-];
+export const DEMO_TRANSCRIPT_COURSES = [];
 
 export function formatBDT(val) {
   if (val === undefined || val === null || isNaN(val)) return '৳0';

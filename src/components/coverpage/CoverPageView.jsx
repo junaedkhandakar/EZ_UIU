@@ -112,8 +112,8 @@ export default function CoverPageView() {
     const savedId = (localStorage.getItem('ez_student_id') || '').trim();
     return [
       {
-        name: 'Md. Junaed Khandakar',
-        id: savedId || '0112330072',
+        name: '',
+        id: savedId || '',
         section: routine[0]?.section || '',
         program: 'B.Sc. in Computer Science and Engineering',
       },
@@ -149,7 +149,14 @@ export default function CoverPageView() {
         if (d.facultyDesignation) setFacultyDesignation(d.facultyDesignation);
         if (d.facultyDept) setFacultyDept(d.facultyDept);
         if (d.isGroup !== undefined) setIsGroup(d.isGroup);
-        if (d.students?.length) setStudents(d.students);
+        if (d.students?.length) {
+          const cleaned = d.students.map((st) => ({
+            ...st,
+            name: st.name === 'Md. Junaed Khandakar' ? '' : st.name,
+            id: st.id === '0112330072' ? '' : st.id,
+          }));
+          setStudents(cleaned);
+        }
       }
     } catch {}
   }, []);

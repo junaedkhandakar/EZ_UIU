@@ -161,18 +161,6 @@ export default function CommandPalette({
         },
       },
       {
-        id: 'act-demo',
-        type: 'action',
-        category: 'Quick Actions',
-        title: 'Load Demo Transcript',
-        desc: 'Load authentic UIU student dataset with 27 courses',
-        icon: Sparkles,
-        action: () => {
-          onClose();
-          onLoadDemo?.();
-        },
-      },
-      {
         id: 'act-export',
         type: 'action',
         category: 'Quick Actions',
