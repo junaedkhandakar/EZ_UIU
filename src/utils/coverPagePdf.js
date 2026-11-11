@@ -129,7 +129,9 @@ export async function generateCoverPagePdf(data) {
     drawTextCentered(docTypeName, PAGE_HEIGHT - 170, 24, fontBold, COLOR_ORANGE);
 
     // Course Title
-    drawTextCentered(courseTitle || 'Course Title', PAGE_HEIGHT - 210, 16, fontBold, COLOR_DARK);
+    if (courseTitle || courseCode) {
+      drawTextCentered(courseTitle || courseCode, PAGE_HEIGHT - 210, 16, fontBold, COLOR_DARK);
+    }
 
     // Course Details Box
     const boxX = 110;
@@ -137,10 +139,10 @@ export async function generateCoverPagePdf(data) {
     const lineSpacing = 20;
 
     const detailsList = [
-      ['Course Code:', courseCode],
+      ...(courseCode ? [['Course Code:', courseCode]] : []),
       ...(courseSection ? [['Course Section:', courseSection]] : []),
       ...(docNumber ? [[docNumLabel, docNumber]] : []),
-      ...(topicTitle ? [['Topic:', topicTitle]] : []),
+      ...(topicTitle?.trim() ? [['Topic:', topicTitle.trim()]] : []),
       ...(effectiveSubmissionDate ? [['Date of Submission:', effectiveSubmissionDate]] : []),
       ...(trimester ? [['Trimester:', trimester]] : []),
     ];
@@ -195,27 +197,33 @@ export async function generateCoverPagePdf(data) {
 
     let studentY = dividerY - 48;
     students.forEach((st) => {
-      page.drawText(st.name || 'Student Name', {
-        x: leftColX,
-        y: studentY,
-        size: 11.5,
-        font: fontBold,
-        color: COLOR_DARK,
-      });
-      page.drawText(`Student ID: ${st.id || '—'}`, {
-        x: leftColX,
-        y: studentY - 14,
-        size: 10,
-        font: fontRegular,
-        color: COLOR_MUTED,
-      });
-      page.drawText(st.program || 'B.Sc. in CSE', {
-        x: leftColX,
-        y: studentY - 26,
-        size: 9.5,
-        font: fontRegular,
-        color: COLOR_LIGHT_MUTED,
-      });
+      if (st.name) {
+        page.drawText(st.name, {
+          x: leftColX,
+          y: studentY,
+          size: 11.5,
+          font: fontBold,
+          color: COLOR_DARK,
+        });
+      }
+      if (st.id) {
+        page.drawText(`Student ID: ${st.id}`, {
+          x: leftColX,
+          y: studentY - 14,
+          size: 10,
+          font: fontRegular,
+          color: COLOR_MUTED,
+        });
+      }
+      if (st.program) {
+        page.drawText(st.program, {
+          x: leftColX,
+          y: studentY - 26,
+          size: 9.5,
+          font: fontRegular,
+          color: COLOR_LIGHT_MUTED,
+        });
+      }
       studentY -= 42;
     });
     page.drawText('United International University', {
@@ -313,14 +321,15 @@ export async function generateCoverPagePdf(data) {
       color: COLOR_ORANGE_TINT,
     });
 
-    drawTextCentered(courseTitle || 'Course Title', PAGE_HEIGHT - 250, 16, fontBold, COLOR_DARK);
-    drawTextCentered(
-      `${courseCode} · Section ${courseSection} · ${trimester}`,
-      PAGE_HEIGHT - 275,
-      12,
-      fontBold,
-      COLOR_MUTED
-    );
+    if (courseTitle || courseCode) {
+      drawTextCentered(courseTitle || courseCode, PAGE_HEIGHT - 250, 16, fontBold, COLOR_DARK);
+    }
+    const modernSubLine = [courseCode, courseSection ? `Section ${courseSection}` : '', trimester]
+      .filter(Boolean)
+      .join(' · ');
+    if (modernSubLine) {
+      drawTextCentered(modernSubLine, PAGE_HEIGHT - 275, 12, fontBold, COLOR_MUTED);
+    }
 
     if (docNumber) {
       drawTextCentered(
@@ -331,16 +340,18 @@ export async function generateCoverPagePdf(data) {
         COLOR_DARK
       );
     }
-    if (topicTitle) {
-      drawTextCentered(`"${topicTitle}"`, PAGE_HEIGHT - 330, 11.5, fontItalic, COLOR_MUTED);
+    if (topicTitle?.trim()) {
+      drawTextCentered(`"${topicTitle.trim()}"`, PAGE_HEIGHT - 330, 11.5, fontItalic, COLOR_MUTED);
     }
-    drawTextCentered(
-      `Date: ${effectiveSubmissionDate}`,
-      PAGE_HEIGHT - 365,
-      10,
-      fontRegular,
-      COLOR_LIGHT_MUTED
-    );
+    if (effectiveSubmissionDate) {
+      drawTextCentered(
+        `Date: ${effectiveSubmissionDate}`,
+        PAGE_HEIGHT - 365,
+        10,
+        fontRegular,
+        COLOR_LIGHT_MUTED
+      );
+    }
 
     // Two Bottom Boxes
     const bottomBoxY = 100;
@@ -366,20 +377,24 @@ export async function generateCoverPagePdf(data) {
     });
     let sY = bottomBoxY + boxHeight - 48;
     students.forEach((st) => {
-      page.drawText(st.name || 'Student Name', {
-        x: 68,
-        y: sY,
-        size: 11,
-        font: fontBold,
-        color: COLOR_DARK,
-      });
-      page.drawText(`ID: ${st.id || '—'}`, {
-        x: 68,
-        y: sY - 13,
-        size: 9.5,
-        font: fontRegular,
-        color: COLOR_MUTED,
-      });
+      if (st.name) {
+        page.drawText(st.name, {
+          x: 68,
+          y: sY,
+          size: 11,
+          font: fontBold,
+          color: COLOR_DARK,
+        });
+      }
+      if (st.id) {
+        page.drawText(`ID: ${st.id}`, {
+          x: 68,
+          y: sY - 13,
+          size: 9.5,
+          font: fontRegular,
+          color: COLOR_MUTED,
+        });
+      }
       sY -= 36;
     });
     page.drawText(students[0]?.program || 'B.Sc. in CSE', {
@@ -472,7 +487,9 @@ export async function generateCoverPagePdf(data) {
 
     // Document Title
     drawTextCentered(docTypeName, PAGE_HEIGHT - 210, 22, fontBold, COLOR_ORANGE);
-    drawTextCentered(courseTitle || 'Course Title', PAGE_HEIGHT - 250, 16, fontBold, COLOR_DARK);
+    if (courseTitle || courseCode) {
+      drawTextCentered(courseTitle || courseCode, PAGE_HEIGHT - 250, 16, fontBold, COLOR_DARK);
+    }
 
     // Details Block
     const dBoxX = 140;
@@ -480,9 +497,9 @@ export async function generateCoverPagePdf(data) {
     const pSpacing = 20;
 
     const pList = [
-      ['Course Code:', `${courseCode} (Section ${courseSection})`],
+      ...(courseCode ? [['Course Code:', `${courseCode}${courseSection ? ` (Section ${courseSection})` : ''}`]] : []),
       ...(docNumber ? [[docNumLabel, docNumber]] : []),
-      ...(topicTitle ? [['Topic:', topicTitle]] : []),
+      ...(topicTitle?.trim() ? [['Topic:', topicTitle.trim()]] : []),
       ...(effectiveSubmissionDate ? [['Date of Submission:', effectiveSubmissionDate]] : []),
       ...(trimester ? [['Trimester:', trimester]] : []),
     ];
@@ -535,20 +552,24 @@ export async function generateCoverPagePdf(data) {
     });
     let stY = footerY - 46;
     students.forEach((st) => {
-      page.drawText(st.name || 'Student Name', {
-        x: leftX,
-        y: stY,
-        size: 11,
-        font: fontBold,
-        color: COLOR_DARK,
-      });
-      page.drawText(`ID: ${st.id || '—'}`, {
-        x: leftX,
-        y: stY - 13,
-        size: 9.5,
-        font: fontRegular,
-        color: COLOR_MUTED,
-      });
+      if (st.name) {
+        page.drawText(st.name, {
+          x: leftX,
+          y: stY,
+          size: 11,
+          font: fontBold,
+          color: COLOR_DARK,
+        });
+      }
+      if (st.id) {
+        page.drawText(`ID: ${st.id}`, {
+          x: leftX,
+          y: stY - 13,
+          size: 9.5,
+          font: fontRegular,
+          color: COLOR_MUTED,
+        });
+      }
       stY -= 36;
     });
     page.drawText(students[0]?.program || 'B.Sc. in CSE', {

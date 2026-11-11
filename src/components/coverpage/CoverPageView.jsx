@@ -82,23 +82,32 @@ export default function CoverPageView() {
   const [isGroup, setIsGroup] = useState(false);
 
   // Form Fields
-  const [docNumber, setDocNumber] = useState('01');
-  const [topicTitle, setTopicTitle] = useState('Heuristic Evaluation of User Interfaces');
+  const [docNumber, setDocNumber] = useState('');
+  const [topicTitle, setTopicTitle] = useState('');
   const [submissionDate, setSubmissionDate] = useState(() => new Date().toISOString().slice(0, 10));
   const [performanceDate, setPerformanceDate] = useState(() => new Date().toISOString().slice(0, 10));
 
-  const [courseCode, setCourseCode] = useState(() => routine[0]?.code || 'CSE 4451');
-  const [courseTitle, setCourseTitle] = useState(() => routine[0]?.title || 'Human Computer Interaction');
-  const [courseSection, setCourseSection] = useState(() => routine[0]?.section || 'C');
+  const [courseCode, setCourseCode] = useState(() => routine[0]?.code || '');
+  const [courseTitle, setCourseTitle] = useState(() => routine[0]?.title || '');
+  const [courseSection, setCourseSection] = useState(() => routine[0]?.section || '');
   const [trimester, setTrimester] = useState('Fall 2026');
+  const [isEditingCourse, setIsEditingCourse] = useState(false);
 
   const [facultyName, setFacultyName] = useState('');
   const [facultyDesignation, setFacultyDesignation] = useState('Professor');
   const [facultyDept, setFacultyDept] = useState('Department of Computer Science and Engineering');
 
-  const [students, setStudents] = useState([
-    { name: 'Md. Junaed Khandakar', id: '0112330072', section: 'C', program: 'B.Sc. in Computer Science and Engineering' },
-  ]);
+  const [students, setStudents] = useState(() => {
+    const savedId = (localStorage.getItem('ez_student_id') || '').trim();
+    return [
+      {
+        name: 'Md. Junaed Khandakar',
+        id: savedId || '0112330072',
+        section: routine[0]?.section || '',
+        program: 'B.Sc. in Computer Science and Engineering',
+      },
+    ];
+  });
 
   // Assignment PDF Merge State
   const [assignmentFile, setAssignmentFile] = useState(null); // { name, size, bytes, pageCount }
@@ -114,12 +123,14 @@ export default function CoverPageView() {
         const d = JSON.parse(saved);
         if (d.docType && DOC_TYPES.some((t) => t.id === d.docType)) setDocType(d.docType);
         if (d.template) setTemplate(d.template);
-        if (d.docNumber) setDocNumber(d.docNumber);
-        if (d.topicTitle) setTopicTitle(d.topicTitle);
+        if (d.docNumber && d.docNumber !== '01') setDocNumber(d.docNumber);
+        if (d.topicTitle && d.topicTitle !== 'Heuristic Evaluation of User Interfaces') {
+          setTopicTitle(d.topicTitle);
+        }
         if (d.submissionDate) setSubmissionDate(d.submissionDate);
-        if (d.courseCode) setCourseCode(d.courseCode);
-        if (d.courseTitle) setCourseTitle(d.courseTitle);
-        if (d.courseSection) setCourseSection(d.courseSection);
+        if (d.courseCode && d.courseCode !== 'CSE 4451') setCourseCode(d.courseCode);
+        if (d.courseTitle && d.courseTitle !== 'Human Computer Interaction') setCourseTitle(d.courseTitle);
+        if (d.courseSection && d.courseSection !== 'C') setCourseSection(d.courseSection);
         if (d.trimester) setTrimester(d.trimester);
         if (d.facultyName && d.facultyName !== 'Dr. Mohammad Nurul Huda') setFacultyName(d.facultyName);
         if (d.facultyDesignation) setFacultyDesignation(d.facultyDesignation);
@@ -565,81 +576,112 @@ export default function CoverPageView() {
             </div>
           </Surface>
 
-          {/* Course Details */}
+          {/* Course Details (Inputted from User's Routine) */}
           <Surface className="space-y-3">
             <div className="flex flex-wrap items-center justify-between gap-2 border-b border-line pb-2.5">
               <div>
-                <h3 className="text-sm font-bold text-ink">Course Details</h3>
+                <h3 className="text-sm font-bold text-ink">Course</h3>
                 {routine.length > 0 && (
                   <p className="text-[10.5px] text-ink-3">
-                    From your saved routine ({routine.length} courses)
+                    Select a course from your routine ({routine.length} available)
                   </p>
                 )}
               </div>
-              <Select
-                value=""
-                onChange={(e) => handleSelectCatalogCourse(e.target.value)}
-                className="w-[200px]"
-              >
-                <option value="">
-                  {routine.length > 0 ? 'Select Routine Course…' : 'Auto-fill from UIU Catalog…'}
-                </option>
-                {routine.length > 0
-                  ? routine.map((c) => (
-                      <option key={`${c.code}-${c.section}`} value={c.code}>
-                        {c.code} · Sec {c.section} ({c.title || 'Course'})
-                      </option>
-                    ))
-                  : COURSE_CATALOG.map((c) => (
-                      <option key={c.course_code} value={c.course_code}>
-                        {c.course_code} · {c.course_name}
-                      </option>
-                    ))}
-              </Select>
+              {routine.length > 0 && (
+                <button
+                  type="button"
+                  onClick={() => setIsEditingCourse((prev) => !prev)}
+                  className="text-[11px] font-semibold text-accent hover:underline"
+                >
+                  {isEditingCourse ? 'Done' : 'Manual / Edit'}
+                </button>
+              )}
             </div>
 
-            <div className="grid grid-cols-2 gap-2.5">
-              <div>
-                <label className="block text-[10.5px] font-semibold text-ink-3 uppercase tracking-wider mb-1">
-                  Course Code
-                </label>
-                <input
-                  type="text"
-                  value={courseCode}
-                  onChange={(e) => setCourseCode(e.target.value)}
-                  placeholder="e.g. CSE 4451"
-                  className="h-[38px] w-full rounded-xl border border-line bg-surface2/60 px-3 text-xs font-mono font-bold text-ink outline-none focus:border-accent"
-                />
+            {/* If user has routine, show direct selectable course cards */}
+            {routine.length > 0 ? (
+              <div className="space-y-1.5">
+                {routine.map((c) => {
+                  const isSelected = courseCode === c.code && courseSection === c.section;
+                  return (
+                    <button
+                      key={`${c.code}-${c.section}`}
+                      type="button"
+                      onClick={() => {
+                        setCourseCode(c.code);
+                        setCourseTitle(c.title);
+                        setCourseSection(c.section);
+                      }}
+                      className={`w-full flex items-center justify-between p-2.5 rounded-xl border text-left transition-all ${
+                        isSelected
+                          ? 'border-accent bg-accentSoft/60 text-ink shadow-sm ring-1 ring-accent/30'
+                          : 'border-line bg-surface hover:bg-surface2/60 text-ink-2 hover:text-ink'
+                      }`}
+                    >
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-2">
+                          <span className="font-mono text-xs font-bold text-accent">{c.code}</span>
+                          <span className="rounded bg-surface2 px-1.5 py-0.5 text-[10px] font-semibold text-ink-3">
+                            Sec {c.section}
+                          </span>
+                        </div>
+                        <div className="text-xs font-medium text-ink truncate mt-0.5">{c.title}</div>
+                      </div>
+                      {isSelected && (
+                        <div className="rounded-full bg-accent text-white p-0.5 shrink-0 ml-2">
+                          <Check className="h-3 w-3 stroke-[3]" />
+                        </div>
+                      )}
+                    </button>
+                  );
+                })}
               </div>
+            ) : null}
 
-              <div>
-                <label className="block text-[10.5px] font-semibold text-ink-3 uppercase tracking-wider mb-1">
-                  Course Section
-                </label>
-                <input
-                  type="text"
-                  value={courseSection}
-                  onChange={(e) => setCourseSection(e.target.value)}
-                  placeholder="e.g. C, 01"
-                  className="h-[38px] w-full rounded-xl border border-line bg-surface2/60 px-3 text-xs font-bold text-ink outline-none focus:border-accent"
-                />
+            {/* Manual Fields: visible if toggled or if no routine is saved */}
+            {(isEditingCourse || routine.length === 0) && (
+              <div className={`space-y-2.5 ${routine.length > 0 ? 'pt-2 border-t border-line' : ''}`}>
+                <div className="grid grid-cols-2 gap-2.5">
+                  <div>
+                    <label className="block text-[10.5px] font-semibold text-ink-3 uppercase tracking-wider mb-1">
+                      Course Code
+                    </label>
+                    <input
+                      type="text"
+                      value={courseCode}
+                      onChange={(e) => setCourseCode(e.target.value)}
+                      className="h-[38px] w-full rounded-xl border border-line bg-surface2/60 px-3 text-xs font-mono font-bold text-ink outline-none focus:border-accent"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-[10.5px] font-semibold text-ink-3 uppercase tracking-wider mb-1">
+                      Course Section
+                    </label>
+                    <input
+                      type="text"
+                      value={courseSection}
+                      onChange={(e) => setCourseSection(e.target.value)}
+                      className="h-[38px] w-full rounded-xl border border-line bg-surface2/60 px-3 text-xs font-bold text-ink outline-none focus:border-accent"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-[10.5px] font-semibold text-ink-3 uppercase tracking-wider mb-1">
+                    Course Title
+                  </label>
+                  <input
+                    type="text"
+                    value={courseTitle}
+                    onChange={(e) => setCourseTitle(e.target.value)}
+                    className="h-[38px] w-full rounded-xl border border-line bg-surface2/60 px-3 text-xs font-medium text-ink outline-none focus:border-accent"
+                  />
+                </div>
               </div>
-            </div>
+            )}
 
-            <div>
-              <label className="block text-[10.5px] font-semibold text-ink-3 uppercase tracking-wider mb-1">
-                Course Title
-              </label>
-              <input
-                type="text"
-                value={courseTitle}
-                onChange={(e) => setCourseTitle(e.target.value)}
-                placeholder="e.g. Human Computer Interaction"
-                className="h-[38px] w-full rounded-xl border border-line bg-surface2/60 px-3 text-xs font-medium text-ink outline-none focus:border-accent"
-              />
-            </div>
-
-            <div className="grid grid-cols-2 gap-2.5">
+            <div className="grid grid-cols-2 gap-2.5 pt-1">
               <div>
                 <label className="block text-[10.5px] font-semibold text-ink-3 uppercase tracking-wider mb-1">
                   {docType === 'lab' ? 'Experiment No.' : 'Assignment / Report No.'}
@@ -648,7 +690,6 @@ export default function CoverPageView() {
                   type="text"
                   value={docNumber}
                   onChange={(e) => setDocNumber(e.target.value)}
-                  placeholder="e.g. 01, Final"
                   className="h-[38px] w-full rounded-xl border border-line bg-surface2/60 px-3 text-xs font-mono font-bold text-ink outline-none focus:border-accent"
                 />
               </div>
@@ -661,7 +702,6 @@ export default function CoverPageView() {
                   type="text"
                   value={trimester}
                   onChange={(e) => setTrimester(e.target.value)}
-                  placeholder="e.g. Fall 2026"
                   className="h-[38px] w-full rounded-xl border border-line bg-surface2/60 px-3 text-xs font-medium text-ink outline-none focus:border-accent"
                 />
               </div>
@@ -675,7 +715,6 @@ export default function CoverPageView() {
                 type="text"
                 value={topicTitle}
                 onChange={(e) => setTopicTitle(e.target.value)}
-                placeholder="e.g. Implementation and Comparative Analysis"
                 className="h-[38px] w-full rounded-xl border border-line bg-surface2/60 px-3 text-xs font-medium text-ink outline-none focus:border-accent"
               />
             </div>
@@ -708,7 +747,6 @@ export default function CoverPageView() {
                   type="text"
                   value={facultyName}
                   onChange={(e) => setFacultyName(e.target.value)}
-                  placeholder="e.g. Dr. Mohammad Nurul Huda"
                   className="h-[38px] w-full rounded-xl border border-line bg-surface2/60 px-3 text-xs font-semibold text-ink outline-none focus:border-accent"
                 />
               </div>
@@ -783,20 +821,28 @@ export default function CoverPageView() {
                   </div>
 
                   <div className="grid grid-cols-2 gap-2">
-                    <input
-                      type="text"
-                      value={st.name}
-                      onChange={(e) => handleStudentChange(idx, 'name', e.target.value)}
-                      placeholder="Student Full Name"
-                      className="h-8 rounded-lg border border-line bg-surface px-2.5 text-xs text-ink outline-none focus:border-accent"
-                    />
-                    <input
-                      type="text"
-                      value={st.id}
-                      onChange={(e) => handleStudentChange(idx, 'id', e.target.value)}
-                      placeholder="Student ID (011...)"
-                      className="h-8 rounded-lg border border-line bg-surface px-2.5 font-mono text-xs text-ink outline-none focus:border-accent"
-                    />
+                    <div>
+                      <label className="block text-[9.5px] font-semibold text-ink-3 uppercase mb-0.5">
+                        Name
+                      </label>
+                      <input
+                        type="text"
+                        value={st.name}
+                        onChange={(e) => handleStudentChange(idx, 'name', e.target.value)}
+                        className="h-8 w-full rounded-lg border border-line bg-surface px-2.5 text-xs text-ink outline-none focus:border-accent"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[9.5px] font-semibold text-ink-3 uppercase mb-0.5">
+                        Student ID
+                      </label>
+                      <input
+                        type="text"
+                        value={st.id}
+                        onChange={(e) => handleStudentChange(idx, 'id', e.target.value)}
+                        className="h-8 w-full rounded-lg border border-line bg-surface px-2.5 font-mono text-xs text-ink outline-none focus:border-accent"
+                      />
+                    </div>
                   </div>
                 </div>
               ))}
@@ -847,7 +893,7 @@ export default function CoverPageView() {
                   </div>
 
                   <div className="text-lg sm:text-xl font-bold text-zinc-900 leading-tight">
-                    {courseTitle || 'Course Title'}
+                    {courseTitle || courseCode || ''}
                   </div>
 
                   <div className="inline-block text-left text-xs sm:text-sm font-semibold space-y-1.5 text-zinc-800 pt-2">
@@ -891,11 +937,13 @@ export default function CoverPageView() {
                     {students.map((st, i) => (
                       <div key={i} className="mb-2.5 last:mb-0">
                         <div className="font-bold text-zinc-950 text-sm sm:text-[14.5px]">
-                          {st.name || 'Student Name'}
+                          {st.name || ''}
                         </div>
-                        <div className="font-mono text-zinc-700 text-xs">
-                          Student ID: {st.id || '011...'}
-                        </div>
+                        {st.id && (
+                          <div className="font-mono text-zinc-700 text-xs">
+                            Student ID: {st.id}
+                          </div>
+                        )}
                         <div className="text-zinc-600 text-[11px] leading-tight">
                           {st.program || 'B.Sc. in CSE'}
                         </div>
@@ -913,7 +961,7 @@ export default function CoverPageView() {
                       Submitted To:
                     </div>
                     <div className="font-bold text-zinc-950 text-sm sm:text-[14.5px]">
-                      {facultyName || 'Faculty Name'}
+                      {facultyName || 'Course Instructor'}
                     </div>
                     <div className="text-zinc-700 text-xs">{facultyDesignation}</div>
                     <div className="text-zinc-600 text-[11px] leading-tight mt-0.5">{facultyDept}</div>
@@ -959,9 +1007,9 @@ export default function CoverPageView() {
                       <div className="font-semibold text-zinc-700">
                         {courseCode} · Section {courseSection} · {trimester}
                       </div>
-                      {topicTitle && (
-                        <div className="text-zinc-600 italic text-xs pt-1">"{topicTitle}"</div>
-                      )}
+                      {topicTitle?.trim() ? (
+                        <div className="text-zinc-600 italic text-xs pt-1">"{topicTitle.trim()}"</div>
+                      ) : null}
                       <div className="text-zinc-500 text-[11px] pt-1">
                         Date: {formattedSubmissionDate}
                       </div>
@@ -977,7 +1025,7 @@ export default function CoverPageView() {
                       {students.map((st, i) => (
                         <div key={i} className="mb-1.5 last:mb-0">
                           <div className="font-bold text-zinc-900 text-xs">{st.name}</div>
-                          <div className="text-[10.5px] font-mono text-zinc-600">ID: {st.id}</div>
+                          {st.id && <div className="text-[10.5px] font-mono text-zinc-600">ID: {st.id}</div>}
                         </div>
                       ))}
                       <div className="text-[10px] text-zinc-500 mt-1">{students[0]?.program}</div>
@@ -1017,7 +1065,7 @@ export default function CoverPageView() {
                   >
                     {activeDocConfig.defaultTitle.toUpperCase()}
                   </div>
-                  <div className="text-lg font-bold text-zinc-900">{courseTitle}</div>
+                  <div className="text-lg font-bold text-zinc-900">{courseTitle || courseCode || ''}</div>
                   <div className="rounded-lg bg-orange-50/70 p-3 inline-block text-left text-xs space-y-1 border border-orange-200/80">
                     <div><b>Course Code:</b> {courseCode} (Section {courseSection})</div>
                     {docNumber && <div><b>No:</b> {docNumber}</div>}
@@ -1034,7 +1082,7 @@ export default function CoverPageView() {
                     {students.map((st, i) => (
                       <div key={i} className="mb-1.5">
                         <div className="font-bold text-zinc-900">{st.name}</div>
-                        <div className="font-mono text-zinc-600">ID: {st.id}</div>
+                        {st.id && <div className="font-mono text-zinc-600">ID: {st.id}</div>}
                       </div>
                     ))}
                     <div className="text-[10.5px] text-zinc-500">{students[0]?.program}</div>
@@ -1072,7 +1120,7 @@ export default function CoverPageView() {
                     {activeDocConfig.defaultTitle.toUpperCase()}
                   </div>
                   <div className="text-base font-bold" style={{ color: THEME_ORANGE }}>
-                    {courseTitle}
+                    {courseTitle || courseCode || ''}
                   </div>
                   <div className="text-xs text-zinc-600">
                     {courseCode} · Section {courseSection} · {trimester}
@@ -1092,7 +1140,7 @@ export default function CoverPageView() {
                     {students.map((st, i) => (
                       <div key={i} className="mb-2">
                         <div className="font-bold text-zinc-900 text-xs">{st.name}</div>
-                        <div className="font-mono text-zinc-600 text-[11px]">ID: {st.id}</div>
+                        {st.id && <div className="font-mono text-zinc-600 text-[11px]">ID: {st.id}</div>}
                       </div>
                     ))}
                     <div className="text-[10px] text-zinc-500">{students[0]?.program}</div>
