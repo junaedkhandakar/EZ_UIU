@@ -35,12 +35,14 @@ import {
   Copy,
   Flame,
   Trash2,
+  Upload,
 } from 'lucide-react';
 import Tabs from '../ui/Tabs';
 import Button from '../ui/Button';
 import Surface from '../ui/Surface';
 import Select from '../ui/Select';
 import Modal from '../ui/Modal';
+import { getSavedRoutine } from '../../utils/routineStore';
 import {
   AI_PROVIDERS,
   generateRecommendedBasket,
@@ -71,8 +73,11 @@ export default function AdvisorView({
   const [auditSelectedCodes, setAuditSelectedCodes] = useState([]);
   const [auditCourseToAdd, setAuditCourseToAdd] = useState('');
 
-  // Prerequisite Visualizer State
-  const [selectedTreeCourse, setSelectedTreeCourse] = useState('CSE 4889');
+  // Prerequisite Visualizer State (defaults to student's registered course or foundational core)
+  const [selectedTreeCourse, setSelectedTreeCourse] = useState(() => {
+    const routine = getSavedRoutine();
+    return routine[0]?.code || 'CSE 1111';
+  });
 
   // AI Provider & Settings State (OpenRouter with Prompt Caching is Primary)
   const [selectedProvider, setSelectedProvider] = useState(() => {
@@ -239,7 +244,7 @@ export default function AdvisorView({
   }, [courses]);
 
   const completedCredits = metrics.earnedCredits || 0;
-  const currentCgpa = metrics.cgpa || 3.0;
+  const currentCgpa = metrics.cgpa || 0;
   const passedCodes = useMemo(() => getPassedCoursesSet(courses), [courses]);
 
   // Mode 1: Next-Term Recommended Basket
@@ -563,6 +568,20 @@ export default function AdvisorView({
         </Surface>
       )}
 
+      {courses.length === 0 && (
+        <Surface className="p-4 sm:p-5 border-accent/40 bg-accentSoft/30 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-sm">
+          <div>
+            <h3 className="text-sm font-bold text-ink flex items-center gap-2">
+              <Upload className="h-4 w-4 text-accent" />
+              No transcript connected
+            </h3>
+            <p className="text-xs text-ink-3 mt-0.5">
+              Advising recommendations currently show freshman entry (0 completed credits). Import your UCAM report in the CGPA tab to personalize your course basket, prerequisite status, and graduation timeline.
+            </p>
+          </div>
+        </Surface>
+      )}
+
       <Tabs tabs={subTabs} value={activeTab} onChange={setActiveTab} layoutId="advisor-subtabs" />
 
       {/* ================= MODE 1: NEXT-TERM BASKET ================= */}
@@ -798,28 +817,43 @@ export default function AdvisorView({
                 )}
               </div>
 
-              {/* Quick Presets */}
+              {/* Quick Actions */}
               <div className="mt-5 border-t border-line pt-4">
                 <span className="text-[11px] font-bold uppercase tracking-wider text-ink-3">
-                  Quick Presets to Test:
+                  Quick Actions:
                 </span>
                 <div className="mt-2 flex flex-wrap gap-1.5">
-                  <button
-                    onClick={() =>
-                      setAuditSelectedCodes(['CSE 2215', 'CSE 2217', 'CSE 2233', 'MATH 2205'])
-                    }
-                    className="rounded-lg border border-line bg-surface2/60 px-2 py-1 text-[11px] font-medium text-ink-2 hover:text-ink"
-                  >
-                    Heavy Theory Basket
-                  </button>
-                  <button
-                    onClick={() =>
-                      setAuditSelectedCodes(['CSE 1115', 'CSE 1116', 'MATH 2183', 'ENG 1013'])
-                    }
-                    className="rounded-lg border border-line bg-surface2/60 px-2 py-1 text-[11px] font-medium text-ink-2 hover:text-ink"
-                  >
-                    Freshman Term 2
-                  </button>
+                  {basketAnalysis.basket.length > 0 && (
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setAuditSelectedCodes(basketAnalysis.basket.map((c) => c.course_code))
+                      }
+                      className="rounded-lg border border-accent/40 bg-accentSoft/60 px-2.5 py-1 text-[11px] font-bold text-accent hover:border-accent"
+                    >
+                      Audit Recommended Basket ({basketAnalysis.basket.length} courses)
+                    </button>
+                  )}
+                  {getSavedRoutine().length > 0 && (
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setAuditSelectedCodes(getSavedRoutine().map((c) => c.code))
+                      }
+                      className="rounded-lg border border-line bg-surface2/60 px-2.5 py-1 text-[11px] font-medium text-ink-2 hover:text-ink"
+                    >
+                      Audit Saved Routine ({getSavedRoutine().length} courses)
+                    </button>
+                  )}
+                  {auditSelectedCodes.length > 0 && (
+                    <button
+                      type="button"
+                      onClick={() => setAuditSelectedCodes([])}
+                      className="rounded-lg border border-line bg-surface2/60 px-2.5 py-1 text-[11px] font-medium text-ink-3 hover:text-bad"
+                    >
+                      Clear Selection
+                    </button>
+                  )}
                 </div>
               </div>
             </Surface>

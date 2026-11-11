@@ -646,7 +646,7 @@ Instructions: Provide concise, friendly, and structured advice formatted in GitH
  */
 export function generateAIAnswer(query, context = {}) {
   const q = (query || '').toLowerCase();
-  const cgpa = context.cgpa || 3.0;
+  const cgpa = typeof context.cgpa === 'number' ? context.cgpa : 0;
   const completedCr = context.completedCredits || 0;
 
   if (q.includes('fydp') || q.includes('thesis') || q.includes('project')) {
@@ -725,7 +725,11 @@ export function generateAIAnswer(query, context = {}) {
     return `**"One does not simply walk into the UIU Vice Chancellor's office without 80 credits for FYDP!"**\n\nFly, you fools! Clear your Algorithms and Discrete Math prerequisites before stepping into the fires of Mount Doom!`;
   }
 
-  return `**Academic Advising Recommendation:** Based on your current CGPA of **${cgpa.toFixed(2)}** and **${completedCr} credits completed**, prioritize clearing all bottleneck prerequisites (Discrete Math, Data Structures, Algorithms) while keeping a balanced mix of 1 Hard Core + 2 Medium Core + 1 Lab to sustain a strong CGPA.\n\n*You can ask me about: FYDP eligibility, retake rules, merit scholarships, exam clash slots, tuition fees, or major tracks!*`;
+  const statusSummary = completedCr > 0
+    ? `Based on your current CGPA of **${cgpa.toFixed(2)}** and **${completedCr} credits completed**`
+    : `Based on your academic record (${completedCr} completed credits)`;
+
+  return `**Academic Advising Recommendation:** ${statusSummary}, prioritize clearing all bottleneck prerequisites (Discrete Math, Data Structures, Algorithms) while keeping a balanced mix of 1 Hard Core + 2 Medium Core + 1 Lab to sustain a strong CGPA.\n\n*You can ask me about: FYDP eligibility, retake rules, merit scholarships, exam clash slots, tuition fees, or major tracks!*`;
 }
 
 /**
