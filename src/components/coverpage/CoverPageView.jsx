@@ -21,6 +21,8 @@ import {
   FolderKanban,
   FlaskConical,
   X,
+  FileUp,
+  FileDown,
 } from 'lucide-react';
 import Button from '../ui/Button';
 import Surface from '../ui/Surface';
@@ -29,6 +31,12 @@ import { useToast } from '../../context/ToastContext';
 import { COURSE_CATALOG } from '../../data/courseCatalog';
 import { UIU_LOGO_BASE64 } from '../../data/uiuLogoBase64';
 import { getSavedRoutine } from '../../utils/routineStore';
+import {
+  generateCoverPagePdf,
+  mergeCoverPageWithPdf,
+  downloadPdfBlob,
+  getAssignmentPageCount,
+} from '../../utils/coverPagePdf';
 
 const STORAGE_COVERPAGE_KEY = 'ez_uiu_coverpage_v3';
 const THEME_ORANGE = '#f97316';
@@ -91,6 +99,12 @@ export default function CoverPageView() {
   const [students, setStudents] = useState([
     { name: 'Md. Junaed Khandakar', id: '0112330072', section: 'C', program: 'B.Sc. in Computer Science and Engineering' },
   ]);
+
+  // Assignment PDF Merge State
+  const [assignmentFile, setAssignmentFile] = useState(null); // { name, size, bytes, pageCount }
+  const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
+  const [isMerging, setIsMerging] = useState(false);
+  const fileInputRef = useRef(null);
 
   // Load saved progress from localStorage
   useEffect(() => {
@@ -242,6 +256,101 @@ export default function CoverPageView() {
     }
   };
 
+  const handleFileSelect = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (!file.name.toLowerCase().endsWith('.pdf') && file.type !== 'application/pdf') {
+      showToast('Please select a valid PDF file', 'error');
+      return;
+    }
+    try {
+      const arrayBuffer = await file.arrayBuffer();
+      const pageCount = await getAssignmentPageCount(arrayBuffer);
+      setAssignmentFile({
+        name: file.name,
+        size: (file.size / (1024 * 1024)).toFixed(2) + ' MB',
+        bytes: arrayBuffer,
+        pageCount,
+      });
+      showToast(`Loaded "${file.name}" (${pageCount} pages)`, 'success');
+    } catch (err) {
+      console.error(err);
+      showToast('Could not read PDF. Ensure it is not encrypted.', 'error');
+    }
+  };
+
+  const handleDownloadCoverPdf = async () => {
+    setIsGeneratingPdf(true);
+    try {
+      showToast('Generating vector A4 Cover Page PDF...', 'info');
+      const doc = await generateCoverPagePdf({
+        template,
+        docType,
+        docNumber,
+        topicTitle,
+        submissionDate,
+        courseCode,
+        courseTitle,
+        courseSection,
+        trimester,
+        facultyName,
+        facultyDesignation,
+        facultyDept,
+        students,
+      });
+      const bytes = await doc.save();
+      const filename = `UIU_${activeDocConfig.label.replace(/\s+/g, '_')}_${courseCode.replace(/\s+/g, '_')}_Cover.pdf`;
+      downloadPdfBlob(bytes, filename);
+      showToast('Cover Page PDF downloaded!', 'success');
+    } catch (err) {
+      console.error(err);
+      showToast('Error generating PDF: ' + (err.message || 'unknown'), 'error');
+    } finally {
+      setIsGeneratingPdf(false);
+    }
+  };
+
+  const handleMergeDownload = async () => {
+    if (!assignmentFile?.bytes) {
+      fileInputRef.current?.click();
+      return;
+    }
+    setIsMerging(true);
+    try {
+      showToast('Merging Cover Page as Page 1 with your assignment...', 'info');
+      const coverDoc = await generateCoverPagePdf({
+        template,
+        docType,
+        docNumber,
+        topicTitle,
+        submissionDate,
+        courseCode,
+        courseTitle,
+        courseSection,
+        trimester,
+        facultyName,
+        facultyDesignation,
+        facultyDept,
+        students,
+      });
+      const { mergedPdfBytes, pageCount } = await mergeCoverPageWithPdf(
+        coverDoc,
+        assignmentFile.bytes
+      );
+      const filename = `UIU_${activeDocConfig.label.replace(/\s+/g, '_')}_${courseCode.replace(/\s+/g, '_')}_Merged.pdf`;
+      downloadPdfBlob(mergedPdfBytes, filename);
+      showToast(
+        `Merged & downloaded ${pageCount} pages (Cover + ${assignmentFile.pageCount} assignment pages)!`,
+        'success'
+      );
+    } catch (err) {
+      console.error(err);
+      showToast('Error merging PDFs: ' + (err.message || 'Check PDF file'), 'error');
+    } finally {
+      setIsMerging(false);
+    }
+  };
+
   const formattedSubmissionDate = useMemo(() => {
     try {
       const d = new Date(submissionDate + 'T00:00:00');
@@ -266,11 +375,30 @@ export default function CoverPageView() {
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
-          <Button variant="secondary" icon={Download} onClick={handleDownloadDoc}>
-            Download Word (.doc)
+          <Button
+            variant="primary"
+            icon={FileDown}
+            onClick={handleDownloadCoverPdf}
+            disabled={isGeneratingPdf}
+          >
+            {isGeneratingPdf ? 'Generating...' : 'Download Cover PDF'}
           </Button>
-          <Button variant="primary" icon={Printer} onClick={handlePrint}>
-            Print / Save as PDF
+          {assignmentFile && (
+            <Button
+              variant="primary"
+              icon={Layers}
+              onClick={handleMergeDownload}
+              disabled={isMerging}
+              className="bg-ok hover:bg-ok/90 border-ok text-white font-bold"
+            >
+              {isMerging ? 'Merging...' : `Merge & Download (${assignmentFile.pageCount + 1}p)`}
+            </Button>
+          )}
+          <Button variant="secondary" icon={Download} onClick={handleDownloadDoc}>
+            Word (.doc)
+          </Button>
+          <Button variant="secondary" icon={Printer} onClick={handlePrint}>
+            Print
           </Button>
         </div>
       </div>
@@ -278,6 +406,88 @@ export default function CoverPageView() {
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
         {/* ================= LEFT CONTROLS ================= */}
         <div className="flex flex-col gap-4 lg:col-span-5 no-print">
+          {/* Assignment PDF Merger Card */}
+          <Surface className="space-y-3 border-accent/35 bg-accentSoft/20">
+            <div className="flex items-center justify-between border-b border-line/60 pb-2.5">
+              <div className="flex items-center gap-2">
+                <FileUp className="h-4 w-4 text-accent" />
+                <h3 className="text-sm font-bold text-ink">Merge with Assignment PDF</h3>
+              </div>
+              <span className="rounded bg-accentSoft px-1.5 py-0.5 text-[9.5px] font-bold text-accent border border-accent/25 uppercase tracking-wider">
+                Cover = Page 1
+              </span>
+            </div>
+
+            {!assignmentFile ? (
+              <div
+                onClick={() => fileInputRef.current?.click()}
+                onDragOver={(e) => e.preventDefault()}
+                onDrop={(e) => {
+                  e.preventDefault();
+                  const file = e.dataTransfer.files?.[0];
+                  if (file) handleFileSelect({ target: { files: [file] } });
+                }}
+                className="group flex flex-col items-center justify-center rounded-xl border border-dashed border-accent/40 bg-surface2/40 p-4 text-center cursor-pointer transition-all hover:border-accent hover:bg-surface2/70"
+              >
+                <div className="rounded-xl bg-accentSoft p-2 text-accent group-hover:scale-105 transition-transform">
+                  <FileUp className="h-5 w-5" />
+                </div>
+                <p className="mt-2 text-xs font-bold text-ink">
+                  Drop your assignment PDF here, or <span className="text-accent underline">browse</span>
+                </p>
+                <p className="mt-0.5 text-[10.5px] text-ink-3">
+                  Upload your report — this cover page will be attached as Page 1
+                </p>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="application/pdf,.pdf"
+                  className="hidden"
+                  onChange={handleFileSelect}
+                />
+              </div>
+            ) : (
+              <div className="space-y-2.5">
+                <div className="flex items-center justify-between rounded-xl border border-line bg-surface p-2.5 shadow-sm">
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <div className="rounded-lg bg-accentSoft p-2 text-accent">
+                      <FileText className="h-4 w-4" />
+                    </div>
+                    <div className="min-w-0">
+                      <p className="truncate text-xs font-bold text-ink">{assignmentFile.name}</p>
+                      <p className="text-[10px] text-ink-3">
+                        {assignmentFile.pageCount} pages · {assignmentFile.size}
+                      </p>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setAssignmentFile(null)}
+                    className="rounded-lg p-1 text-ink-3 hover:bg-bad/10 hover:text-bad transition-colors"
+                    title="Remove PDF"
+                  >
+                    <X className="h-3.5 w-3.5" />
+                  </button>
+                </div>
+
+                <Button
+                  variant="primary"
+                  icon={Layers}
+                  onClick={handleMergeDownload}
+                  disabled={isMerging}
+                  className="w-full justify-center shadow-md font-bold"
+                >
+                  {isMerging
+                    ? 'Merging Cover & Assignment...'
+                    : `Merge & Download PDF (${assignmentFile.pageCount + 1} Pages)`}
+                </Button>
+                <p className="text-center text-[10px] text-ink-3">
+                  Cover Page will be prepended as Page 1 of your {assignmentFile.pageCount}-page document
+                </p>
+              </div>
+            )}
+          </Surface>
+
           {/* Document Type Selector */}
           <Surface className="space-y-3">
             <div className="flex items-center justify-between border-b border-line pb-2.5">
