@@ -13,9 +13,9 @@ export const AI_PROVIDERS = {
     id: 'openrouter',
     name: 'OpenRouter AI',
     badge: 'Prompt Caching · Primary',
-    description: 'High-speed reasoning models with server-side prefix prompt caching and zero setup barrier.',
+    description: 'High-speed reasoning models with server-side prompt caching. Supports Vercel project environment keys or client keys.',
     requiresKey: true,
-    keyPlaceholder: 'sk-or-v1-...',
+    keyPlaceholder: 'sk-or-v1-... (or set OPENROUTER_API_KEY in Vercel)',
     keyHelpUrl: 'https://openrouter.ai/keys',
     keyHelpLabel: 'Get Free OpenRouter Key ↗',
     models: [
@@ -41,9 +41,9 @@ export const AI_PROVIDERS = {
     id: 'gemini',
     name: 'Google Gemini',
     badge: 'Free Tier · 15 RPM',
-    description: 'Google’s state-of-the-art multimodal model. 100% free API key from Google AI Studio.',
+    description: 'Google multimodal models. Supports Vercel environment keys or free client keys from Google AI Studio.',
     requiresKey: true,
-    keyPlaceholder: 'AIzaSy...',
+    keyPlaceholder: 'AIzaSy... (or set GEMINI_API_KEY in Vercel)',
     keyHelpUrl: 'https://aistudio.google.com/app/apikey',
     keyHelpLabel: 'Get Free Gemini Key ↗',
     models: [
@@ -57,9 +57,9 @@ export const AI_PROVIDERS = {
     id: 'groq',
     name: 'Groq Cloud',
     badge: 'Ultra Fast · 500 T/s',
-    description: 'Blazing-fast Llama 3.3 70B inference with generous free tier from Groq Console.',
+    description: 'Blazing-fast Llama 3.3 70B inference. Supports Vercel environment keys or free client keys from Groq Console.',
     requiresKey: true,
-    keyPlaceholder: 'gsk_...',
+    keyPlaceholder: 'gsk_... (or set GROQ_API_KEY in Vercel)',
     keyHelpUrl: 'https://console.groq.com/keys',
     keyHelpLabel: 'Get Free Groq Key ↗',
     models: [
@@ -793,10 +793,70 @@ export async function queryUniversalAIAdvisor({
 
   const systemInstructions = buildUIUSystemPrompt(studentContext);
 
+  // Serverless Proxy (Vercel): Try /api/chat endpoint first
+  if (provider === 'openrouter' || provider === 'gemini' || provider === 'groq') {
+    try {
+      const serverlessRes = await fetch('/api/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          provider,
+          apiKey: (apiKey || '').trim(),
+          model: chosenModel,
+          prompt: cleanPrompt,
+          augmentedPrompt,
+          systemInstructions,
+          conversationHistory,
+          studentContext,
+        }),
+      });
+
+      if (serverlessRes.ok) {
+        const json = await serverlessRes.json();
+        if (json?.text) {
+          const resultPayload = {
+            text: json.text,
+            retrievedSources,
+            usage: json.usage || {},
+            latencyMs: json.latencyMs || (Date.now() - startTime),
+            isClientCached: false,
+            isServerless: true,
+            provider: json.source || `${provider} (Vercel Serverless)`,
+          };
+
+          promptCache.set(
+            {
+              prompt: cleanPrompt,
+              model: chosenModel,
+              provider,
+              cgpa: studentContext.cgpa,
+              completedCredits: studentContext.completedCredits,
+              major: studentContext.selectedMajor,
+            },
+            resultPayload
+          );
+
+          return resultPayload;
+        }
+      } else if (serverlessRes.status !== 404 && serverlessRes.status !== 405) {
+        const errJson = await serverlessRes.json().catch(() => ({}));
+        if (errJson?.error && !errJson.error.includes('No') && !errJson.error.includes('key found')) {
+          throw new Error(errJson.error);
+        }
+      }
+    } catch (e) {
+      if (e.message && !e.message.includes('404') && !e.message.includes('Failed to fetch')) {
+        throw e;
+      }
+    }
+  }
+
   // Provider 2: OpenRouter API (Primary Provider with Prompt Caching Optimization)
   if (provider === 'openrouter') {
     if (!apiKey || !apiKey.trim()) {
-      throw new Error('Please enter your OpenRouter API Key. You can paste it in the bar above or get one at openrouter.ai/keys.');
+      throw new Error(
+        'Please enter your OpenRouter API Key, or set OPENROUTER_API_KEY in your Vercel project environment variables.'
+      );
     }
 
     // Structure messages to maximize OpenRouter prefix prompt caching
@@ -826,7 +886,7 @@ export async function queryUniversalAIAdvisor({
       headers: {
         'Content-Type': 'application/json',
         Authorization: `Bearer ${apiKey.trim()}`,
-        'HTTP-Referer': 'https://junaedkhandakar.github.io/EZ_UIU/',
+        'HTTP-Referer': typeof window !== 'undefined' ? window.location.origin : 'https://ez-uiu.vercel.app',
         'X-Title': 'EZ_UIU Academic Suite',
       },
       body: JSON.stringify({
@@ -881,6 +941,7 @@ export async function queryUniversalAIAdvisor({
 
   // Provider 3: Instant Cloud AI (Zero Key Needed - Public Free API)
   if (provider === 'instant') {
+    const fallback = generateAIAnswer(cleanPrompt, studentContext);
     try {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 12000);
@@ -905,7 +966,6 @@ export async function queryUniversalAIAdvisor({
 
       const text = await response.text();
       if (!text || text.includes('Free limit reached') || text.includes('<html')) {
-        const fallback = generateAIAnswer(cleanPrompt, studentContext);
         return {
           text: `${fallback}\n\n*(Note: Cloud AI busy; verified via offline UIU regulations engine)*`,
           retrievedSources,
@@ -1132,4 +1192,17 @@ export async function queryGeminiAdvisor({ apiKey, prompt, studentContext }) {
     studentContext,
   });
   return res.text;
+}
+
+/**
+ * Detects if EZ_UIU is deployed on Vercel with serverless AI environment variables configured
+ */
+export async function checkVercelServerlessStatus() {
+  try {
+    const res = await fetch('/api/chat', { method: 'GET' });
+    if (res.ok) {
+      return await res.json();
+    }
+  } catch {}
+  return null;
 }

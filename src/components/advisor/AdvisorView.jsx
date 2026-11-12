@@ -54,6 +54,7 @@ import {
   generateFollowUpSuggestions,
   queryUniversalAIAdvisor,
   getPassedCoursesSet,
+  checkVercelServerlessStatus,
 } from '../../utils/advisorEngine';
 import { UIU_KNOWLEDGE_DOCUMENTS } from '../../data/uiuKnowledgeBase';
 import { ALL_COURSES, MAJOR_TRACKS } from '../../data/advisorData';
@@ -121,6 +122,13 @@ export default function AdvisorView({
   const [kbQuery, setKbQuery] = useState('');
   const [kbCategory, setKbCategory] = useState('ALL');
   const [expandedKbDoc, setExpandedKbDoc] = useState(null);
+  const [vercelStatus, setVercelStatus] = useState(null);
+
+  useEffect(() => {
+    checkVercelServerlessStatus().then((res) => {
+      if (res?.status === 'ok') setVercelStatus(res);
+    });
+  }, []);
 
   const [chatInput, setChatInput] = useState('');
   const [isThinking, setIsThinking] = useState(false);
@@ -516,7 +524,12 @@ export default function AdvisorView({
                   )}
                 </div>
 
-                {activeProviderConfig.requiresKey && (
+                {vercelStatus?.configuredKeys?.[selectedProvider] ? (
+                  <p className="text-xs text-ok mt-2 flex items-center gap-1.5 font-medium">
+                    <CheckCircle2 className="h-3.5 w-3.5 text-ok shrink-0" />
+                    Vercel Serverless AI active: Connected via project environment variable (No client key needed).
+                  </p>
+                ) : activeProviderConfig.requiresKey ? (
                   <div className="mt-2 flex items-center gap-2">
                     <input
                       type="password"
@@ -535,9 +548,7 @@ export default function AdvisorView({
                       </button>
                     )}
                   </div>
-                )}
-
-                {!activeProviderConfig.requiresKey && (
+                ) : (
                   <p className="text-xs text-ok mt-1 flex items-center gap-1.5">
                     <CheckCircle2 className="h-3.5 w-3.5 text-ok" />
                     Zero setup required! Ready to answer all your academic questions right now.
