@@ -106,7 +106,7 @@ export default function AdvisorView({
       if (saved) return JSON.parse(saved);
     } catch {}
     return {
-      openrouter: 'deepseek/deepseek-r1:free',
+      openrouter: 'auto-free',
     };
   });
 
@@ -346,11 +346,17 @@ export default function AdvisorView({
 
       const followUps = generateFollowUpSuggestions(query, replyText);
 
+      const actualModel = typeof response === 'object' && response.model ? response.model : model;
+      const modelLabel =
+        actualModel === 'auto-free'
+          ? 'Auto (Every Free AI)'
+          : actualModel.split('/').pop().replace(':free', '');
+
       setChatMessages((prev) => [
         ...prev,
         {
           role: 'ai',
-          provider: `${activeProviderConfig.name} (${model})`,
+          provider: `${activeProviderConfig.name} (${modelLabel})`,
           text: replyText,
           retrievedSources: sources || [],
           usage,
@@ -428,7 +434,9 @@ export default function AdvisorView({
             <Globe className="h-3.5 w-3.5 text-accent" />
             <span className="font-bold">{activeProviderConfig.name}</span>
             <span className="rounded bg-surface2 px-1.5 py-0.5 text-[9.5px] font-medium text-ink-3">
-              {providerModels['openrouter']?.split('/')?.pop()?.replace(':free', '') || 'DeepSeek R1'}
+              {providerModels['openrouter'] === 'auto-free'
+                ? 'Auto (Every Free AI)'
+                : providerModels['openrouter']?.split('/')?.pop()?.replace(':free', '') || 'Auto AI'}
             </span>
             <Settings2 className="h-3 w-3 opacity-60" />
           </button>

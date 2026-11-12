@@ -1,9 +1,17 @@
 /**
  * Vercel Serverless Function: OpenRouter AI Academic Advisor Proxy
  *
- * Exclusively proxies requests to OpenRouter with server-side OPENROUTER_API_KEY support,
- * prompt caching optimization, and student context injection.
+ * Implements resilient multi-model failover across every free AI endpoint
+ * (DeepSeek R1 -> Gemini 2.0 Flash -> Llama 3.3 70B -> Qwen 2.5 -> Mistral).
  */
+
+const FREE_MODELS_CASCADE = [
+  'deepseek/deepseek-r1:free',
+  'google/gemini-2.0-flash-exp:free',
+  'meta-llama/llama-3.3-70b-instruct:free',
+  'qwen/qwen-2.5-coder-32b-instruct:free',
+  'mistralai/mistral-7b-instruct:free',
+];
 
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Credentials', 'true');
@@ -25,6 +33,7 @@ export default async function handler(req, res) {
       runtime: 'vercel-serverless',
       provider: 'openrouter',
       hasOpenRouterKey: Boolean(process.env.OPENROUTER_API_KEY),
+      freeModelsCascade: FREE_MODELS_CASCADE,
     });
   }
 
@@ -34,7 +43,7 @@ export default async function handler(req, res) {
 
   const {
     apiKey = '',
-    model = 'deepseek/deepseek-r1:free',
+    model = 'auto-free',
     prompt = '',
     systemInstructions = '',
     conversationHistory = [],
@@ -54,76 +63,95 @@ export default async function handler(req, res) {
   }
 
   const startTime = Date.now();
+  const isAutoFree = !model || model === 'auto-free' || model === 'openrouter/auto';
+  const modelsToAttempt = isAutoFree ? FREE_MODELS_CASCADE : [model];
 
-  try {
-    const chosenModel = model || 'deepseek/deepseek-r1:free';
-    const messages = [
-      {
-        role: 'system',
-        content: [
-          {
-            type: 'text',
-            text: systemInstructions || 'You are the official UIU AI Academic Advisor.',
-            cache_control: { type: 'ephemeral' },
-          },
-        ],
-      },
-      ...conversationHistory.slice(-4).map((m) => ({
-        role: m.role === 'user' ? 'user' : 'assistant',
-        content: m.text,
-      })),
-      {
-        role: 'user',
-        content: cleanPrompt,
-      },
-    ];
+  const messages = [
+    {
+      role: 'system',
+      content: [
+        {
+          type: 'text',
+          text: systemInstructions || 'You are the official UIU AI Academic Advisor.',
+          cache_control: { type: 'ephemeral' },
+        },
+      ],
+    },
+    ...conversationHistory.slice(-4).map((m) => ({
+      role: m.role === 'user' ? 'user' : 'assistant',
+      content: m.text,
+    })),
+    {
+      role: 'user',
+      content: cleanPrompt,
+    },
+  ];
 
-    const apiRes = await fetch('https://openrouter.ai/api/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${effectiveKey}`,
-        'HTTP-Referer': 'https://ez-uiu.vercel.app',
-        'X-Title': 'EZ_UIU OpenRouter Advisor',
-      },
-      body: JSON.stringify({
-        model: chosenModel,
+  let lastError = null;
+
+  // Try OpenRouter models with cascade failover
+  for (const candidateModel of modelsToAttempt) {
+    try {
+      const payload = {
+        model: candidateModel,
         messages,
         temperature: 0.35,
         max_tokens: 850,
-      }),
-    });
+      };
 
-    if (!apiRes.ok) {
-      const errJson = await apiRes.json().catch(() => ({}));
-      return res.status(apiRes.status).json({
-        error: errJson?.error?.message || `OpenRouter API error (HTTP ${apiRes.status})`,
+      if (isAutoFree) {
+        payload.models = FREE_MODELS_CASCADE;
+      }
+
+      const apiRes = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${effectiveKey}`,
+          'HTTP-Referer': 'https://ez-uiu.vercel.app',
+          'X-Title': 'EZ_UIU Auto-Switching AI',
+        },
+        body: JSON.stringify(payload),
       });
+
+      if (!apiRes.ok) {
+        const errJson = await apiRes.json().catch(() => ({}));
+        lastError = errJson?.error?.message || `HTTP ${apiRes.status}`;
+        continue;
+      }
+
+      const data = await apiRes.json();
+      const reply = data?.choices?.[0]?.message?.content;
+      if (!reply) {
+        lastError = 'Empty response from model';
+        continue;
+      }
+
+      const cachedTokens =
+        data.usage?.prompt_tokens_details?.cached_tokens ||
+        data.usage?.cache_read_input_tokens ||
+        0;
+
+      const answeredModel = data?.model || candidateModel;
+
+      return res.status(200).json({
+        text: reply,
+        usage: {
+          promptTokens: data.usage?.prompt_tokens || 0,
+          completionTokens: data.usage?.completion_tokens || 0,
+          cachedTokens,
+        },
+        latencyMs: Date.now() - startTime,
+        isServerless: true,
+        model: answeredModel,
+        autoSwitched: isAutoFree,
+      });
+    } catch (err) {
+      lastError = err.message || 'Network error';
     }
-
-    const data = await apiRes.json();
-    const reply = data?.choices?.[0]?.message?.content;
-    if (!reply) throw new Error('No text generated by OpenRouter');
-
-    const cachedTokens =
-      data.usage?.prompt_tokens_details?.cached_tokens ||
-      data.usage?.cache_read_input_tokens ||
-      0;
-
-    return res.status(200).json({
-      text: reply,
-      usage: {
-        promptTokens: data.usage?.prompt_tokens || 0,
-        completionTokens: data.usage?.completion_tokens || 0,
-        cachedTokens,
-      },
-      latencyMs: Date.now() - startTime,
-      isServerless: true,
-      model: chosenModel,
-    });
-  } catch (err) {
-    return res.status(500).json({
-      error: err.message || 'Internal server error communicating with OpenRouter',
-    });
   }
+
+  return res.status(503).json({
+    error: `All free AI models currently busy or rate-limited: ${lastError}. Try again in a few seconds or switch to offline rules.`,
+  });
 }

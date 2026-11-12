@@ -5,29 +5,38 @@ import { promptCache } from './cacheUtils';
 
 const SLOT_ORDER = ['T1', 'T2', 'T3'];
 
+export const FREE_MODELS_CASCADE = [
+  'deepseek/deepseek-r1:free',
+  'google/gemini-2.0-flash-exp:free',
+  'meta-llama/llama-3.3-70b-instruct:free',
+  'qwen/qwen-2.5-coder-32b-instruct:free',
+  'mistralai/mistral-7b-instruct:free',
+];
+
 /**
- * Supported Free AI Providers configuration with Prompt Caching Architecture
+ * Supported AI Providers configuration with Prompt Caching Architecture
  */
 export const AI_PROVIDERS = {
   openrouter: {
     id: 'openrouter',
     name: 'OpenRouter AI',
-    badge: 'Prompt Caching · Primary',
-    description: 'Unified high-speed AI with prompt caching. Supports Vercel OPENROUTER_API_KEY or personal client keys.',
+    badge: 'Universal AI Engine',
+    description: 'Auto-switches across every free AI API (DeepSeek R1, Gemini 2.0, Llama 3.3, Qwen) with zero downtime.',
     requiresKey: true,
     keyPlaceholder: 'sk-or-v1-... (or set OPENROUTER_API_KEY in Vercel)',
     keyHelpUrl: 'https://openrouter.ai/keys',
     keyHelpLabel: 'Get Free OpenRouter Key ↗',
     models: [
+      { id: 'auto-free', name: 'Auto-Switch (Cycles Every Free AI API)' },
       { id: 'deepseek/deepseek-r1:free', name: 'DeepSeek R1 (Free Reasoning)' },
-      { id: 'deepseek/deepseek-chat', name: 'DeepSeek V3 (Prompt Caching Enabled)' },
-      { id: 'meta-llama/llama-3.3-70b-instruct:free', name: 'Llama 3.3 70B (Free)' },
-      { id: 'google/gemini-2.0-flash-exp:free', name: 'Gemini 2.0 Flash (Free)' },
+      { id: 'google/gemini-2.0-flash-exp:free', name: 'Gemini 2.0 Flash (Free Speed)' },
+      { id: 'meta-llama/llama-3.3-70b-instruct:free', name: 'Llama 3.3 70B (Free Accuracy)' },
       { id: 'qwen/qwen-2.5-coder-32b-instruct:free', name: 'Qwen 2.5 Coder 32B (Free)' },
+      { id: 'deepseek/deepseek-chat', name: 'DeepSeek V3 (Prompt Caching Enabled)' },
       { id: 'anthropic/claude-3.5-sonnet', name: 'Claude 3.5 Sonnet (Prompt Caching)' },
       { id: 'openai/gpt-4o-mini', name: 'OpenAI GPT-4o Mini' },
     ],
-    defaultModel: 'deepseek/deepseek-r1:free',
+    defaultModel: 'auto-free',
   },
   offline: {
     id: 'offline',
@@ -841,30 +850,70 @@ export async function queryUniversalAIAdvisor({
       },
     ];
 
-    const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${apiKey.trim()}`,
-        'HTTP-Referer': typeof window !== 'undefined' ? window.location.origin : 'https://ez-uiu.vercel.app',
-        'X-Title': 'EZ_UIU Academic Suite',
-      },
-      body: JSON.stringify({
-        model: chosenModel,
-        messages,
-        temperature: 0.35,
-        max_tokens: 850,
-      }),
-    });
+    const isAutoFree = chosenModel === 'auto-free';
+    const modelsToTry = isAutoFree ? FREE_MODELS_CASCADE : [chosenModel];
 
-    if (!response.ok) {
-      const errData = await response.json().catch(() => ({}));
-      throw new Error(errData?.error?.message || `OpenRouter API error (HTTP ${response.status})`);
+    let data = null;
+    let answeredModel = chosenModel;
+    let lastError = null;
+
+    for (const candidate of modelsToTry) {
+      try {
+        const payload = {
+          model: candidate,
+          messages,
+          temperature: 0.35,
+          max_tokens: 850,
+        };
+        if (isAutoFree) {
+          payload.models = FREE_MODELS_CASCADE;
+        }
+
+        const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${apiKey.trim()}`,
+            'HTTP-Referer': typeof window !== 'undefined' ? window.location.origin : 'https://ez-uiu.vercel.app',
+            'X-Title': 'EZ_UIU Universal AI',
+          },
+          body: JSON.stringify(payload),
+        });
+
+        if (!response.ok) {
+          const errData = await response.json().catch(() => ({}));
+          lastError = errData?.error?.message || `HTTP ${response.status}`;
+          if (!isAutoFree) {
+            throw new Error(lastError);
+          }
+          continue;
+        }
+
+        const resJson = await response.json();
+        const reply = resJson?.choices?.[0]?.message?.content;
+        if (reply) {
+          data = resJson;
+          answeredModel = resJson?.model || candidate;
+          break;
+        }
+      } catch (err) {
+        lastError = err.message;
+        if (!isAutoFree) throw err;
+      }
     }
 
-    const data = await response.json();
+    if (!data) {
+      const offlineReply = generateAIAnswer(cleanPrompt, studentContext);
+      return {
+        text: `${offlineReply}\n\n*(Note: Cloud AI busy or rate-limited; verified via offline UIU regulations engine)*`,
+        retrievedSources,
+        latencyMs: Date.now() - startTime,
+        isClientCached: false,
+        provider: 'UIU Regulations Engine (Fallback)',
+      };
+    }
+
     const reply = data?.choices?.[0]?.message?.content;
-    if (!reply) throw new Error('No response text generated by OpenRouter.');
 
     // Capture prompt caching metrics from OpenRouter
     const cachedTokens =
@@ -881,6 +930,7 @@ export async function queryUniversalAIAdvisor({
       usage: { promptTokens, completionTokens, cachedTokens },
       latencyMs,
       isClientCached: false,
+      model: answeredModel,
     };
 
     // Save in prompt cache for instant future retrieval
