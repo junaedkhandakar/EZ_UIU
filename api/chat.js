@@ -55,10 +55,10 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: 'Prompt is required' });
   }
 
-  const effectiveKey = (apiKey?.trim() || process.env.OPENROUTER_API_KEY || '').trim();
+  const effectiveKey = (process.env.OPENROUTER_API_KEY || '').trim();
   if (!effectiveKey) {
-    return res.status(401).json({
-      error: 'No OpenRouter API key found. Set OPENROUTER_API_KEY in Vercel project settings or enter key in app.',
+    return res.status(500).json({
+      error: 'Vercel OPENROUTER_API_KEY environment variable is not configured yet in Project Settings.',
     });
   }
 

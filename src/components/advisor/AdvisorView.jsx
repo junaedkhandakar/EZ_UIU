@@ -89,17 +89,6 @@ export default function AdvisorView({
     }
   });
 
-  const [providerKeys, setProviderKeys] = useState(() => {
-    try {
-      const saved = localStorage.getItem('ez_ai_keys');
-      if (saved) return JSON.parse(saved);
-      const legacyOr = localStorage.getItem('ez_openrouter_api_key');
-      return { openrouter: legacyOr || '' };
-    } catch {
-      return { openrouter: '' };
-    }
-  });
-
   const [providerModels, setProviderModels] = useState(() => {
     try {
       const saved = localStorage.getItem('ez_ai_models');
@@ -111,7 +100,6 @@ export default function AdvisorView({
   });
 
   const [isAiSettingsOpen, setIsAiSettingsOpen] = useState(false);
-  const [openRouterKeyInput, setOpenRouterKeyInput] = useState('');
   const [expandedSources, setExpandedSources] = useState({});
   const [copiedIndex, setCopiedIndex] = useState(null);
   const [isKbOpen, setIsKbOpen] = useState(false);
@@ -187,21 +175,6 @@ export default function AdvisorView({
     try {
       localStorage.setItem('ez_ai_provider', provId);
       showToast(`AI Provider switched to ${AI_PROVIDERS[provId]?.name}`, 'info');
-    } catch {}
-  };
-
-  const saveKeyForProvider = (provId, keyVal) => {
-    const updated = { ...providerKeys, [provId]: keyVal };
-    setProviderKeys(updated);
-    try {
-      localStorage.setItem('ez_ai_keys', JSON.stringify(updated));
-      if (provId === 'openrouter') {
-        localStorage.setItem('ez_openrouter_api_key', keyVal.trim());
-      }
-      if (provId === 'gemini') {
-        localStorage.setItem('ez_gemini_api_key', keyVal.trim());
-      }
-      showToast(`${AI_PROVIDERS[provId]?.name} API key updated`, 'info');
     } catch {}
   };
 
@@ -321,13 +294,11 @@ export default function AdvisorView({
     setChatInput('');
     setIsThinking(true);
 
-    const apiKey = providerKeys[selectedProvider] || '';
     const model = providerModels[selectedProvider] || activeProviderConfig.defaultModel;
 
     try {
       const response = await queryUniversalAIAdvisor({
         provider: selectedProvider,
-        apiKey,
         model,
         prompt: query,
         studentContext: {
@@ -520,36 +491,10 @@ export default function AdvisorView({
                   )}
                 </div>
 
-                {vercelStatus?.configuredKeys?.[selectedProvider] ? (
-                  <p className="text-xs text-ok mt-2 flex items-center gap-1.5 font-medium">
-                    <CheckCircle2 className="h-3.5 w-3.5 text-ok shrink-0" />
-                    Vercel Serverless AI active: Connected via project environment variable (No client key needed).
-                  </p>
-                ) : activeProviderConfig.requiresKey ? (
-                  <div className="mt-2 flex items-center gap-2">
-                    <input
-                      type="password"
-                      value={providerKeys[selectedProvider] || ''}
-                      onChange={(e) => saveKeyForProvider(selectedProvider, e.target.value)}
-                      placeholder={activeProviderConfig.keyPlaceholder || 'Enter API Key...'}
-                      className="h-9 flex-1 max-w-md rounded-xl border border-line bg-surface px-3 font-mono text-xs text-ink outline-none focus:border-accent"
-                    />
-                    {providerKeys[selectedProvider] && (
-                      <button
-                        onClick={() => saveKeyForProvider(selectedProvider, '')}
-                        className="rounded-lg p-2 text-ink-3 hover:text-bad"
-                        title="Clear Key"
-                      >
-                        <X className="h-4 w-4" />
-                      </button>
-                    )}
-                  </div>
-                ) : (
-                  <p className="text-xs text-ok mt-1 flex items-center gap-1.5">
-                    <CheckCircle2 className="h-3.5 w-3.5 text-ok" />
-                    Zero setup required! Ready to answer all your academic questions right now.
-                  </p>
-                )}
+                <p className="text-xs text-ok mt-2 flex items-center gap-1.5 font-medium">
+                  <CheckCircle2 className="h-3.5 w-3.5 text-ok shrink-0" />
+                  Pre-configured on Vercel: All students can ask questions directly with 0 setup.
+                </p>
               </div>
 
               {/* Model Selector if Provider has choices */}
@@ -1431,43 +1376,6 @@ export default function AdvisorView({
               </button>
             </div>
           </div>
-
-          {/* Dedicated OpenRouter API Key Activation Bar if Empty and not on Vercel */}
-          {selectedProvider === 'openrouter' && !providerKeys.openrouter && !vercelStatus?.hasOpenRouterKey && (
-            <Surface className="p-4 border-accent/40 bg-accentSoft shadow-sm fade-in">
-              <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
-                <div className="flex-1">
-                  <h4 className="text-xs font-bold text-ink flex items-center gap-1.5">
-                    <Key className="h-3.5 w-3.5 text-accent" />
-                    Enter Your OpenRouter API Key
-                  </h4>
-                  <p className="text-[11px] text-ink-3 mt-0.5">
-                    Paste your OpenRouter key here to activate high-speed DeepSeek R1 & prompt caching.
-                  </p>
-                </div>
-                <div className="flex items-center gap-2">
-                  <input
-                    type="password"
-                    placeholder="sk-or-v1-..."
-                    value={openRouterKeyInput}
-                    onChange={(e) => setOpenRouterKeyInput(e.target.value)}
-                    className="h-9 w-44 sm:w-56 rounded-xl border border-line bg-surface px-3 font-mono text-xs text-ink outline-none focus:border-accent"
-                  />
-                  <Button
-                    variant="primary"
-                    size="sm"
-                    disabled={!openRouterKeyInput.trim()}
-                    onClick={() => {
-                      saveKeyForProvider('openrouter', openRouterKeyInput);
-                      setOpenRouterKeyInput('');
-                    }}
-                  >
-                    Save & Activate
-                  </Button>
-                </div>
-              </div>
-            </Surface>
-          )}
 
           {/* Chat Messages Log */}
           <Surface className="p-4 sm:p-5 min-h-[340px] max-h-[500px] overflow-y-auto overscroll-contain space-y-4">

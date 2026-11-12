@@ -21,11 +21,8 @@ export const AI_PROVIDERS = {
     id: 'openrouter',
     name: 'OpenRouter AI',
     badge: 'Universal AI Engine',
-    description: 'Auto-switches across every free AI API (DeepSeek R1, Gemini 2.0, Llama 3.3, Qwen) with zero downtime.',
-    requiresKey: true,
-    keyPlaceholder: 'sk-or-v1-... (or set OPENROUTER_API_KEY in Vercel)',
-    keyHelpUrl: 'https://openrouter.ai/keys',
-    keyHelpLabel: 'Get Free OpenRouter Key ↗',
+    description: 'Powered by Vercel serverless AI with auto-switching across free models (DeepSeek R1, Gemini 2.0, Llama 3.3). Zero setup required.',
+    requiresKey: false,
     models: [
       { id: 'auto-free', name: 'Auto-Switch (Cycles Every Free AI API)' },
       { id: 'deepseek/deepseek-r1:free', name: 'DeepSeek R1 (Free Reasoning)' },
@@ -762,15 +759,14 @@ export async function queryUniversalAIAdvisor({
 
   const systemInstructions = buildUIUSystemPrompt(studentContext);
 
-  // Serverless Proxy (Vercel): Try /api/chat endpoint first
-  if (provider === 'openrouter' || provider === 'gemini' || provider === 'groq') {
+  // Serverless Cloud AI (Vercel): Queries /api/chat which uses OPENROUTER_API_KEY from Vercel environment
+  if (provider === 'openrouter') {
     try {
       const serverlessRes = await fetch('/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          provider,
-          apiKey: (apiKey || '').trim(),
+          provider: 'openrouter',
           model: chosenModel,
           prompt: cleanPrompt,
           augmentedPrompt,
@@ -787,10 +783,10 @@ export async function queryUniversalAIAdvisor({
             text: json.text,
             retrievedSources,
             usage: json.usage || {},
-            latencyMs: json.latencyMs || (Date.now() - startTime),
+            latencyMs: json.latencyMs || Date.now() - startTime,
             isClientCached: false,
             isServerless: true,
-            provider: json.source || `${provider} (Vercel Serverless)`,
+            model: json.model || chosenModel,
           };
 
           promptCache.set(
@@ -807,153 +803,17 @@ export async function queryUniversalAIAdvisor({
 
           return resultPayload;
         }
-      } else if (serverlessRes.status !== 404 && serverlessRes.status !== 405) {
-        const errJson = await serverlessRes.json().catch(() => ({}));
-        if (errJson?.error && !errJson.error.includes('No') && !errJson.error.includes('key found')) {
-          throw new Error(errJson.error);
-        }
       }
-    } catch (e) {
-      if (e.message && !e.message.includes('404') && !e.message.includes('Failed to fetch')) {
-        throw e;
-      }
-    }
+    } catch {}
   }
 
-  // Provider 2: OpenRouter API (Primary Provider with Prompt Caching Optimization)
-  if (provider === 'openrouter') {
-    if (!apiKey || !apiKey.trim()) {
-      throw new Error(
-        'Please enter your OpenRouter API Key, or set OPENROUTER_API_KEY in your Vercel project environment variables.'
-      );
-    }
-
-    // Structure messages to maximize OpenRouter prefix prompt caching
-    const messages = [
-      {
-        role: 'system',
-        content: [
-          {
-            type: 'text',
-            text: systemInstructions,
-            cache_control: { type: 'ephemeral' },
-          },
-        ],
-      },
-      ...conversationHistory.slice(-4).map((m) => ({
-        role: m.role === 'user' ? 'user' : 'assistant',
-        content: m.text,
-      })),
-      {
-        role: 'user',
-        content: augmentedPrompt,
-      },
-    ];
-
-    const isAutoFree = chosenModel === 'auto-free';
-    const modelsToTry = isAutoFree ? FREE_MODELS_CASCADE : [chosenModel];
-
-    let data = null;
-    let answeredModel = chosenModel;
-    let lastError = null;
-
-    for (const candidate of modelsToTry) {
-      try {
-        const payload = {
-          model: candidate,
-          messages,
-          temperature: 0.35,
-          max_tokens: 850,
-        };
-        if (isAutoFree) {
-          payload.models = FREE_MODELS_CASCADE;
-        }
-
-        const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${apiKey.trim()}`,
-            'HTTP-Referer': typeof window !== 'undefined' ? window.location.origin : 'https://ez-uiu.vercel.app',
-            'X-Title': 'EZ_UIU Universal AI',
-          },
-          body: JSON.stringify(payload),
-        });
-
-        if (!response.ok) {
-          const errData = await response.json().catch(() => ({}));
-          lastError = errData?.error?.message || `HTTP ${response.status}`;
-          if (!isAutoFree) {
-            throw new Error(lastError);
-          }
-          continue;
-        }
-
-        const resJson = await response.json();
-        const reply = resJson?.choices?.[0]?.message?.content;
-        if (reply) {
-          data = resJson;
-          answeredModel = resJson?.model || candidate;
-          break;
-        }
-      } catch (err) {
-        lastError = err.message;
-        if (!isAutoFree) throw err;
-      }
-    }
-
-    if (!data) {
-      const offlineReply = generateAIAnswer(cleanPrompt, studentContext);
-      return {
-        text: `${offlineReply}\n\n*(Note: Cloud AI busy or rate-limited; verified via offline UIU regulations engine)*`,
-        retrievedSources,
-        latencyMs: Date.now() - startTime,
-        isClientCached: false,
-        provider: 'UIU Regulations Engine (Fallback)',
-      };
-    }
-
-    const reply = data?.choices?.[0]?.message?.content;
-
-    // Capture prompt caching metrics from OpenRouter
-    const cachedTokens =
-      data.usage?.prompt_tokens_details?.cached_tokens ||
-      data.usage?.cache_read_input_tokens ||
-      0;
-    const promptTokens = data.usage?.prompt_tokens || 0;
-    const completionTokens = data.usage?.completion_tokens || 0;
-    const latencyMs = Date.now() - startTime;
-
-    const resultPayload = {
-      text: reply,
-      retrievedSources,
-      usage: { promptTokens, completionTokens, cachedTokens },
-      latencyMs,
-      isClientCached: false,
-      model: answeredModel,
-    };
-
-    // Save in prompt cache for instant future retrieval
-    promptCache.set(
-      {
-        prompt: cleanPrompt,
-        model: chosenModel,
-        provider,
-        cgpa: studentContext.cgpa,
-        completedCredits: studentContext.completedCredits,
-        major: studentContext.selectedMajor,
-      },
-      resultPayload
-    );
-
-    return resultPayload;
-  }
-  // Fallback to offline rule engine
+  // Fallback to verified deterministic UIU regulations engine (zero network/setup needed)
   return {
     text: generateAIAnswer(cleanPrompt, studentContext),
     retrievedSources,
     latencyMs: Date.now() - startTime,
     isClientCached: false,
+    provider: 'UIU Regulations Engine',
   };
 }
 
