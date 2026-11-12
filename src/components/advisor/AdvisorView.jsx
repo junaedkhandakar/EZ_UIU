@@ -94,10 +94,9 @@ export default function AdvisorView({
       const saved = localStorage.getItem('ez_ai_keys');
       if (saved) return JSON.parse(saved);
       const legacyOr = localStorage.getItem('ez_openrouter_api_key');
-      const legacyGemini = localStorage.getItem('ez_gemini_api_key');
-      return { openrouter: legacyOr || '', gemini: legacyGemini || '', groq: '' };
+      return { openrouter: legacyOr || '' };
     } catch {
-      return { openrouter: '', gemini: '', groq: '' };
+      return { openrouter: '' };
     }
   });
 
@@ -108,9 +107,6 @@ export default function AdvisorView({
     } catch {}
     return {
       openrouter: 'deepseek/deepseek-r1:free',
-      gemini: 'gemini-1.5-flash',
-      groq: 'llama-3.3-70b-versatile',
-      instant: 'mistral',
     };
   });
 
@@ -419,28 +415,20 @@ export default function AdvisorView({
             </span>
           </button>
 
-          {/* Multi-AI Provider Selector Button */}
+          {/* OpenRouter AI Settings Button */}
           <button
             onClick={() => setIsAiSettingsOpen(!isAiSettingsOpen)}
             className={`flex items-center gap-2 rounded-xl border px-3 py-1.5 text-xs font-semibold shadow-card transition-colors ${
               isAiSettingsOpen
                 ? 'border-accent bg-accentSoft text-accent'
-                : selectedProvider === 'instant'
-                  ? 'border-accent/40 bg-accentSoft/50 text-accent hover:border-accent'
-                  : providerKeys[selectedProvider]?.trim() || selectedProvider === 'offline'
-                    ? 'border-ok/30 bg-ok/10 text-ok hover:border-ok/50'
-                    : 'border-line bg-surface text-ink-3 hover:text-ink'
+                : 'border-line bg-surface text-ink-2 hover:border-accent'
             }`}
-            title="Configure AI Models & Free API Keys"
+            title="Configure OpenRouter Models & Vercel Keys"
           >
-            {selectedProvider === 'instant' && <Sparkles className="h-3.5 w-3.5 text-accent" />}
-            {selectedProvider === 'gemini' && <Zap className="h-3.5 w-3.5 text-warn" />}
-            {selectedProvider === 'groq' && <Cpu className="h-3.5 w-3.5 text-ok" />}
-            {selectedProvider === 'openrouter' && <Globe className="h-3.5 w-3.5 text-accent2" />}
-            {selectedProvider === 'offline' && <ShieldCheck className="h-3.5 w-3.5 text-ok" />}
+            <Globe className="h-3.5 w-3.5 text-accent" />
             <span className="font-bold">{activeProviderConfig.name}</span>
             <span className="rounded bg-surface2 px-1.5 py-0.5 text-[9.5px] font-medium text-ink-3">
-              {activeProviderConfig.badge}
+              {providerModels['openrouter']?.split('/')?.pop()?.replace(':free', '') || 'DeepSeek R1'}
             </span>
             <Settings2 className="h-3 w-3 opacity-60" />
           </button>
@@ -462,11 +450,11 @@ export default function AdvisorView({
           <div className="flex items-start justify-between border-b border-line pb-3">
             <div>
               <h3 className="text-sm font-bold text-ink flex items-center gap-2">
-                <Bot className="h-4 w-4 text-accent" />
-                Select AI Engine & Free Providers
+                <Globe className="h-4 w-4 text-accent" />
+                Configure OpenRouter AI Engine
               </h3>
               <p className="text-xs text-ink-3 mt-0.5">
-                Every provider is 100% free. Choose Instant AI for zero-setup, or connect your own free key for higher limits and custom models.
+                Unified AI powered by OpenRouter (DeepSeek R1/V3, Llama 3.3, Gemini 2.0, Claude 3.5). On Vercel, configure OPENROUTER_API_KEY in Project Settings for 0-setup deployment.
               </p>
             </div>
             <button
@@ -478,7 +466,7 @@ export default function AdvisorView({
           </div>
 
           {/* Provider Grid */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-2.5 mt-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-4">
             {Object.values(AI_PROVIDERS).map((prov) => {
               const isSelected = selectedProvider === prov.id;
               return (
