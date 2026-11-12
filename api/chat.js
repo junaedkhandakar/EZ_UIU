@@ -50,7 +50,7 @@ export default async function handler(req, res) {
     augmentedPrompt = '',
   } = req.body || {};
 
-  const cleanPrompt = (prompt || augmentedPrompt || '').trim();
+  const cleanPrompt = (prompt || augmentedPrompt || '').trim().slice(0, 4500);
   if (!cleanPrompt) {
     return res.status(400).json({ error: 'Prompt is required' });
   }
@@ -151,7 +151,12 @@ export default async function handler(req, res) {
     }
   }
 
+  // Sanitize any potential bearer tokens or keys from error strings before returning
+  const sanitizedError = String(lastError || 'Service unavailable')
+    .replace(/Bearer\s+[a-zA-Z0-9_\-.]+/gi, 'Bearer [REDACTED]')
+    .replace(/sk-or-v1-[a-zA-Z0-9_\-]+/gi, '[REDACTED]');
+
   return res.status(503).json({
-    error: `All free AI models currently busy or rate-limited: ${lastError}. Try again in a few seconds or switch to offline rules.`,
+    error: `All free AI models currently busy or rate-limited: ${sanitizedError}. Try again in a few seconds or switch to offline rules.`,
   });
 }

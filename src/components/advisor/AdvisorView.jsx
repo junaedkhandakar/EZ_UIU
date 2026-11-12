@@ -1432,8 +1432,8 @@ export default function AdvisorView({
             </div>
           </div>
 
-          {/* Dedicated OpenRouter API Key Activation Bar if Empty */}
-          {selectedProvider === 'openrouter' && !providerKeys.openrouter && (
+          {/* Dedicated OpenRouter API Key Activation Bar if Empty and not on Vercel */}
+          {selectedProvider === 'openrouter' && !providerKeys.openrouter && !vercelStatus?.hasOpenRouterKey && (
             <Surface className="p-4 border-accent/40 bg-accentSoft shadow-sm fade-in">
               <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
                 <div className="flex-1">

@@ -130,11 +130,13 @@ Graduation Criteria:
     content: `UIU Tuition Fee Policy for Trimester Programs:
 1. Tuition Formula: Total Due = (Credits Taken x Per-Credit Fee) + Trimester Activity Fee.
 2. Current Rates:
-   - Undergraduate Regular (CSE, BBA, EEE, Civil, Data Science): Tk. 6,500/- per credit.
-   - BA in English & BSS MSJ: Tk. 5,525/- per credit (15% discount).
+   - Undergraduate Regular (Batch ≥ 241): Tk. 6,500/- per credit (CSE, BBA, EEE, Civil, Data Science).
+   - Undergraduate Regular (Batch < 241, e.g. 233): Tk. 5,525/- per credit.
+   - BA in English & BSS MSJ: Tk. 5,525/- per credit.
    - Trimester Activity Fee: Tk. 6,500/- per trimester.
    - Semester Fee for B. Pharm: Tk. 9,750/- per semester.
-   - One-time Admission Fee: Tk. 20,000/- (non-refundable) + Caution Money: Tk. 2,000/- (refundable).
+   - FYDP / Thesis Exemption: 0% waiver applies to capstone credits (CSE 4000A / 4000B).
+   - Retake Discount: 50% tuition waiver on first retake.
 3. Payment Installments (Trimester Programs):
    - At Registration: Initial deposit of Tk. 15,000/- (or partial payment).
    - Remaining balance is split into three (3) installments:

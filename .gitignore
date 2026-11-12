@@ -4,7 +4,20 @@ modelref.html
 # Dependencies
 node_modules/
 
-# Build
+# Environment Variables & Secrets (CRITICAL: Never commit API keys)
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+*.env
+*.pem
+*.key
+
+# Vercel Project State
+.vercel/
+
+# Build Output
 dist/
 
 # OS generated files
