@@ -172,22 +172,9 @@ export function retrieveRelevantDocuments(query = '', topK = 3) {
     };
   });
 
-  // Sort descending by relevance score
+  // Sort descending by relevance score and drop weak matches
   scored.sort((a, b) => b.rawScore - a.rawScore);
-
-  // Filter out irrelevant documents
-  const relevant = scored.filter((d) => d.rawScore >= 12).slice(0, topK);
-  if (!relevant.length) return [];
-
-  // Normalize scores to clean confidence percentages (50% to 99%)
-  const maxRaw = Math.max(1, relevant[0].rawScore);
-  return relevant.map((doc, idx) => ({
-    ...doc,
-    confidencePct: Math.min(
-      99,
-      Math.max(50, Math.round((doc.rawScore / maxRaw) * 96) - idx * 4)
-    ),
-  }));
+  return scored.filter((d) => d.rawScore >= 12).slice(0, topK);
 }
 
 /**
@@ -225,9 +212,11 @@ Student Question:
 "${query}"
 
 Instructions:
-1. Answer strictly using official UIU regulations from the verified sources above.
-2. Cite the specific policy or document title when mentioning rules, minimums, or fee rates (e.g. [Source: ${retrievedDocs[0]?.title}]).
-3. If the student asks about personal eligibility (e.g. retakes, FYDP, scholarships, probation), check their academic record against the verified clauses.
-4. Format using clean GitHub-flavored Markdown bullets, bold highlights, and readable tables where helpful.
+1. Answer strictly using the official UIU regulations from the sources above, and cite the document title when stating a rule, minimum, deadline or fee.
+2. If the student asks about personal eligibility (retakes, FYDP, scholarships, probation), check their record against the clauses above.
+3. Plain, direct language. Short paragraphs and bullets; a table only for genuinely tabular data.
+4. If the sources do not cover the question, say so instead of guessing.
+5. No preamble, no filler, no emojis, no jokes or pop-culture references, no exclamation marks.
+6. Markdown only: bold, lists, tables. Never HTML.
 `;
 }

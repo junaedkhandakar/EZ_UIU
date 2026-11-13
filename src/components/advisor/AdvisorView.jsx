@@ -1,39 +1,28 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import {
-  Sparkles,
-  Compass,
-  ArrowRight,
   CheckCircle2,
   AlertTriangle,
-  Clock,
   BookOpen,
   Calendar,
   Layers,
   GraduationCap,
   MessageSquare,
   Send,
-  Zap,
   ShieldCheck,
   Check,
   ChevronRight,
   ChevronDown,
-  Key,
-  Network,
-  ListCheck,
   X,
   Plus,
+  ListCheck,
   GitBranch,
   Bot,
-  Cpu,
   Globe,
-  ExternalLink,
   Settings2,
-  RefreshCw,
   Search,
   FileText,
   Copy,
-  Flame,
   Trash2,
   Upload,
 } from 'lucide-react';
@@ -42,6 +31,7 @@ import Button from '../ui/Button';
 import Surface from '../ui/Surface';
 import Select from '../ui/Select';
 import Modal from '../ui/Modal';
+import ChatText from './ChatText';
 import { getSavedRoutine } from '../../utils/routineStore';
 import {
   AI_PROVIDERS,
@@ -80,7 +70,7 @@ export default function AdvisorView({
     return routine[0]?.code || 'CSE 1111';
   });
 
-  // AI Provider & Settings State (OpenRouter with Prompt Caching is Primary)
+  // AI provider & model selection
   const [selectedProvider, setSelectedProvider] = useState(() => {
     try {
       return localStorage.getItem('ez_ai_provider') || 'openrouter';
@@ -120,30 +110,13 @@ export default function AdvisorView({
     {
       role: 'ai',
       provider: 'UIU Knowledge Base',
-      text: "Hello! I'm your **UIU AI Academic Advisor** with Prompt Caching & RAG. Based on official university policies and your academic record, I can recommend clash-free course baskets, verify prerequisite readiness, check probation rules, and audit your graduation timeline. How can I help you today?",
+      text: 'Ask anything about UIU regulations — FYDP eligibility, retakes, merit waivers, probation, tuition, exam slots or major tracks. Every answer cites the official policy.',
       followUps: [
         'When can I start FYDP / Thesis?',
         'How do retakes affect my CGPA?',
         'What are the merit waiver requirements?',
       ],
-      retrievedSources: [
-        {
-          id: 'kb_grading_scale',
-          title: 'UIU Official Grading System & Grade Points',
-          category: 'Academic Evaluation',
-          source: 'UIU Controller of Examinations',
-          confidencePct: 98,
-          snippet: 'Official letter grades, percentage thresholds, and graduation CGPA requirements.',
-        },
-        {
-          id: 'kb_retake_policy',
-          title: 'Course Retake & Grade Replacement',
-          category: 'Curriculum Rules',
-          source: 'UIU Academic Regulations §3.4',
-          confidencePct: 95,
-          snippet: '50% tuition waiver for first retake. New grade completely replaces old grade in CGPA calculation.',
-        },
-      ],
+      retrievedSources: [],
     },
   ]);
 
@@ -214,7 +187,13 @@ export default function AdvisorView({
     } catch {}
   };
 
-  const activeProviderConfig = AI_PROVIDERS[selectedProvider] || AI_PROVIDERS.instant;
+  const activeProviderConfig = AI_PROVIDERS[selectedProvider] || AI_PROVIDERS.openrouter;
+
+  const activeModelName = (() => {
+    const id = providerModels[selectedProvider] || activeProviderConfig.defaultModel;
+    const found = activeProviderConfig.models?.find((m) => m.id === id);
+    return found ? found.name : id;
+  })();
 
   const metrics = useMemo(() => {
     return calculateAcademicMetrics(getEffectiveCourses(courses));
@@ -320,7 +299,7 @@ export default function AdvisorView({
       const actualModel = typeof response === 'object' && response.model ? response.model : model;
       const modelLabel =
         actualModel === 'auto-free'
-          ? 'Auto (Every Free AI)'
+          ? 'Auto'
           : actualModel.split('/').pop().replace(':free', '');
 
       setChatMessages((prev) => [
@@ -337,16 +316,15 @@ export default function AdvisorView({
         },
       ]);
     } catch (err) {
-      showToast(err.message || 'Error communicating with AI provider', 'error');
-      // Automatic smart fallback
+      showToast(err.message || 'Could not reach the AI service', 'error');
       const fallback = generateAIAnswer(query, { cgpa: currentCgpa, completedCredits });
       const followUps = generateFollowUpSuggestions(query, fallback);
       setChatMessages((prev) => [
         ...prev,
         {
           role: 'ai',
-          provider: 'UIU Regulations Engine (Fallback)',
-          text: `${fallback}\n\n*(Error contacting ${activeProviderConfig.name}: ${err.message})*`,
+          provider: 'UIU Regulations Engine',
+          text: `${fallback}\n\n(Couldn't reach the AI service, so this answer came from the built-in regulations reference.)`,
           retrievedSources: [],
           followUps,
         },
@@ -357,12 +335,12 @@ export default function AdvisorView({
   };
 
   const subTabs = [
-    { value: 'basket', label: 'Next-Term Basket', icon: Sparkles },
-    { value: 'audit', label: 'Schedule Auditor', icon: ListCheck },
-    { value: 'tree', label: 'Prereq Tree', icon: GitBranch },
-    { value: 'roadmap', label: 'Full Degree Plan', icon: GraduationCap },
-    { value: 'majors', label: 'Major Concentrations', icon: Layers },
-    { value: 'copilot', label: 'AI Copilot', icon: MessageSquare },
+    { value: 'basket', label: 'Basket', icon: Calendar },
+    { value: 'audit', label: 'Auditor', icon: ListCheck },
+    { value: 'tree', label: 'Prereqs', icon: GitBranch },
+    { value: 'roadmap', label: 'Degree Plan', icon: GraduationCap },
+    { value: 'majors', label: 'Tracks', icon: Layers },
+    { value: 'copilot', label: 'Ask Advisor', icon: MessageSquare },
   ];
 
   return (
@@ -383,16 +361,16 @@ export default function AdvisorView({
           <button
             onClick={() => setIsKbOpen(true)}
             className="flex items-center gap-1.5 rounded-xl border border-line bg-surface px-3 py-1.5 text-xs font-semibold text-ink-2 shadow-card transition-colors hover:border-accent hover:text-accent"
-            title="Browse 13 Verified UIU Statutes & Official Policies"
+            title="Browse UIU statutes and official policies"
           >
             <BookOpen className="h-3.5 w-3.5 text-accent" />
             <span className="hidden sm:inline">UIU Statutes</span>
-            <span className="rounded bg-ok/15 text-ok px-1.5 py-0.5 text-[9.5px] font-bold">
-              13 Verified
+            <span className="rounded bg-surface2 px-1.5 py-0.5 text-[9.5px] font-bold text-ink-3">
+              {UIU_KNOWLEDGE_DOCUMENTS.length}
             </span>
           </button>
 
-          {/* OpenRouter AI Settings Button */}
+          {/* AI Settings Button */}
           <button
             onClick={() => setIsAiSettingsOpen(!isAiSettingsOpen)}
             className={`flex items-center gap-2 rounded-xl border px-3 py-1.5 text-xs font-semibold shadow-card transition-colors ${
@@ -400,14 +378,12 @@ export default function AdvisorView({
                 ? 'border-accent bg-accentSoft text-accent'
                 : 'border-line bg-surface text-ink-2 hover:border-accent'
             }`}
-            title="Configure OpenRouter Models & Vercel Keys"
+            title="AI settings"
           >
             <Globe className="h-3.5 w-3.5 text-accent" />
             <span className="font-bold">{activeProviderConfig.name}</span>
             <span className="rounded bg-surface2 px-1.5 py-0.5 text-[9.5px] font-medium text-ink-3">
-              {providerModels['openrouter'] === 'auto-free'
-                ? 'Auto (Every Free AI)'
-                : providerModels['openrouter']?.split('/')?.pop()?.replace(':free', '') || 'Auto AI'}
+              {activeModelName}
             </span>
             <Settings2 className="h-3 w-3 opacity-60" />
           </button>
@@ -423,17 +399,18 @@ export default function AdvisorView({
         </div>
       </div>
 
-      {/* Free AI Models & API Key Settings Drawer */}
+      {/* AI Settings Drawer */}
       {isAiSettingsOpen && (
         <Surface className="p-5 border-accent/30 bg-surface shadow-pop fade-in">
           <div className="flex items-start justify-between border-b border-line pb-3">
             <div>
               <h3 className="text-sm font-bold text-ink flex items-center gap-2">
                 <Globe className="h-4 w-4 text-accent" />
-                Configure OpenRouter AI Engine
+                AI Settings
               </h3>
               <p className="text-xs text-ink-3 mt-0.5">
-                Unified AI powered by OpenRouter (DeepSeek R1/V3, Llama 3.3, Gemini 2.0, Claude 3.5). On Vercel, configure OPENROUTER_API_KEY in Project Settings for 0-setup deployment.
+                Choose which model answers your questions. If a model is unavailable, the built-in
+                UIU regulations reference answers instead.
               </p>
             </div>
             <button
@@ -475,25 +452,13 @@ export default function AdvisorView({
           <div className="mt-4 rounded-xl border border-line bg-surface2/40 p-4">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
               <div className="flex-1">
-                <div className="flex items-center gap-2">
-                  <span className="text-xs font-bold text-ink">
-                    Configuring: {activeProviderConfig.name}
-                  </span>
-                  {activeProviderConfig.keyHelpUrl && (
-                    <a
-                      href={activeProviderConfig.keyHelpUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center gap-1 text-[11px] font-bold text-accent hover:underline"
-                    >
-                      {activeProviderConfig.keyHelpLabel} <ExternalLink className="h-3 w-3" />
-                    </a>
-                  )}
-                </div>
+                <span className="text-xs font-bold text-ink">
+                  {activeProviderConfig.name}
+                </span>
 
                 <p className="text-xs text-ok mt-2 flex items-center gap-1.5 font-medium">
                   <CheckCircle2 className="h-3.5 w-3.5 text-ok shrink-0" />
-                  Pre-configured on Vercel: All students can ask questions directly with 0 setup.
+                  Ready to use — no setup needed.
                 </p>
               </div>
 
@@ -501,7 +466,7 @@ export default function AdvisorView({
               {activeProviderConfig.models?.length > 1 && (
                 <div className="shrink-0 w-full md:w-64">
                   <label className="block text-[10.5px] font-semibold uppercase tracking-wider text-ink-3 mb-1">
-                    Select Model
+                    Model
                   </label>
                   <Select
                     value={providerModels[selectedProvider] || activeProviderConfig.defaultModel}
@@ -645,7 +610,7 @@ export default function AdvisorView({
               <Surface className="p-8 text-center">
                 <p className="text-sm font-semibold text-ink-2">No remaining eligible courses</p>
                 <p className="mt-1 text-xs text-ink-3">
-                  You have completed or are currently taking all required prerequisites!
+                  You have completed or are currently taking every required prerequisite.
                 </p>
               </Surface>
             ) : (
@@ -1032,7 +997,7 @@ export default function AdvisorView({
 
                     {prereqTree.prerequisitesList.length === 0 ? (
                       <div className="rounded-xl border border-line bg-surface2/40 p-4 text-xs text-ink-3 text-center">
-                        This is an entry-level course with zero prerequisites. You can take it anytime!
+                        This is an entry-level course with no prerequisites, so you can take it any term.
                       </div>
                     ) : (
                       <div className="space-y-2">
@@ -1154,9 +1119,9 @@ export default function AdvisorView({
                   </h3>
                 </div>
                 <p className="mt-1 text-xs text-ink-2 max-w-2xl">
-                  UIU Department of CSE requires **80 credits completed** before enrollment in FYDP I.
+                  UIU Department of CSE requires 80 completed credits before enrollment in FYDP I.
                   {timeline.fydpEligible
-                    ? ' You have crossed the 80-credit mark! You are authorized to register for CSE 4000A.'
+                    ? ' You have passed the 80-credit mark and can register for CSE 4000A.'
                     : ` You currently need ${timeline.creditsToFydp} more credits to qualify.`}
                 </p>
               </div>
@@ -1182,7 +1147,7 @@ export default function AdvisorView({
           <div className="mt-2 space-y-3">
             <div className="flex items-center justify-between">
               <h3 className="text-[15px] font-bold tracking-tight text-ink">
-                Automated Multi-Trimester Degree Plan
+                Multi-Trimester Degree Plan
               </h3>
               <span className="text-xs text-ink-3">
                 Calculated up to Trimester 12 under {targetCredits} cr/term
@@ -1344,14 +1309,9 @@ export default function AdvisorView({
             <div className="flex flex-wrap items-center gap-2">
               <span className="flex items-center gap-1.5">
                 <Bot className="h-3.5 w-3.5 text-accent" />
-                Active AI: <b className="text-ink font-semibold">{activeProviderConfig.name}</b>
-                <span className="text-[11px] text-accent">({providerModels[selectedProvider] || activeProviderConfig.defaultModel})</span>
+                <b className="text-ink font-semibold">{activeProviderConfig.name}</b>
+                <span className="text-[11px] text-ink-3">· {activeModelName}</span>
               </span>
-              {selectedProvider === 'openrouter' && (
-                <span className="rounded bg-ok/15 text-ok border border-ok/30 px-1.5 py-0.5 text-[9.5px] font-bold flex items-center gap-1">
-                  <Flame className="h-2.5 w-2.5" /> Prompt Caching Ready
-                </span>
-              )}
             </div>
 
             <div className="flex items-center gap-3">
@@ -1359,7 +1319,7 @@ export default function AdvisorView({
                 onClick={() => setIsKbOpen(true)}
                 className="text-[11px] text-accent hover:underline flex items-center gap-1 font-semibold"
               >
-                <BookOpen className="h-3 w-3" /> 13 UIU Statutes
+                <BookOpen className="h-3 w-3" /> {UIU_KNOWLEDGE_DOCUMENTS.length} UIU Statutes
               </button>
               <button
                 onClick={handleClearChat}
@@ -1385,8 +1345,8 @@ export default function AdvisorView({
                 className={`flex gap-3 ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
               >
                 {msg.role === 'ai' && (
-                  <div className="h-8 w-8 rounded-xl bg-gradient-to-br from-accent to-accent2 p-1.5 text-white shrink-0 shadow-md">
-                    <Sparkles className="h-full w-full" />
+                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl border border-line bg-surface2 text-ink-2">
+                    <Bot className="h-4 w-4" />
                   </div>
                 )}
                 <div
@@ -1401,18 +1361,8 @@ export default function AdvisorView({
                     <div className="flex items-center justify-between gap-2 border-b border-line/40 pb-1.5 mb-2">
                       <div className="flex flex-wrap items-center gap-1.5">
                         {msg.provider && (
-                          <span className="text-[10px] font-bold uppercase tracking-wider text-accent opacity-90">
+                          <span className="text-[10px] font-bold uppercase tracking-wider text-ink-3">
                             {msg.provider}
-                          </span>
-                        )}
-                        {msg.isClientCached && (
-                          <span className="rounded bg-accentSoft text-accent border border-accent/25 px-1.5 py-0.5 text-[9.5px] font-bold flex items-center gap-1">
-                            <Zap className="h-2.5 w-2.5" /> 0ms Cached
-                          </span>
-                        )}
-                        {msg.usage?.cachedTokens > 0 && (
-                          <span className="rounded bg-ok/15 text-ok border border-ok/30 px-1.5 py-0.5 text-[9.5px] font-bold flex items-center gap-0.5">
-                            <Flame className="h-2.5 w-2.5" /> {msg.usage.cachedTokens} Tokens Cached
                           </span>
                         )}
                         {msg.latencyMs != null && !msg.isClientCached && (
@@ -1436,7 +1386,7 @@ export default function AdvisorView({
                     </div>
                   )}
 
-                  <div className="whitespace-pre-line">{msg.text}</div>
+                  <ChatText text={msg.text} />
 
                   {/* Contextual Suggested Follow-up Chips */}
                   {msg.followUps && msg.followUps.length > 0 && (
@@ -1454,7 +1404,7 @@ export default function AdvisorView({
                     </div>
                   )}
 
-                  {/* RAG Retrieved Sources Inspector */}
+                  {/* Cited policy sources */}
                   {msg.retrievedSources && msg.retrievedSources.length > 0 && (
                     <div className="mt-2.5 border-t border-line/60 pt-2">
                       <button
@@ -1463,12 +1413,10 @@ export default function AdvisorView({
                         className="inline-flex items-center gap-1.5 rounded-lg border border-accent/25 bg-accentSoft px-2.5 py-1 text-[11px] font-semibold text-accent hover:border-accent transition-colors shadow-sm"
                       >
                         <BookOpen className="h-3 w-3 text-accent" />
-                        <span>{msg.retrievedSources.length} Official UIU Policy Sources Cited</span>
-                        {msg.retrievedSources[0]?.confidencePct && (
-                          <span className="text-[10px] font-mono opacity-80">
-                            ({msg.retrievedSources[0].confidencePct}% match)
-                          </span>
-                        )}
+                        <span>
+                          {msg.retrievedSources.length}{' '}
+                          {msg.retrievedSources.length === 1 ? 'policy source' : 'policy sources'}
+                        </span>
                         <ChevronDown
                           className={`h-3 w-3 transition-transform duration-200 ${
                             expandedSources[i] ? 'rotate-180' : ''
@@ -1483,24 +1431,12 @@ export default function AdvisorView({
                               key={src.id}
                               className="rounded-xl border border-line bg-surface p-3 text-xs shadow-card"
                             >
-                              <div className="flex items-start justify-between gap-2">
-                                <div>
-                                  <div className="font-bold text-ink text-[12px] flex items-center gap-1.5">
-                                    <ShieldCheck className="h-3.5 w-3.5 text-ok shrink-0" />
-                                    {src.title}
-                                  </div>
-                                  <div className="text-[10.5px] text-ink-3 mt-0.5">
-                                    Authority: <span className="text-ink-2 font-medium">{src.source}</span> · Category: {src.category}
-                                  </div>
-                                </div>
-                                {src.confidencePct && (
-                                  <span className="rounded-md bg-ok/15 text-ok border border-ok/30 px-1.5 py-0.5 text-[9.5px] font-bold shrink-0">
-                                    {src.confidencePct}% match
-                                  </span>
-                                )}
+                              <div className="font-bold text-ink text-[12px]">{src.title}</div>
+                              <div className="text-[10.5px] text-ink-3 mt-0.5">
+                                {src.source} · {src.category}
                               </div>
-                              <p className="mt-2 rounded-lg bg-surface2/60 p-2.5 text-[11px] leading-relaxed text-ink font-mono border border-line/60">
-                                "{src.snippet}"
+                              <p className="mt-2 rounded-lg bg-surface2/60 p-2.5 text-[11px] leading-relaxed text-ink-2 border border-line/60">
+                                {src.snippet}
                               </p>
                             </div>
                           ))}
@@ -1513,11 +1449,11 @@ export default function AdvisorView({
             ))}
             {isThinking && (
               <div className="flex gap-3 justify-start">
-                <div className="h-8 w-8 rounded-xl bg-gradient-to-br from-accent to-accent2 p-1.5 text-white shrink-0 shadow-md">
-                  <Sparkles className="h-full w-full animate-spin" />
+                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl border border-line bg-surface2 text-ink-2">
+                  <Bot className="h-4 w-4" />
                 </div>
-                <div className="rounded-2xl px-4 py-3 text-xs border border-line bg-surface2/60 text-ink-3 italic">
-                  {activeProviderConfig.name} is retrieving UIU statutes & generating advice…
+                <div className="flex items-center rounded-2xl border border-line bg-surface2/60 px-4 py-3 text-xs text-ink-3">
+                  <span className="animate-pulse">Checking UIU regulations…</span>
                 </div>
               </div>
             )}
@@ -1551,7 +1487,7 @@ export default function AdvisorView({
         open={isKbOpen}
         onClose={() => setIsKbOpen(false)}
         title="UIU Knowledge Base & Policy Statutes"
-        sub="13 verified official policy documents indexed for Retrieval-Augmented Generation (RAG)"
+        sub={`Official UIU regulations, exam rules, waivers and fee policies — ${UIU_KNOWLEDGE_DOCUMENTS.length} documents`}
         width="max-w-4xl"
       >
         <div className="space-y-4">
@@ -1563,7 +1499,7 @@ export default function AdvisorView({
                 type="text"
                 value={kbQuery}
                 onChange={(e) => setKbQuery(e.target.value)}
-                placeholder="Search across all 13 verified UIU statutes, exam rules, waivers, or FYDP..."
+                placeholder="Search statutes, exam rules, waivers, FYDP…"
                 className="h-10 w-full rounded-xl border border-line bg-surface2/60 pl-10 pr-4 text-xs text-ink placeholder-ink-3 outline-none focus:border-accent focus:ring-2 focus:ring-accent/20"
               />
               {kbQuery && (
@@ -1588,7 +1524,7 @@ export default function AdvisorView({
                       : 'bg-surface2 text-ink-3 hover:text-ink border border-line'
                   }`}
                 >
-                  {cat === 'ALL' ? 'All Policies (13)' : cat}
+                  {cat === 'ALL' ? `All Policies (${UIU_KNOWLEDGE_DOCUMENTS.length})` : cat}
                 </button>
               ))}
             </div>

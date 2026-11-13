@@ -42,7 +42,6 @@ export default async function handler(req, res) {
   }
 
   const {
-    apiKey = '',
     model = 'auto-free',
     prompt = '',
     systemInstructions = '',
@@ -109,7 +108,7 @@ export default async function handler(req, res) {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${effectiveKey}`,
           'HTTP-Referer': 'https://ez-uiu.vercel.app',
-          'X-Title': 'EZ_UIU Auto-Switching AI',
+          'X-Title': 'EZ_UIU',
         },
         body: JSON.stringify(payload),
       });
@@ -157,6 +156,6 @@ export default async function handler(req, res) {
     .replace(/sk-or-v1-[a-zA-Z0-9_\-]+/gi, '[REDACTED]');
 
   return res.status(503).json({
-    error: `All free AI models currently busy or rate-limited: ${sanitizedError}. Try again in a few seconds or switch to offline rules.`,
+    error: `All free AI models are busy right now (${sanitizedError}). Try again in a few seconds.`,
   });
 }

@@ -8,7 +8,7 @@ import {
   Sun,
   Moon,
   Search,
-  Sparkles,
+  Compass,
   Bus,
   FileCheck2,
 } from 'lucide-react';
@@ -16,7 +16,7 @@ import { useTheme } from '../../context/ThemeContext';
 
 export const NAV = [
   { id: 'cgpa', label: 'CGPA & Standing', icon: Gauge },
-  { id: 'advisor', label: 'AI Advisor', icon: Sparkles },
+  { id: 'advisor', label: 'AI Advisor', icon: Compass },
   { id: 'routine', label: 'Class Routine', icon: CalendarRange },
   { id: 'tuition', label: 'Tuition & Fees', icon: Receipt },
   { id: 'commute', label: 'Shuttle & Commute', icon: Bus },
