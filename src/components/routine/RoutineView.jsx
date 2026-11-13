@@ -1,12 +1,13 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { motion } from 'motion/react';
-import { Download, AlertTriangle, FileUp } from 'lucide-react';
+import { Download, AlertTriangle, FileUp, X } from 'lucide-react';
 import Button from '../ui/Button';
 import Surface from '../ui/Surface';
 import Select from '../ui/Select';
 import Empty from '../ui/Empty';
 import Timetable from './Timetable';
 import UcamRoutineUploadModal from './UcamRoutineUploadModal';
+import FydpNotice from '../fydp/FydpNotice';
 import { useToast } from '../../context/ToastContext';
 import { CALENDARS_DATA, CALENDAR_SOURCE } from '../../data/calendarData';
 import {
@@ -16,6 +17,8 @@ import {
   colourFor,
 } from '../../utils/routineSolver';
 import { generateICS, downloadICS } from '../../utils/icsGenerator';
+import { addFydpToRoutine, removeFydpFromRoutine, ROUTINE_STORAGE_KEY } from '../../utils/routineStore';
+import { inferFydp, matchFydpStage, readFydpDecision, writeFydpDecision } from '../../utils/fydp';
 
 /**
  * Class Routine — upload → preview → .ics.
@@ -26,8 +29,12 @@ import { generateICS, downloadICS } from '../../utils/icsGenerator';
  *
  * Only PDF-imported routines persist (entries carry `customSection`);
  * solver-era selections referencing retired section data are ignored.
+ *
+ * FYDP / capstone courses have no class meetings, so they never show up on the
+ * routine PDF. The student is asked to confirm them instead, and they are kept
+ * in the routine so tuition counts them.
  */
-export function RoutineView() {
+export function RoutineView({ courses = [] }) {
   const { showToast } = useToast();
 
   const [selectedCourses, setSelectedCourses] = useState(() => {
@@ -39,6 +46,8 @@ export function RoutineView() {
   });
   const [calId, setCalId] = useState(CALENDARS_DATA[0]?.id || '');
   const [isUcamModalOpen, setIsUcamModalOpen] = useState(false);
+  const [fydpDecision, setFydpDecision] = useState(() => readFydpDecision());
+  const [fydpSelection, setFydpSelection] = useState([]);
 
   useEffect(() => {
     try {
@@ -78,6 +87,61 @@ export function RoutineView() {
   const totalCredits = activeSections.reduce((s, x) => s + (x.credit || 0), 0);
   const hasRoutine = activeSections.length > 0;
 
+  // ---- FYDP (no class meetings, so it never lands on the routine PDF) ----
+  const fydp = useMemo(() => inferFydp(courses), [courses]);
+
+  const routineFydpCodes = useMemo(
+    () => new Set(activeSections.map((s) => matchFydpStage(s.code)?.code).filter(Boolean)),
+    [activeSections]
+  );
+
+  const missingFydpStages = useMemo(
+    () => fydp.candidates.filter((c) => !routineFydpCodes.has(c.code)),
+    [fydp.candidates, routineFydpCodes]
+  );
+
+  // Pre-select the stage the transcript points to, so the student only confirms.
+  useEffect(() => {
+    if (fydpDecision || !missingFydpStages.length) return;
+    const suggested =
+      fydp.inferred && missingFydpStages.some((s) => s.code === fydp.inferred.code)
+        ? fydp.inferred.code
+        : missingFydpStages[0].code;
+    setFydpSelection([suggested]);
+  }, [fydpDecision, missingFydpStages, fydp.inferred]);
+
+  const readStoredRoutine = () => {
+    try {
+      const saved = JSON.parse(localStorage.getItem(ROUTINE_STORAGE_KEY) || '[]');
+      return Array.isArray(saved) ? saved.filter((c) => c.customSection) : [];
+    } catch {
+      return [];
+    }
+  };
+
+  const handleFydpAccept = () => {
+    const stages = fydp.candidates.filter((c) => fydpSelection.includes(c.code));
+    if (!stages.length) return;
+    stages.forEach((s) => addFydpToRoutine(s));
+    writeFydpDecision({ stages });
+    setFydpDecision({ stages });
+    setFydpSelection([]);
+    setSelectedCourses(readStoredRoutine());
+    showToast(`Added ${stages.map((s) => s.code).join(', ')} to your routine`, 'success');
+  };
+
+  const handleFydpDismiss = () => {
+    writeFydpDecision({ dismissed: true });
+    setFydpDecision({ stages: [], dismissed: true });
+    showToast('FYDP not registered this term', 'info');
+  };
+
+  const handleFydpRemove = (code) => {
+    removeFydpFromRoutine(code);
+    setSelectedCourses(readStoredRoutine());
+    showToast(`Removed ${code} from your routine`, 'info');
+  };
+
   const exportICS = () => {
     try {
       if (!activeSections.length) {
@@ -104,7 +168,12 @@ export function RoutineView() {
         content,
         `UIU_Routine_${activeCalendar ? `${activeCalendar.term}_${activeCalendar.year}` : 'Routine'}.ics`
       );
-      showToast(`Exported ${stats.classes} classes to your calendar`, 'success');
+      showToast(
+        stats.classes
+          ? `Exported ${stats.classes} classes to your calendar`
+          : 'No fixed class times to export',
+        stats.classes ? 'success' : 'info'
+      );
     } catch (e) {
       showToast(e.message || 'Error generating calendar', 'error');
     }
@@ -167,6 +236,27 @@ export function RoutineView() {
         </div>
       </div>
 
+      {missingFydpStages.length > 0 && !fydpDecision && (
+        <FydpNotice
+          candidates={missingFydpStages}
+          selected={fydpSelection}
+          onToggle={(code) =>
+            setFydpSelection((prev) =>
+              prev.includes(code) ? prev.filter((c) => c !== code) : [...prev, code]
+            )
+          }
+          onAccept={handleFydpAccept}
+          onDismiss={handleFydpDismiss}
+          context={
+            fydp.basis === 'running'
+              ? 'Your transcript shows an FYDP course running this term. FYDP has no fixed class times, so it does not appear on the routine PDF — but it still counts toward your registration and tuition.'
+              : fydp.completed.length
+                ? `Your transcript shows ${fydp.completed.join(' and ')} completed, so you are most likely in ${fydp.inferred?.label || 'the next FYDP stage'}. FYDP has no fixed class times, so it is missing from the routine PDF.`
+                : 'FYDP has no fixed class times, so it does not appear on the routine PDF — but it still counts toward your registration and tuition.'
+          }
+        />
+      )}
+
       {!hasRoutine ? (
         <Empty
           icon={FileUp}
@@ -182,9 +272,9 @@ export function RoutineView() {
               <div>
                 <h3 className="text-[15px] font-bold tracking-tight text-ink">Your Routine</h3>
                 <p className="mt-0.5 text-xs text-ink-3">
-                  <span className="num font-bold text-ink-2">{activeSections.length}</span> sections ·{' '}
-                  <span className="num font-bold text-ink-2">{totalCredits}</span> credits · imported
-                  from your PDF
+                  <span className="num font-bold text-ink-2">{activeSections.length}</span> courses ·{' '}
+                  <span className="num font-bold text-ink-2">{totalCredits}</span> credits ·
+                  registered this term
                 </p>
               </div>
               <Button variant="secondary" icon={FileUp} onClick={openUpload}>
@@ -192,19 +282,35 @@ export function RoutineView() {
               </Button>
             </div>
             <ul className="mt-3 divide-y divide-line/60">
-              {activeSections.map((sec) => (
-                <li
-                  key={sec.id}
-                  className="flex flex-wrap items-baseline gap-x-3 gap-y-1 py-2.5"
-                >
-                  <span className="font-mono text-[13px] font-bold text-accent">{sec.code}</span>
-                  <span className="num shrink-0 rounded-md bg-surface2 px-1.5 py-0.5 text-[10px] font-bold text-ink-3">
-                    Sec {sec.section} · {sec.credit || 0} cr
-                  </span>
-                  <span className="min-w-[10rem] flex-1 text-[13px] text-ink">{sec.title}</span>
-                  <span className="text-[11px] text-ink-3">{sectionSummary(sec)}</span>
-                </li>
-              ))}
+              {activeSections.map((sec) => {
+                const fydpStage = matchFydpStage(sec.code);
+                const hasMeetings = (sec.meetings || []).length > 0;
+                return (
+                  <li
+                    key={sec.id}
+                    className="flex flex-wrap items-baseline gap-x-3 gap-y-1 py-2.5"
+                  >
+                    <span className="font-mono text-[13px] font-bold text-accent">{sec.code}</span>
+                    <span className="num shrink-0 rounded-md bg-surface2 px-1.5 py-0.5 text-[10px] font-bold text-ink-3">
+                      {fydpStage ? fydpStage.label : `Sec ${sec.section}`} · {sec.credit || 0} cr
+                    </span>
+                    <span className="min-w-[10rem] flex-1 text-[13px] text-ink">{sec.title}</span>
+                    <span className="text-[11px] text-ink-3">
+                      {hasMeetings ? sectionSummary(sec) : 'No fixed class times'}
+                    </span>
+                    {fydpStage && (
+                      <button
+                        type="button"
+                        onClick={() => handleFydpRemove(sec.code)}
+                        className="rounded-md p-1 text-ink-3 transition-colors hover:text-bad"
+                        title={`Remove ${sec.code} from your routine`}
+                      >
+                        <X className="h-3.5 w-3.5" />
+                      </button>
+                    )}
+                  </li>
+                );
+              })}
             </ul>
           </Surface>
 
@@ -226,7 +332,8 @@ export function RoutineView() {
                   className="h-2.5 w-2.5 rounded-full"
                   style={{ background: `color-mix(in srgb, ${colourFor(s.code)} 70%, transparent)` }}
                 />
-                {s.code} · {s.section}
+                {s.code}
+                {s.section ? ` · ${s.section}` : ''}
               </motion.span>
             ))}
           </div>

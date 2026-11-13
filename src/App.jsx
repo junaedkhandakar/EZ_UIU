@@ -129,7 +129,7 @@ export function AppContent() {
           {activeTab === 'advisor' && (
             <AdvisorView courses={courses} settings={settings} />
           )}
-          {activeTab === 'routine' && <RoutineView />}
+          {activeTab === 'routine' && <RoutineView courses={courses} />}
           {activeTab === 'tuition' && (
             <TuitionView courses={courses} settings={settings} defaultDept={settings.dept} />
           )}

@@ -517,8 +517,8 @@ export default function AdvisorView({
                     </span>
                     <span className="num font-bold text-accent">{targetCredits} Credits</span>
                   </div>
-                  <div className="grid grid-cols-3 gap-1.5">
-                    {[9, 12, 15].map((cr) => (
+                  <div className="grid grid-cols-6 gap-1.5">
+                    {[10, 11, 12, 13, 14, 15].map((cr) => (
                       <button
                         key={cr}
                         onClick={() => setTargetCredits(cr)}

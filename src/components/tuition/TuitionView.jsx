@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { motion } from 'motion/react';
 import {
   Receipt,
@@ -15,6 +15,7 @@ import {
 import Button from '../ui/Button';
 import Surface from '../ui/Surface';
 import Select from '../ui/Select';
+import FydpNotice from '../fydp/FydpNotice';
 import { calculateTuitionFees, estimateDegreeCost, SCHOLARSHIP_TIERS } from '../../utils/tuitionUtils';
 import { DEPT_PROFILES, formatBDT, getEffectiveCourses, calculateAcademicMetrics } from '../../utils/cgpaUtils';
 import { useToast } from '../../context/ToastContext';
@@ -22,7 +23,15 @@ import {
   getRoutineSummary,
   detectStudentBatch,
   getTuitionRateForBatch,
+  addFydpToRoutine,
+  isFydpCourse,
 } from '../../utils/routineStore';
+import {
+  inferFydp,
+  matchFydpStage,
+  readFydpDecision,
+  writeFydpDecision,
+} from '../../utils/fydp';
 
 const inputCls =
   'w-full rounded-xl border border-line bg-surface2/70 px-3.5 py-2.5 text-[13px] text-ink placeholder-ink-3 transition-colors hover:border-line-strong focus:outline-none focus:ring-2 focus:ring-accent/40';
@@ -54,7 +63,8 @@ export function TuitionView({ courses = [], settings = {}, defaultDept = 'regula
   const profile = DEPT_PROFILES[defaultDept] || DEPT_PROFILES.regular;
 
   // Auto-derived from saved routine & transcript batch
-  const routineSummary = useMemo(() => getRoutineSummary(), []);
+  const [routineTick, setRoutineTick] = useState(0);
+  const routineSummary = useMemo(() => getRoutineSummary(), [routineTick]);
   const detectedBatch = useMemo(() => detectStudentBatch(courses), [courses]);
   const batchRate = useMemo(
     () => (detectedBatch ? getTuitionRateForBatch(detectedBatch.batchNum) : 6500),
@@ -77,6 +87,54 @@ export function TuitionView({ courses = [], settings = {}, defaultDept = 'regula
 
   const [avgCredits, setAvgCredits] = useState(12);
   const [avgScholarship, setAvgScholarship] = useState(0);
+
+  // ---- FYDP: inferred from the transcript, confirmed by the student ----
+  const [fydpDecision, setFydpDecision] = useState(() => readFydpDecision());
+  const [fydpSelection, setFydpSelection] = useState([]);
+
+  const fydp = useMemo(() => inferFydp(courses), [courses]);
+
+  const routineFydpCodes = useMemo(
+    () =>
+      new Set(
+        routineSummary.fydpCourses.map((c) => matchFydpStage(c.code)?.code).filter(Boolean)
+      ),
+    [routineSummary]
+  );
+
+  const missingFydpStages = useMemo(
+    () => fydp.candidates.filter((c) => !routineFydpCodes.has(c.code)),
+    [fydp.candidates, routineFydpCodes]
+  );
+
+  useEffect(() => {
+    if (fydpDecision || !missingFydpStages.length) return;
+    const suggested =
+      fydp.inferred && missingFydpStages.some((s) => s.code === fydp.inferred.code)
+        ? fydp.inferred.code
+        : missingFydpStages[0].code;
+    setFydpSelection([suggested]);
+  }, [fydpDecision, missingFydpStages, fydp.inferred]);
+
+  const handleFydpAccept = () => {
+    const stages = fydp.candidates.filter((c) => fydpSelection.includes(c.code));
+    if (!stages.length) return;
+    const added = stages.reduce((sum, c) => sum + (c.credit || 0), 0);
+    stages.forEach((s) => addFydpToRoutine(s));
+    writeFydpDecision({ stages });
+    setFydpDecision({ stages });
+    setFydpSelection([]);
+    setRoutineTick((t) => t + 1);
+    setCredits((c) => c + added);
+    setThesisCredits((t) => t + added);
+    showToast(`Added ${added} FYDP credits — 0% waiver applies`, 'success');
+  };
+
+  const handleFydpDismiss = () => {
+    writeFydpDecision({ dismissed: true });
+    setFydpDecision({ stages: [], dismissed: true });
+    showToast('FYDP not registered this term', 'info');
+  };
 
   const deptProfile = DEPT_PROFILES[dept] || DEPT_PROFILES.regular;
 
@@ -121,11 +179,18 @@ export function TuitionView({ courses = [], settings = {}, defaultDept = 'regula
     const runningRetakes = running
       .filter((c) => (c.retakeOf || '').trim() !== '')
       .reduce((s, c) => s + (c.credit || 0), 0);
+    // FYDP credits are waiver-exempt, so they must be flagged separately
+    const runningFydp = running
+      .filter((c) => isFydpCourse(c.courseId))
+      .reduce((s, c) => s + (c.credit || 0), 0);
     if (runningCredits) setCredits(runningCredits);
     setRetakeCredits(runningRetakes);
+    if (runningFydp) setThesisCredits(runningFydp);
     showToast(
       runningCredits
-        ? `Synced ${runningCredits} running credits from transcript`
+        ? `Synced ${runningCredits} running credits from transcript${
+            runningFydp ? ` (${runningFydp} cr FYDP waiver-exempt)` : ''
+          }`
         : 'No running courses found in transcript',
       runningCredits ? 'success' : 'info'
     );
@@ -180,6 +245,26 @@ export function TuitionView({ courses = [], settings = {}, defaultDept = 'regula
           </Button>
         </div>
       </div>
+
+      {missingFydpStages.length > 0 && !fydpDecision && (
+        <FydpNotice
+          candidates={missingFydpStages}
+          selected={fydpSelection}
+          onToggle={(code) =>
+            setFydpSelection((prev) =>
+              prev.includes(code) ? prev.filter((c) => c !== code) : [...prev, code]
+            )
+          }
+          onAccept={handleFydpAccept}
+          onDismiss={handleFydpDismiss}
+          acceptLabel="Add to registration"
+          context={
+            fydp.completed.length
+              ? `Your transcript shows ${fydp.completed.join(' and ')} completed, so your tuition is most likely missing ${fydp.inferred?.label || 'the next FYDP stage'}. FYDP credits are charged per credit and get a 0% waiver.`
+              : 'FYDP credits are charged per credit and get a 0% waiver, but they never appear on the class routine PDF because they have no fixed class times.'
+          }
+        />
+      )}
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-12">
         {/* ============ LEFT: inputs + installments ============ */}

@@ -3,6 +3,8 @@
  * Manages routine synchronization, FYDP waiver rules, and batch-aware fee rates.
  */
 
+import { matchFydpStage } from './fydp';
+
 export const ROUTINE_STORAGE_KEY = 'ez_routine_selected';
 export const STUDENT_ID_STORAGE_KEY = 'ez_student_id';
 
@@ -56,6 +58,72 @@ export function getSavedRoutine() {
   } catch {
     return [];
   }
+}
+
+/**
+ * Adds a FYDP / capstone course to the saved routine.
+ * FYDP has no fixed class meetings, so it never appears on the routine PDF -
+ * this keeps it in the student's registration so tuition counts it.
+ */
+export function addFydpToRoutine(stage) {
+  if (!stage?.code) return getSavedRoutine();
+  const routine = getSavedRoutine();
+  if (routine.some((c) => matchFydpStage(c.code)?.code === stage.code)) return routine;
+
+  const entry = {
+    id: `custom-fydp-${stage.code.replace(/\s+/g, '').toUpperCase()}`,
+    code: stage.code,
+    title: stage.title || stage.label,
+    section: '',
+    credit: stage.credit || 0,
+    meetings: [],
+    faculty: [],
+    program: 'BSCSE',
+    hasLab: false,
+    isFydp: true,
+  };
+
+  const next = [...routine.map(toStoredEntry), { customSection: entry }];
+  try {
+    localStorage.setItem(ROUTINE_STORAGE_KEY, JSON.stringify(next));
+  } catch {}
+  return getSavedRoutine();
+}
+
+/**
+ * Removes a FYDP / capstone course from the saved routine.
+ */
+export function removeFydpFromRoutine(code) {
+  const routine = getSavedRoutine();
+  const target = matchFydpStage(code)?.code;
+  if (!target) return routine;
+
+  const next = routine
+    .filter((c) => matchFydpStage(c.code)?.code !== target)
+    .map(toStoredEntry);
+  try {
+    localStorage.setItem(ROUTINE_STORAGE_KEY, JSON.stringify(next));
+  } catch {}
+  return getSavedRoutine();
+}
+
+/**
+ * Normalises a routine entry back into the stored shape (customSection wrapper).
+ */
+function toStoredEntry(course) {
+  return {
+    customSection: {
+      id: course.id || `custom-${course.code}`,
+      code: course.code,
+      title: course.title,
+      section: course.section || '',
+      credit: course.credit || 0,
+      meetings: course.meetings || [],
+      faculty: course.faculty || [],
+      program: course.program || 'BSCSE',
+      hasLab: false,
+    },
+  };
 }
 
 /**

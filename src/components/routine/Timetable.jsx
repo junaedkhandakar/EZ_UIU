@@ -82,7 +82,9 @@ export default function Timetable({ sections = [], hoveredSection = null }) {
   if (!model) {
     return (
       <div className="flex h-[320px] items-center justify-center rounded-2xl border border-dashed border-line-strong text-sm text-ink-3">
-        Upload your class routine PDF to preview your weekly timetable.
+        {sections.length
+          ? 'The courses in your routine have no fixed class times.'
+          : 'Upload your class routine PDF to preview your weekly timetable.'}
       </div>
     );
   }
