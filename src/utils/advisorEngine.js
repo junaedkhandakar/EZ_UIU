@@ -589,7 +589,7 @@ Official UIU Policies (Verified & Strictly Enforced):
    - Only the single highest waiver applies (no stacking).
    - Incomplete ('I') grade or improvement exams in a term forfeit merit scholarship in the following term.
 7. Final Year Design Project (FYDP):
-   - CSE 4000A (FYDP I - 2 cr) and CSE 4000B (FYDP II - 4 cr).
+   - CSE 4000A (FYDP I), CSE 4000B (FYDP II) and CSE 4000C (FYDP III), 2 credits each (6 credits total).
    - Gatekeeper: Must have at least 80 credits completed before registering for CSE 4000A.
    - Graduation requirement: Must pass FYDP with at least a 'C' grade.
    - Exempt from all tuition waivers (0% waiver).

@@ -15,8 +15,8 @@ import { calculateAcademicMetrics, getEffectiveCourses } from './cgpaUtils';
  */
 export const FYDP_STAGES = [
   { code: 'CSE 4000A', label: 'FYDP I', title: 'Final Year Design Project I', credit: 2 },
-  { code: 'CSE 4000B', label: 'FYDP II', title: 'Final Year Design Project II', credit: 4 },
-  { code: 'CSE 4000C', label: 'FYDP III', title: 'Final Year Design Project III', credit: 4 },
+  { code: 'CSE 4000B', label: 'FYDP II', title: 'Final Year Design Project II', credit: 2 },
+  { code: 'CSE 4000C', label: 'FYDP III', title: 'Final Year Design Project III', credit: 2 },
 ];
 
 export const FYDP_MIN_CREDITS = 80;
@@ -111,7 +111,7 @@ export function inferFydp(transcriptCourses = []) {
   if (runningStage) {
     return {
       completed,
-      candidates: remaining.length ? remaining : [],
+      candidates: [runningStage],
       inferred: runningStage,
       earnedCredits,
       basis: 'running',
@@ -123,7 +123,7 @@ export function inferFydp(transcriptCourses = []) {
   }
 
   if (!started && earnedCredits < FYDP_MIN_CREDITS) {
-    return { completed, candidates: remaining, inferred: null, earnedCredits, basis: 'not-eligible' };
+    return { completed, candidates: [], inferred: null, earnedCredits, basis: 'not-eligible' };
   }
 
   return {

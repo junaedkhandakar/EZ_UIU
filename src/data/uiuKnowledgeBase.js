@@ -86,16 +86,16 @@ Eligibility & Quotas:
   },
   {
     id: 'kb_fydp_capstone',
-    title: 'Final Year Design Project (FYDP I & II / CSE 4000A & 4000B)',
+    title: 'Final Year Design Project (FYDP I, II & III / CSE 4000A, 4000B & 4000C)',
     category: 'Graduation Requirements',
     source: 'UIU Dept of CSE Capstone Guidelines',
     lastVerified: '2026',
-    keywords: ['fydp', 'thesis', 'project', 'capstone', 'cse 4000a', 'cse 4000b', '80 credits', 'supervisor', 'final year project'],
-    summary: 'FYDP eligibility requirements (80 credits prerequisite), CSE 4000A/B registration, passing grade, and waiver exemptions.',
+    keywords: ['fydp', 'thesis', 'project', 'capstone', 'cse 4000a', 'cse 4000b', 'cse 4000c', '80 credits', 'supervisor', 'final year project'],
+    summary: 'FYDP eligibility requirements (80 credits prerequisite), the CSE 4000A/B/C stages, passing grade, and waiver exemptions.',
     content: `The Final Year Design Project (FYDP) is the capstone requirement for the B.Sc. in CSE program.
 Key Rules:
 1. Prerequisites & Gatekeeper: Students must have completed at least 80 credits before registering for FYDP I (CSE 4000A - 2.0 credits).
-2. FYDP II: CSE 4000B (4.0 credits) is taken in the subsequent trimester upon satisfactory progress in CSE 4000A.
+2. FYDP Stages: The project carries 6.0 credits in total, split into three stages of 2.0 credits each - CSE 4000A (FYDP I), CSE 4000B (FYDP II) and CSE 4000C (FYDP III) - each taken upon satisfactory progress in the previous stage.
 3. Passing Requirement: A student must obtain at least a 'C' grade (2.00) in the final project defense to be eligible for graduation.
 4. Tuition Waiver Exemption: Under university regulations, Thesis and FYDP credits are 100% exempt from all merit scholarships and tuition waivers (0% discount applies).
 5. Group Formation: Students form project groups of 3 to 4 members and submit supervisor preference proposals during advising week.`,
@@ -135,7 +135,7 @@ Graduation Criteria:
    - BA in English & BSS MSJ: Tk. 5,525/- per credit.
    - Trimester Activity Fee: Tk. 6,500/- per trimester.
    - Semester Fee for B. Pharm: Tk. 9,750/- per semester.
-   - FYDP / Thesis Exemption: 0% waiver applies to capstone credits (CSE 4000A / 4000B).
+   - FYDP / Thesis Exemption: 0% waiver applies to capstone credits (CSE 4000A / 4000B / 4000C).
    - Retake Discount: 50% tuition waiver on first retake.
 3. Payment Installments (Trimester Programs):
    - At Registration: Initial deposit of Tk. 15,000/- (or partial payment).
