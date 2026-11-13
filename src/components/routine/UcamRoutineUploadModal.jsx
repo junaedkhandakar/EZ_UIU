@@ -9,7 +9,6 @@ import {
   AlertCircle,
   Download,
   ArrowRight,
-  Sparkles,
   BookOpen,
   User,
   Clock,

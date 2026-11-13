@@ -12,7 +12,6 @@ import {
   Mail,
   Compass,
   AlertCircle,
-  Sparkles,
   PhoneCall,
   CheckCircle2,
   ChevronRight,

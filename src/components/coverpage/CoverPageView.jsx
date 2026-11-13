@@ -10,7 +10,6 @@ import {
   Users,
   User,
   Check,
-  Sparkles,
   Building2,
   GraduationCap,
   Calendar,

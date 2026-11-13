@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import { motion } from 'motion/react';
-import { TrendingUp, Sparkles, AlertCircle, Award } from 'lucide-react';
+import { TrendingUp, AlertCircle, Award } from 'lucide-react';
 
 /**
  * Fritsch-Carlson Monotone Cubic Spline Interpolation.
