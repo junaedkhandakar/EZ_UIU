@@ -30,7 +30,6 @@ export default function CommandPalette({
   setActiveTab,
   onAddCourse,
   onOpenUcam,
-  onLoadDemo,
   onExportCSV,
 }) {
   const { theme, toggle: toggleTheme } = useTheme();
@@ -235,7 +234,7 @@ export default function CommandPalette({
     );
 
     return [...matchedEggs, ...filteredActions, ...courseMatches];
-  }, [query, theme, setActiveTab, onClose, toggleTheme, onOpenUcam, onLoadDemo, onExportCSV, onAddCourse, showToast]);
+  }, [query, theme, setActiveTab, onClose, toggleTheme, onOpenUcam, onExportCSV, onAddCourse, showToast]);
 
   const handleKeyDown = (e) => {
     if (e.key === 'ArrowDown') {

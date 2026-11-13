@@ -216,7 +216,8 @@ export function generateRecommendedBasket({
       continue;
     }
 
-    if (currentCredits + candidateCredit > targetCredits + 1.5) {
+    // UIU courses carry whole credits only, so the basket never exceeds the target load
+    if (currentCredits + candidateCredit > targetCredits) {
       continue;
     }
 
@@ -277,7 +278,7 @@ export function generateRecommendedBasket({
 export function generateFullDegreeRoadmap({
   completedCourses = [],
   currentCgpa = 3.0,
-  maxCreditsPerSem = 13.5,
+  maxCreditsPerSem = 15,
   selectedMajor = 'Software Engineering',
 }) {
   const passedSet = new Set(Array.from(getPassedCoursesSet(completedCourses)));
@@ -497,7 +498,8 @@ export function calculateDegreeTimeline({
   const safeCompleted = Math.max(0, completedCredits);
   const remainingCredits = Math.max(0, totalDegreeCredits - safeCompleted);
   const remainingTrimesters = Math.max(1, targetTrimester - currentTrimester + 1);
-  const creditsPerTermNeeded = parseFloat((remainingCredits / remainingTrimesters).toFixed(1));
+  // UIU credits are whole numbers, so the required load rounds up to the next full credit
+  const creditsPerTermNeeded = Math.ceil(remainingCredits / remainingTrimesters);
 
   let paceStatus = 'ON_TRACK';
   let paceLabel = 'Comfortable Pace';
@@ -511,7 +513,7 @@ export function calculateDegreeTimeline({
     paceStatus = 'OVERLOAD';
     paceLabel = 'Heavy Overload Risk';
     paceColor = 'text-bad';
-  } else if (creditsPerTermNeeded > 13) {
+  } else if (creditsPerTermNeeded > 12) {
     paceStatus = 'HEAVY';
     paceLabel = 'Moderate / High Pace';
     paceColor = 'text-warn';

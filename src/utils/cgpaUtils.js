@@ -378,7 +378,7 @@ export function parseCSV(text) {
     const trimester = (termIdx >= 0 ? cols[termIdx] : cols[0]) || '';
     const courseId = (idIdx >= 0 ? cols[idIdx] : cols[1]) || '';
     const courseName = (nameIdx >= 0 ? cols[nameIdx] : cols[2]) || '';
-    const credit = parseFloat(creditIdx >= 0 ? cols[creditIdx] : cols[3]) || 3;
+    const credit = Math.round(parseFloat(creditIdx >= 0 ? cols[creditIdx] : cols[3])) || 3;
     let grade = (gradeIdx >= 0 ? cols[gradeIdx] : cols[4]) || '';
     let status = (statusIdx >= 0 ? cols[statusIdx] : cols[5]) || '';
 

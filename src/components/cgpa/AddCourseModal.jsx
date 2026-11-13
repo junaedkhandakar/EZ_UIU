@@ -44,7 +44,7 @@ export function AddCourseModal({ isOpen, onClose, onAddCourse, defaultTerm = '25
       trimester: trimester.trim() || '251',
       courseId: courseId.trim().toUpperCase(),
       courseName: courseName.trim() || courseId.trim().toUpperCase(),
-      credit: parseFloat(credit) || 3,
+      credit: Math.round(parseFloat(credit)) || 3,
       grade,
       status: grade ? '' : 'Running',
     });
@@ -126,8 +126,8 @@ export function AddCourseModal({ isOpen, onClose, onAddCourse, defaultTerm = '25
             <label className={labelCls}>Credits</label>
             <input
               type="number"
-              step="0.5"
-              min="0.5"
+              step="1"
+              min="1"
               max="12"
               required
               value={credit}

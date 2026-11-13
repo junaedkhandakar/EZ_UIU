@@ -203,9 +203,9 @@ export function TuitionView({ courses = [], settings = {}, defaultDept = 'regula
                 <input
                   type="number"
                   min="0"
-                  step="0.5"
+                  step="1"
                   value={credits}
-                  onChange={(e) => setCredits(parseFloat(e.target.value) || 0)}
+                  onChange={(e) => setCredits(Math.round(parseFloat(e.target.value)) || 0)}
                   className={`${inputCls} num font-mono font-semibold`}
                 />
                 {routineSummary.totalCredits > 0 ? (
@@ -268,9 +268,9 @@ export function TuitionView({ courses = [], settings = {}, defaultDept = 'regula
                 <input
                   type="number"
                   min="0"
-                  step="0.5"
+                  step="1"
                   value={thesisCredits}
-                  onChange={(e) => setThesisCredits(parseFloat(e.target.value) || 0)}
+                  onChange={(e) => setThesisCredits(Math.round(parseFloat(e.target.value)) || 0)}
                   className={`${inputCls} num font-mono`}
                 />
                 {routineSummary.hasFydp && (
@@ -284,9 +284,9 @@ export function TuitionView({ courses = [], settings = {}, defaultDept = 'regula
                 <input
                   type="number"
                   min="0"
-                  step="0.5"
+                  step="1"
                   value={retakeCredits}
-                  onChange={(e) => setRetakeCredits(parseFloat(e.target.value) || 0)}
+                  onChange={(e) => setRetakeCredits(Math.round(parseFloat(e.target.value)) || 0)}
                   className={`${inputCls} num font-mono`}
                 />
               </div>

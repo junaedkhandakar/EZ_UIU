@@ -486,9 +486,6 @@ export function CgpaView({
                 <Button variant="secondary" icon={Upload} onClick={() => fileRef.current?.click()}>
                   Import CSV file
                 </Button>
-                <Button variant="secondary" icon={Sparkles} onClick={loadDemo}>
-                  Load demo transcript
-                </Button>
                 <Button variant="danger" icon={RotateCcw} onClick={resetAll}>
                   Clear all data
                 </Button>
