@@ -1,20 +1,108 @@
-import { ALL_COURSES, ADVISOR_COURSE_MAP, MAJOR_TRACKS, GED_ELECTIVES } from '../data/advisorData';
+/**
+ * EZ_UIU - Academic Advisor Engine
+ *
+ * Three layers:
+ *
+ *   1. Deterministic tools (advisorTools.js) compute every number about a
+ *      student. The advisor never asks a language model to do arithmetic on a
+ *      transcript.
+ *   2. The rule engine (generateAIAnswer) answers policy questions offline
+ *      from the same verified clauses the RAG index uses, so the offline mode
+ *      is not a second, weaker source of truth.
+ *   3. The serverless model (queryUniversalAIAdvisor) receives the retrieved
+ *      clauses as its only policy source and the tool results as facts.
+ *
+ * The prompts are deliberately flat: no cheerleading, no invented facts, no
+ * filler, and an explicit instruction to say when the published UIU documents
+ * do not answer the question.
+ */
+
+import {
+  MAJOR_TRACKS,
+  LEGACY_MAJOR_TRACKS,
+  CURRENT_MAJOR_MIN_ELECTIVES,
+  TOTAL_ELECTIVES_REQUIRED,
+  ELECTIVE_TRIMESTERS,
+  GED_TRIMESTERS,
+  COURSE_CATEGORY,
+} from '../data/advisorData';
 import { GRADE_POINTS } from './cgpaUtils';
 import { retrieveRelevantDocuments, buildRagAugmentedPrompt } from './ragEngine';
 import { promptCache } from './cacheUtils';
+import {
+  normalizeCode,
+  ALL_COURSES,
+  findCourse,
+  getPassedCoursesSet,
+  getRunningCoursesSet,
+  computeTranscriptStats,
+  evaluateProbation,
+  evaluateFydpEligibility,
+  evaluateDegreeProgress,
+  evaluateSpecializationProgress,
+  evaluateElectiveProgress,
+  estimateTuition,
+  meritScholarshipOutlook,
+  detectExamConflicts,
+  estimateCurrentTrimester,
+  describeStanding,
+  projectCgpa,
+  GED_OPTIONAL_COUNT,
+  MERIT_SCHOLARSHIP_GPA,
+  MIN_CREDITS_PER_TRIMESTER,
+  FYDP_MIN_CREDITS,
+  GRADUATION_CGPA_MINIMUM,
+  DEGREE_CREDITS,
+  TUITION_PER_CREDIT,
+  TUITION_PER_CREDIT_DISCOUNTED,
+  TRIMESTER_FEE,
+} from './advisorTools';
 
-const SLOT_ORDER = ['T1', 'T2', 'T3'];
+export {
+  normalizeCode,
+  findCourse,
+  getPassedCoursesSet,
+  computeTranscriptStats,
+  evaluateProbation,
+  evaluateFydpEligibility,
+  evaluateDegreeProgress,
+  evaluateSpecializationProgress,
+  evaluateElectiveProgress,
+  estimateTuition,
+  meritScholarshipOutlook,
+  detectExamConflicts,
+  describeStanding,
+  projectCgpa,
+};
 
+/**
+ * Free models that exist in the live OpenRouter catalogue. The serverless
+ * function re-checks this list at request time and drops any model that has
+ * been retired, so a stale entry here cannot break the auto cascade.
+ */
 export const FREE_MODELS_CASCADE = [
-  'deepseek/deepseek-r1:free',
-  'google/gemini-2.0-flash-exp:free',
+  'nvidia/nemotron-3.5-lightning:free',
+  'google/gemma-4-31b-it:free',
+  'qwen/qwen3.5-flash-02-23:free',
+  'deepseek/deepseek-v3.2:free',
+  'mistralai/mistral-3b-2512:free',
   'meta-llama/llama-3.3-70b-instruct:free',
-  'qwen/qwen-2.5-coder-32b-instruct:free',
-  'mistralai/mistral-7b-instruct:free',
+  'google/gemini-2.5-flash-lite:free',
 ];
 
 /**
- * Supported AI providers and the model list exposed to students
+ * Paid models a student can pick if the deployment has a funded key.
+ */
+export const PAID_MODELS = [
+  { id: 'deepseek/deepseek-chat', name: 'DeepSeek Chat' },
+  { id: 'openai/gpt-4o-mini', name: 'GPT-4o Mini' },
+  { id: 'google/gemini-2.5-flash', name: 'Gemini 2.5 Flash' },
+  { id: 'qwen/qwen3-235b-a22b', name: 'Qwen 3 235B' },
+  { id: 'mistralai/mistral-large-2512', name: 'Mistral Large' },
+];
+
+/**
+ * Supported AI providers and the model list exposed to students.
  */
 export const AI_PROVIDERS = {
   openrouter: {
@@ -22,17 +110,12 @@ export const AI_PROVIDERS = {
     name: 'OpenRouter AI',
     badge: 'Online',
     description:
-      'Answers from hosted AI models, falling back to the built-in regulations reference when unavailable.',
+      'Answers grounded in the retrieved UIU policy clauses. Falls back to the built-in regulations engine when the hosted models are unavailable.',
     requiresKey: false,
     models: [
       { id: 'auto-free', name: 'Auto (recommended)' },
-      { id: 'deepseek/deepseek-r1:free', name: 'DeepSeek R1' },
-      { id: 'google/gemini-2.0-flash-exp:free', name: 'Gemini 2.0 Flash' },
-      { id: 'meta-llama/llama-3.3-70b-instruct:free', name: 'Llama 3.3 70B' },
-      { id: 'qwen/qwen-2.5-coder-32b-instruct:free', name: 'Qwen 2.5 Coder 32B' },
-      { id: 'deepseek/deepseek-chat', name: 'DeepSeek V3' },
-      { id: 'anthropic/claude-3.5-sonnet', name: 'Claude 3.5 Sonnet' },
-      { id: 'openai/gpt-4o-mini', name: 'GPT-4o Mini' },
+      ...FREE_MODELS_CASCADE.map((id) => ({ id, name: id.split('/').pop().replace(':free', '') })),
+      ...PAID_MODELS,
     ],
     defaultModel: 'auto-free',
   },
@@ -41,325 +124,353 @@ export const AI_PROVIDERS = {
     name: 'UIU Regulations Engine',
     badge: 'Offline',
     description:
-      'A built-in reference of official UIU academic policies. Works without a connection.',
+      'Answers from the verified UIU policy clauses stored in the app. Works without a connection.',
     requiresKey: false,
     models: [{ id: 'rule-engine', name: 'UIU Regulations Engine' }],
     defaultModel: 'rule-engine',
   },
 };
 
-/**
- * Normalize course codes: "CSE1115", "cse 1115" -> "CSE 1115"
- */
-export function normalizeCode(code) {
-  if (!code) return '';
-  const clean = String(code).toUpperCase().trim();
-  const match = clean.match(/^([A-Z]{2,4})\s*(\d{4}[A-Z]?)$/);
-  if (match) return `${match[1]} ${match[2]}`;
-  return clean;
-}
-
-export function findCourse(code) {
-  const norm = normalizeCode(code);
-  return ADVISOR_COURSE_MAP[norm] || null;
-}
+/* ------------------------------------------------------------------ *
+ * Prerequisite logic
+ * ------------------------------------------------------------------ */
 
 /**
- * Get set of passed course codes from student course record
- */
-export function getPassedCoursesSet(courseList = []) {
-  const passed = new Set();
-  courseList.forEach((c) => {
-    const code = normalizeCode(c.courseId || c.course_code);
-    const grade = (c.grade || '').toUpperCase();
-    if (code && grade && grade !== 'F' && grade !== 'W' && (GRADE_POINTS[grade] || 0) >= 1.0) {
-      passed.add(code);
-    }
-  });
-  return passed;
-}
-
-/**
- * Check if all prerequisites are met for a given course
+ * Are all prerequisites met for a course?
  */
 export function arePrerequisitesMet(course, passedSet) {
-  if (!course.prerequisites || course.prerequisites.length === 0) return true;
+  if (!course?.prerequisites?.length) return true;
   return course.prerequisites.every((prereq) => passedSet.has(normalizeCode(prereq)));
 }
 
 /**
- * Calculate how many future downstream courses this course unlocks
+ * How many downstream courses a course unlocks, and how many of those unlock
+ * further. Used to prioritise bottleneck courses.
  */
 export function calculateUnlockingPower(targetCode, passedSet) {
   const code = normalizeCode(targetCode);
-  let directUnlockCount = 0;
-  let indirectUnlockCount = 0;
+  let direct = 0;
+  let indirect = 0;
 
-  ALL_COURSES.forEach((other) => {
+  for (const other of ALL_COURSES) {
     const otherCode = normalizeCode(other.course_code);
-    if (passedSet.has(otherCode) || otherCode === code) return;
+    if (passedSet.has(otherCode) || otherCode === code) continue;
 
     const prereqs = (other.prerequisites || []).map(normalizeCode);
-    if (prereqs.includes(code)) {
-      directUnlockCount++;
-      const missingCount = prereqs.filter((p) => !passedSet.has(p) && p !== code).length;
-      if (missingCount === 0) {
-        indirectUnlockCount += 2;
-      }
-    }
-  });
+    if (!prereqs.includes(code)) continue;
 
-  return directUnlockCount * 3 + indirectUnlockCount;
-}
-
-/**
- * Detect exam slot conflicts and tight exam pairs
- */
-export function detectExamConflicts(courseBasket = []) {
-  const conflicts = [];
-  const tightExams = [];
-
-  for (let i = 0; i < courseBasket.length; i++) {
-    for (let j = i + 1; j < courseBasket.length; j++) {
-      const a = courseBasket[i];
-      const b = courseBasket[j];
-      if (a.exam_day && b.exam_day && a.exam_day === b.exam_day) {
-        if (a.exam_slot && b.exam_slot && a.exam_slot === b.exam_slot) {
-          conflicts.push({
-            courseA: a.course_code,
-            courseB: b.course_code,
-            day: a.exam_day,
-            slot: a.exam_slot,
-            desc: `Both ${a.course_code} and ${b.course_code} have final exams on ${a.exam_day} at ${a.exam_slot}`,
-          });
-        } else if (a.exam_slot && b.exam_slot) {
-          const gap = Math.abs(SLOT_ORDER.indexOf(a.exam_slot) - SLOT_ORDER.indexOf(b.exam_slot));
-          if (gap === 1) {
-            tightExams.push({
-              courseA: a.course_code,
-              courseB: b.course_code,
-              day: a.exam_day,
-              slots: `${a.exam_slot} & ${b.exam_slot}`,
-              desc: `Back-to-back exams on ${a.exam_day}: ${a.course_code} (${a.exam_slot}) & ${b.course_code} (${b.exam_slot})`,
-            });
-          }
-        }
-      }
-    }
+    direct++;
+    const missing = prereqs.filter((p) => !passedSet.has(p) && p !== code);
+    if (missing.length === 0) indirect += 2;
   }
-  return { conflicts, tightExams };
+
+  return direct * 3 + indirect;
 }
 
 /**
- * Generate optimal Next-Trimester Recommended Course Basket
+ * Prerequisites a course is still missing.
+ */
+export function missingPrerequisites(course, passedSet) {
+  if (!course?.prerequisites?.length) return [];
+  return course.prerequisites
+    .map(normalizeCode)
+    .filter((p) => !passedSet.has(p));
+}
+
+/* ------------------------------------------------------------------ *
+ * Recommended basket
+ * ------------------------------------------------------------------ */
+
+/**
+ * Choose the next trimester's courses.
+ *
+ * The basket respects the official 9-credit scholarship floor as a soft
+ * target, prefers courses the student is eligible for, avoids exam-slot
+ * collisions, and prioritises bottleneck courses so the plan does not stall.
  */
 export function generateRecommendedBasket({
   completedCourses = [],
   currentCgpa = 3.0,
   targetCredits = 12,
   selectedMajor = '',
+  excludedCodes = [],
 }) {
   const passedSet = getPassedCoursesSet(completedCourses);
+  const runningSet = getRunningCoursesSet(completedCourses);
+  const excluded = new Set(excludedCodes.map(normalizeCode));
 
-  const eligibleCourses = ALL_COURSES.filter((course) => {
+  const eligible = ALL_COURSES.filter((course) => {
     const code = normalizeCode(course.course_code);
-    if (passedSet.has(code)) return false;
-    return arePrerequisitesMet(course, passedSet);
+    if (passedSet.has(code) || runningSet.has(code) || excluded.has(code)) return false;
+    if (!arePrerequisitesMet(course, passedSet)) return false;
+    // FYDP needs the credit gate and a supervisor, so it is never auto-offered.
+    if (course.category === COURSE_CATEGORY.PROJECT) return false;
+    return true;
   });
 
-  const scoredCourses = eligibleCourses.map((course) => {
-    const code = normalizeCode(course.course_code);
-    const unlockingScore = calculateUnlockingPower(code, passedSet);
-    const difficulty = (course.difficulty || 'Medium').toLowerCase();
+  const majorCodes = selectedMajor
+    ? new Set(
+        (MAJOR_TRACKS[selectedMajor]?.courses || LEGACY_MAJOR_TRACKS[selectedMajor]?.courses || []).map(
+          (c) => normalizeCode(c.course_code)
+        )
+      )
+    : null;
 
-    let priorityScore = unlockingScore * 4;
+  const scored = eligible
+    .map((course) => {
+      const code = normalizeCode(course.course_code);
+      let score = 0;
+      const reasons = [];
 
-    if (course.trimester) {
-      priorityScore += Math.max(0, (12 - course.trimester) * 5);
-    }
-
-    if (course.type === 'Core') priorityScore += 25;
-    else if (course.type === 'Lab') priorityScore += 15;
-
-    if (selectedMajor && MAJOR_TRACKS[selectedMajor]) {
-      const majorCodes = MAJOR_TRACKS[selectedMajor].courses.map((c) => normalizeCode(c.course_code));
-      if (majorCodes.includes(code)) {
-        priorityScore += 30;
+      const unlocking = calculateUnlockingPower(code, passedSet);
+      if (unlocking >= 6) {
+        score += unlocking * 4;
+        reasons.push('Unlocks later courses');
       }
-    }
 
-    if (currentCgpa < 2.5 && difficulty === 'hard') {
-      priorityScore -= 40;
-    } else if (currentCgpa >= 3.5 && difficulty === 'hard') {
-      priorityScore += 10;
-    }
+      if (course.category === COURSE_CATEGORY.CORE) {
+        score += 25;
+        reasons.push('Core course');
+      } else if (course.category === COURSE_CATEGORY.ELECTIVE) {
+        score += 5;
+      }
 
-    return {
-      ...course,
-      priorityScore,
-      unlockingScore,
-      reasonTags: [],
-    };
-  });
+      if (majorCodes?.has(code)) {
+        score += 30;
+        reasons.push(`${selectedMajor} elective`);
+      }
 
-  scoredCourses.sort((a, b) => b.priorityScore - a.priorityScore);
+      // Official trimester order is a soft guide, not a hard rule.
+      if (course.trimester && course.trimester <= 12) {
+        score += Math.max(0, 12 - course.trimester) * 3;
+      }
+
+      // Probation caps the load; a low CGPA should not add heavy courses.
+      const heavy = isHeavyCourse(course);
+      if (currentCgpa < 2.0 && heavy) {
+        score -= 40;
+      } else if (currentCgpa >= 3.5 && heavy) {
+        score += 8;
+      }
+
+      return { ...course, priorityScore: score, unlockingScore: unlocking, reasons };
+    })
+    .sort((a, b) => b.priorityScore - a.priorityScore);
 
   const basket = [];
   let currentCredits = 0;
-  let hardCourseCount = 0;
+  let heavyCount = 0;
+  const heavyLimit = currentCgpa < 2.5 ? 1 : 2;
 
-  for (const candidate of scoredCourses) {
-    const candidateCredit = candidate.credit || 3;
-    const diff = (candidate.difficulty || 'Medium').toLowerCase();
+  for (const candidate of scored) {
+    const credit = candidate.credit || 3;
+    if (currentCredits + credit > targetCredits) continue;
 
-    if (diff === 'hard' && hardCourseCount >= (currentCgpa >= 3.0 ? 2 : 1)) {
-      continue;
-    }
+    const heavy = isHeavyCourse(candidate);
+    if (heavy && heavyCount >= heavyLimit) continue;
 
-    // UIU courses carry whole credits only, so the basket never exceeds the target load
-    if (currentCredits + candidateCredit > targetCredits) {
-      continue;
-    }
+    const { conflicts } = detectExamConflicts([...basket, candidate]);
+    if (conflicts.length) continue;
 
-    const testBasket = [...basket, candidate];
-    const { conflicts } = detectExamConflicts(testBasket);
-    if (conflicts.length > 0) {
-      continue;
-    }
-
-    const reasons = [];
-    if (candidate.unlockingScore >= 6) {
-      reasons.push(`Key Bottleneck (Unlocks ${Math.round(candidate.unlockingScore / 3)}+ courses)`);
-    }
-    if (candidate.type === 'Core') reasons.push('Required Core');
-    if (candidate.type === 'Lab') reasons.push('Practical Lab');
-    if (selectedMajor && MAJOR_TRACKS[selectedMajor]?.courses.some((c) => normalizeCode(c.course_code) === normalizeCode(candidate.course_code))) {
-      reasons.push(`${selectedMajor} Elective`);
-    }
-
-    basket.push({
-      ...candidate,
-      reasons: reasons.slice(0, 2),
-    });
-
-    currentCredits += candidateCredit;
-    if (diff === 'hard') hardCourseCount++;
-
+    basket.push(candidate);
+    currentCredits += credit;
+    if (heavy) heavyCount++;
     if (currentCredits >= targetCredits) break;
-  }
-
-  let workloadGrade = 'Balanced';
-  let workloadColor = 'text-ok';
-  if (hardCourseCount >= 2 && currentCredits >= 13) {
-    workloadGrade = 'Demanding Workload';
-    workloadColor = 'text-warn';
-  } else if (currentCredits > 15) {
-    workloadGrade = 'Heavy Overload';
-    workloadColor = 'text-bad';
   }
 
   const { conflicts, tightExams } = detectExamConflicts(basket);
 
+  let workloadGrade = 'Balanced';
+  let workloadTone = 'ok';
+  if (heavyCount >= 2 && currentCredits >= 13) {
+    workloadGrade = 'Demanding';
+    workloadTone = 'warn';
+  } else if (currentCredits > 15) {
+    workloadGrade = 'Overloaded';
+    workloadTone = 'bad';
+  }
+
   return {
     basket,
     totalCredits: currentCredits,
-    hardCourseCount,
+    heavyCourseCount: heavyCount,
     workloadGrade,
-    workloadColor,
-    eligibleCount: eligibleCourses.length,
+    workloadTone,
+    eligibleCount: eligible.length,
     examConflicts: conflicts,
     tightExams,
+    belowScholarshipFloor: currentCredits < MIN_CREDITS_PER_TRIMESTER,
+    scholarshipFloor: MIN_CREDITS_PER_TRIMESTER,
   };
 }
 
 /**
- * Full Multi-Trimester Degree Auto-Planner (Semester by Semester to 138/141 cr)
+ * Heavy courses, judged by credits and by being core theory courses at the
+ * back end of the plan.
+ */
+function isHeavyCourse(course) {
+  const code = normalizeCode(course.course_code);
+  const heavy = new Set([
+    'CSE 2217',
+    'CSE 2233',
+    'CSE 3313',
+    'CSE 4325',
+    'CSE 4509',
+    'CSE 3811',
+    'CSE 4889',
+    'MATH 2183',
+    'MATH 2205',
+    'CSE 4531',
+  ]);
+  return heavy.has(code) || ((course.credit || 3) >= 3 && course.category === COURSE_CATEGORY.CORE);
+}
+
+/* ------------------------------------------------------------------ *
+ * Full degree roadmap
+ * ------------------------------------------------------------------ */
+
+/**
+ * Plan the remaining courses across the remaining trimesters.
+ *
+ * The plan follows the official course sequence wherever the official
+ * prerequisites allow, then fills the remaining seats with electives and
+ * general education optionals. It never schedules a course whose
+ * prerequisites are not yet met.
  */
 export function generateFullDegreeRoadmap({
   completedCourses = [],
   currentCgpa = 3.0,
-  maxCreditsPerSem = 15,
-  selectedMajor = 'Software Engineering',
+  maxCreditsPerSem = 14,
+  selectedMajor = 'AI & Data Science',
 }) {
-  const passedSet = new Set(Array.from(getPassedCoursesSet(completedCourses)));
-  const completedCr = Array.from(passedSet).reduce((sum, code) => {
-    const c = findCourse(code);
-    return sum + (c?.credit || 3);
-  }, 0);
-
-  const startSem = Math.min(12, Math.max(1, Math.ceil(completedCr / 12) + 1));
-  const plannedSemesters = [];
+  const passedSet = getPassedCoursesSet(completedCourses);
   const plannedCodes = new Set(passedSet);
+  const stats = computeTranscriptStats(completedCourses);
+  const startSem = estimateCurrentTrimester(stats.earnedCredits);
 
-  const majorElectives = (MAJOR_TRACKS[selectedMajor]?.courses || []).map((c) => ({
+  const planned = [];
+
+  const majorCourses = (MAJOR_TRACKS[selectedMajor]?.courses || []).map((c) => ({
     ...c,
-    category: 'MAJOR_ELECTIVE',
+    category: COURSE_CATEGORY.ELECTIVE,
+    group: 'Elective',
   }));
 
+  const electivesTaken = new Set();
+  const gedTaken = new Set();
+
   for (let sem = startSem; sem <= 12; sem++) {
-    let semCredits = 0;
     const semCourses = [];
+    let semCredits = 0;
 
-    // Step 1: Core courses for this curriculum trimester or earlier
-    const uncompletedCore = ALL_COURSES.filter((c) => {
-      const code = normalizeCode(c.course_code);
-      if (plannedCodes.has(code) || c.category === 'MAJOR_ELECTIVE') return false;
-      return arePrerequisitesMet(c, plannedCodes);
-    }).sort((a, b) => {
-      const powerA = calculateUnlockingPower(a.course_code, plannedCodes);
-      const powerB = calculateUnlockingPower(b.course_code, plannedCodes);
-      return powerB - powerA;
-    });
+    const add = (course) => {
+      const credit = course.credit || 3;
+      if (semCredits + credit > maxCreditsPerSem) return false;
+      semCourses.push(course);
+      semCredits += credit;
+      plannedCodes.add(normalizeCode(course.course_code));
+      return true;
+    };
 
-    for (const c of uncompletedCore) {
-      if (semCredits + c.credit <= maxCreditsPerSem) {
-        semCourses.push(c);
-        semCredits += c.credit;
-        plannedCodes.add(normalizeCode(c.course_code));
+    // 1. The courses the official sequence puts in this trimester.
+    //    A laboratory often sits in the same trimester as its theory course,
+    //    so the pool is re-scanned after every addition until it stops
+    //    yielding anything. A course that does not fit this trimester is
+    //    skipped for the rest of the trimester, so the scan terminates.
+    const tooBigThisTerm = new Set();
+
+    let addedOfficial = true;
+    while (addedOfficial) {
+      addedOfficial = false;
+
+      const official = ALL_COURSES.filter(
+        (c) =>
+          c.trimester === sem &&
+          !plannedCodes.has(normalizeCode(c.course_code)) &&
+          !tooBigThisTerm.has(normalizeCode(c.course_code)) &&
+          arePrerequisitesMet(c, plannedCodes)
+      ).sort(
+        (a, b) =>
+          calculateUnlockingPower(b.course_code, plannedCodes) -
+          calculateUnlockingPower(a.course_code, plannedCodes)
+      );
+
+      for (const course of official) {
+        const code = normalizeCode(course.course_code);
+        if (course.category === COURSE_CATEGORY.ELECTIVE) electivesTaken.add(code);
+        if (course.category === COURSE_CATEGORY.GED) gedTaken.add(code);
+        if (add(course)) {
+          addedOfficial = true;
+        } else {
+          tooBigThisTerm.add(code);
+        }
       }
     }
 
-    // Step 2: Major electives if room left
-    for (const c of majorElectives) {
-      const code = normalizeCode(c.course_code);
+    // 2. Electives from the selected specialisation, then any other elective.
+    //    The official sequence opens these seats in trimesters 10 to 12, so
+    //    they are not pulled forward into the earlier terms.
+    const electivePool =
+      ELECTIVE_TRIMESTERS.includes(sem)
+        ? [
+            ...majorCourses.filter((c) => !plannedCodes.has(normalizeCode(c.course_code))),
+            ...ALL_COURSES.filter(
+              (c) =>
+                c.category === COURSE_CATEGORY.ELECTIVE &&
+                !plannedCodes.has(normalizeCode(c.course_code)) &&
+                !majorCourses.some((m) => normalizeCode(m.course_code) === normalizeCode(c.course_code))
+            ),
+          ]
+        : [];
+
+    for (const course of electivePool) {
+      const code = normalizeCode(course.course_code);
       if (plannedCodes.has(code)) continue;
-      if (!arePrerequisitesMet(c, plannedCodes)) continue;
+      if (electivesTaken.size >= TOTAL_ELECTIVES_REQUIRED) break;
+      if (!arePrerequisitesMet(course, plannedCodes)) continue;
 
-      if (semCredits + c.credit <= maxCreditsPerSem) {
-        semCourses.push(c);
-        semCredits += c.credit;
-        plannedCodes.add(code);
-      }
+      if (!add(course)) continue;
+      electivesTaken.add(code);
     }
 
-    // Step 3: GED open credit electives
-    for (const c of GED_ELECTIVES) {
-      const code = normalizeCode(c.course_code);
+    // 3. General education optionals, three of them, also from trimester 10.
+    const gedPool = GED_TRIMESTERS.includes(sem)
+      ? ALL_COURSES.filter(
+          (c) =>
+            c.category === COURSE_CATEGORY.GED &&
+            !plannedCodes.has(normalizeCode(c.course_code))
+        )
+      : [];
+
+    for (const course of gedPool) {
+      const code = normalizeCode(course.course_code);
       if (plannedCodes.has(code)) continue;
-      if (semCredits + c.credit <= maxCreditsPerSem) {
-        semCourses.push(c);
-        semCredits += c.credit;
-        plannedCodes.add(code);
-      }
+      if (gedTaken.size >= GED_OPTIONAL_COUNT) break;
+      if (!arePrerequisitesMet(course, plannedCodes)) continue;
+
+      if (!add(course)) continue;
+      gedTaken.add(code);
     }
 
-    if (semCourses.length > 0) {
-      plannedSemesters.push({
+    if (semCourses.length) {
+      planned.push({
         trimesterNum: sem,
         title: `Trimester ${sem}`,
         credits: semCredits,
         courses: semCourses,
       });
     }
-
-    if (plannedCodes.size >= ALL_COURSES.length) break;
   }
 
-  return plannedSemesters;
+  return planned;
 }
 
+/* ------------------------------------------------------------------ *
+ * Custom schedule auditor
+ * ------------------------------------------------------------------ */
+
 /**
- * Custom Course Schedule Auditor ("Can I Take These Together?")
+ * Audit a hand-picked set of courses.
  */
 export function auditCustomSchedule({
   selectedCodes = [],
@@ -367,36 +478,31 @@ export function auditCustomSchedule({
   currentCgpa = 3.0,
 }) {
   const passedSet = getPassedCoursesSet(completedCourses);
+  const runningSet = getRunningCoursesSet(completedCourses);
   const validCourses = [];
   const blockedCourses = [];
   let totalCredits = 0;
-  let hardCount = 0;
+  let heavyCount = 0;
 
   selectedCodes.forEach((rawCode) => {
     const code = normalizeCode(rawCode);
     const course = findCourse(code);
 
     if (!course) {
-      blockedCourses.push({
-        code,
-        reason: 'Course not recognized in curriculum database',
-      });
+      blockedCourses.push({ code, reason: 'Not a course in the official curriculum' });
       return;
     }
-
     if (passedSet.has(code)) {
-      blockedCourses.push({
-        code,
-        course,
-        reason: 'Already passed this course in previous trimester',
-      });
+      blockedCourses.push({ code, course, reason: 'Already passed' });
+      return;
+    }
+    if (runningSet.has(code)) {
+      blockedCourses.push({ code, course, reason: 'Already registered this trimester' });
       return;
     }
 
-    if (!arePrerequisitesMet(course, passedSet)) {
-      const missing = (course.prerequisites || []).filter(
-        (p) => !passedSet.has(normalizeCode(p))
-      );
+    const missing = missingPrerequisites(course, passedSet);
+    if (missing.length) {
       blockedCourses.push({
         code,
         course,
@@ -406,24 +512,39 @@ export function auditCustomSchedule({
       return;
     }
 
+    if (course.category === COURSE_CATEGORY.PROJECT) {
+      const fydp = evaluateFydpEligibility({ completedCourses, currentCgpa });
+      if (!fydp.eligible) {
+        blockedCourses.push({
+          code,
+          course,
+          reason:
+            fydp.basis === 'credit-gate-not-met'
+              ? `FYDP-I needs ${FYDP_MIN_CREDITS} completed credits. You have ${fydp.earnedCredits}.`
+              : 'FYDP is restricted to 4th-year students.',
+        });
+        return;
+      }
+    }
+
     validCourses.push(course);
     totalCredits += course.credit || 3;
-    if ((course.difficulty || '').toLowerCase() === 'hard') hardCount++;
+    if (isHeavyCourse(course)) heavyCount++;
   });
 
   const { conflicts, tightExams } = detectExamConflicts(validCourses);
 
   let workloadStatus = 'SAFE';
-  let workloadMsg = 'Balanced workload with safe exam spacing';
-  if (conflicts.length > 0) {
+  let workloadMsg = 'Balanced load with no exam-slot collision';
+  if (conflicts.length) {
     workloadStatus = 'CLASH';
-    workloadMsg = 'Critical: Final exam slot collision detected!';
-  } else if (hardCount >= 2 && totalCredits >= 12) {
+    workloadMsg = 'Two courses share the same exam day and slot';
+  } else if (heavyCount >= 2 && totalCredits >= 12) {
     workloadStatus = 'HEAVY';
-    workloadMsg = 'Demanding: 2+ Hard courses in the same trimester';
+    workloadMsg = 'Two or more heavy courses in the same trimester';
   } else if (totalCredits > 15) {
     workloadStatus = 'OVERLOAD';
-    workloadMsg = 'Overload: Exceeds standard 15-credit load';
+    workloadMsg = 'Above the standard 15-credit load';
   }
 
   return {
@@ -432,16 +553,20 @@ export function auditCustomSchedule({
     examConflicts: conflicts,
     tightExams,
     totalCredits,
-    hardCount,
+    heavyCount,
     workloadStatus,
     workloadMsg,
+    belowScholarshipFloor: totalCredits < MIN_CREDITS_PER_TRIMESTER,
     isValid: blockedCourses.length === 0 && conflicts.length === 0,
   };
 }
 
+/* ------------------------------------------------------------------ *
+ * Prerequisite tree
+ * ------------------------------------------------------------------ */
+
 /**
- * Recursive Prerequisite Chain Resolver
- * Finds the entire tree of prerequisites required to unlock a target course
+ * Every prerequisite standing between the student and a target course.
  */
 export function getPrerequisiteTree(targetCode, completedCourses = []) {
   const norm = normalizeCode(targetCode);
@@ -453,25 +578,23 @@ export function getPrerequisiteTree(targetCode, completedCourses = []) {
   const chain = [];
 
   function traverse(code, depth = 0) {
-    const c = findCourse(code);
-    if (!c || visited.has(code)) return;
+    if (visited.has(code)) return;
     visited.add(code);
 
-    const isTarget = code === norm;
-    const isPassed = passedSet.has(code);
+    const course = findCourse(code);
+    if (!course) return;
 
-    (c.prerequisites || []).forEach((prereq) => {
+    for (const prereq of course.prerequisites || []) {
       traverse(normalizeCode(prereq), depth + 1);
-    });
+    }
 
-    if (!isTarget) {
+    if (code !== norm) {
       chain.push({
-        code: c.course_code,
-        name: c.course_name,
-        credit: c.credit,
-        difficulty: c.difficulty,
+        code: course.course_code,
+        name: course.course_name,
+        credit: course.credit,
+        isPassed: passedSet.has(code),
         depth,
-        isPassed,
       });
     }
   }
@@ -483,45 +606,54 @@ export function getPrerequisiteTree(targetCode, completedCourses = []) {
     isTargetPassed: passedSet.has(norm),
     arePrereqsMet: arePrerequisitesMet(target, passedSet),
     prerequisitesList: chain,
+    missingCount: chain.filter((c) => !c.isPassed).length,
   };
 }
 
+/* ------------------------------------------------------------------ *
+ * Graduation timeline
+ * ------------------------------------------------------------------ */
+
 /**
- * Calculate graduation timeline, pacing, and FYDP readiness
+ * The graduation timeline shown in the roadmap tab.
+ *
+ * It wraps the deterministic progress tools and flattens them into the field
+ * names the UI reads. The FYDP gate uses the official 85-credit requirement
+ * from the FYDP Handbook, not the 80-credit figure the app used before.
  */
 export function calculateDegreeTimeline({
+  completedCourses = [],
   completedCredits = 0,
-  totalDegreeCredits = 138,
-  currentTrimester = 4,
+  totalDegreeCredits = DEGREE_CREDITS.current,
+  currentTrimester = null,
   targetTrimester = 12,
+  cgpa = null,
 }) {
-  const safeCompleted = Math.max(0, completedCredits);
+  const progress = evaluateDegreeProgress({
+    completedCourses,
+    totalDegreeCredits,
+    currentTrimester,
+    targetTrimester,
+    cgpa,
+  });
+
+  // A transcript may be absent while a manual credit count is present.
+  const safeCompleted = completedCourses.length
+    ? progress.earnedCredits
+    : Math.min(Number(completedCredits) || 0, totalDegreeCredits);
+
   const remainingCredits = Math.max(0, totalDegreeCredits - safeCompleted);
-  const remainingTrimesters = Math.max(1, targetTrimester - currentTrimester + 1);
-  // UIU credits are whole numbers, so the required load rounds up to the next full credit
+  const remainingTrimesters = Math.max(1, targetTrimester - progress.currentTrimester + 1);
   const creditsPerTermNeeded = Math.ceil(remainingCredits / remainingTrimesters);
 
-  let paceStatus = 'ON_TRACK';
-  let paceLabel = 'Comfortable Pace';
-  let paceColor = 'text-ok';
+  const paceColor =
+    progress.paceTone === 'bad'
+      ? 'text-red-500'
+      : progress.paceTone === 'warn'
+        ? 'text-amber-500'
+        : 'text-ok';
 
-  if (remainingCredits <= 0) {
-    paceStatus = 'COMPLETED';
-    paceLabel = 'Degree Requirements Completed';
-    paceColor = 'text-ok';
-  } else if (creditsPerTermNeeded > 15) {
-    paceStatus = 'OVERLOAD';
-    paceLabel = 'Heavy Overload Risk';
-    paceColor = 'text-bad';
-  } else if (creditsPerTermNeeded > 12) {
-    paceStatus = 'HEAVY';
-    paceLabel = 'Moderate / High Pace';
-    paceColor = 'text-warn';
-  }
-
-  const FYDP_MIN_CREDITS = 80;
-  const fydpEligible = safeCompleted >= FYDP_MIN_CREDITS;
-  const creditsToFydp = Math.max(0, FYDP_MIN_CREDITS - safeCompleted);
+  const fydpCreditsNeeded = Math.max(0, FYDP_MIN_CREDITS - safeCompleted);
 
   return {
     safeCompleted,
@@ -529,164 +661,320 @@ export function calculateDegreeTimeline({
     remainingCredits,
     remainingTrimesters,
     creditsPerTermNeeded,
-    paceStatus,
-    paceLabel,
+    paceLabel: progress.paceLabel,
     paceColor,
-    fydpEligible,
-    creditsToFydp,
-    fydpMinCredits: FYDP_MIN_CREDITS,
+    currentTrimester: progress.currentTrimester,
+    cgpa: progress.cgpa,
+    standing: progress.standing,
+    fydpEligible: progress.fydp.eligible,
+    fydpBasis: progress.fydp.basis,
+    creditsToFydp: fydpCreditsNeeded,
+    fydpRequiredCredits: FYDP_MIN_CREDITS,
+    fydpHeadline: progress.fydp.headline,
+    fydpRequirements: progress.fydp.requirements,
+    sources: progress.sources,
   };
 }
 
+/* ------------------------------------------------------------------ *
+ * System prompt
+ * ------------------------------------------------------------------ */
+
 /**
- * Verified Official UIU System Prompt injected across all AI models
+ * The instruction block sent to every hosted model.
  */
 export function buildUIUSystemPrompt(studentContext = {}) {
-  return `
-You are the official AI Academic Advisor for United International University (UIU) in Dhaka, Bangladesh.
-You assist UIU students with curriculum advising, course registration, prerequisite chains, honors graduation, and tuition fee policies.
+  const cgpa = studentContext.cgpa;
+  const hasRecord = typeof cgpa === 'number' && cgpa > 0;
 
-Official UIU Policies (Verified & Strictly Enforced):
-1. Degree Credit Requirements:
-   - B.Sc. in CSE (Summer 2026 Batch onwards): 141.0 credits total (requires 4 track elective courses).
-   - B.Sc. in CSE (Prior Batches): 138.0 credits total (requires 3 track elective courses) or 137.0 credits (Spring 2023 - Spring 2026).
-   - B. Pharm: 165.0 credits (Semester-based).
-2. Official Grading Scale:
-   - A (4.00): 90% – 100% (Outstanding)
-   - A- (3.67): 86% – <90% (Excellent)
-   - B+ (3.33): 82% – <86% (Good)
-   - B (3.00): 78% – <82% (Average)
-   - B- (2.67): 74% – <78% (Below Average)
-   - C+ (2.33): 70% – <74% (Satisfactory)
-   - C (2.00): 66% – <70% (Pass)
-   - C- (1.67): 62% – <66% (Pass)
-   - D+ (1.33): 58% – <62% (Pass)
-   - D (1.00): 55% – <58% (Lowest Passing Grade)
-   - F (0.00): Below 55% (Fail)
-   - Passing Grade: Minimum grade to pass any course is 'D' (1.00). Minimum CGPA for graduation is 2.00.
-3. Convocation Latin Honors:
-   - Summa Cum Laude: CGPA >= 3.90
-   - Magna Cum Laude: CGPA >= 3.80
-   - Cum Laude: CGPA >= 3.75
-4. Academic Probation Policy:
-   - Maintaining a CGPA below 2.00 results in Academic Probation.
-   - For undergraduate students with < 60 completed credits, a maximum of 3 probation notices are served in consecutive terms.
-   - If Term GPA >= 2.00 during the 3rd probation, student is allowed to continue; if Term GPA < 2.00, dismissed.
-   - Term registration strictly capped at 9–12 credits per trimester.
-   - Department changes are strictly forbidden while on probation.
-5. Retake & Repeat Policy:
-   - Permitted for courses with grade C+ or below (C+, C, C-, D+, D, F).
-   - 50% Course Fee Waiver: Automatically waived by 50% for the first time retaken.
-   - Grade Replacement: The new grade completely replaces the old grade in the CGPA formula (marked with 'R' on official transcript).
-6. Merit Scholarships & Tuition Waivers:
-   - Minimum GPA requirement: GPA >= 3.50 in the preceding trimester exam.
-   - Distribution in order of merit:
-     • Top 2% of program: 100% Tuition Fee Waiver
-     • Next 4% of program: 50% Tuition Fee Waiver
-     • Next 4% of program: 25% Tuition Fee Waiver
-   - Minimum Credit Load: Must register for at least 9 credits in a trimester (14 credits for Pharmacy).
-   - Exclusions: Waivers do NOT apply to Thesis/FYDP, Retake/Repeat courses, Projects, or Internships.
-   - Only the single highest waiver applies (no stacking).
-   - Incomplete ('I') grade or improvement exams in a term forfeit merit scholarship in the following term.
-7. Final Year Design Project (FYDP):
-   - CSE 4000A (FYDP I), CSE 4000B (FYDP II) and CSE 4000C (FYDP III), 2 credits each (6 credits total).
-   - Gatekeeper: Must have at least 80 credits completed before registering for CSE 4000A.
-   - Graduation requirement: Must pass FYDP with at least a 'C' grade.
-   - Exempt from all tuition waivers (0% waiver).
-8. Attendance & Final Exams:
-   - Minimum 80% class attendance required to be eligible for final examinations.
-   - Final Exam Slots: T1 (9:00 AM – 11:00 AM), T2 (11:30 AM – 1:30 PM), T3 (2:00 PM – 4:00 PM / 2:30 PM – 4:30 PM).
-9. Tuition & Fees Structure:
-   - Regular/CSE: Tk. 6,500/- per credit (Batch ≥ 241) or Tk. 5,525/- (Batch < 241); English/MSJ: Tk. 5,525/- per credit.
-   - Trimester Activity Fee: Tk. 6,500/- per trimester.
-   - Installment Schedule: 40% (during registration/advising), 30% (before midterm exam), 30% (before final exam).
+  return `You are the academic advisor for United International University (UIU), Dhaka.
 
-Student Profile & Current Academic Record:
-- Current CGPA: ${studentContext.cgpa || 'N/A'}
-- Completed Credits: ${studentContext.completedCredits || 0} cr
-- Completed Courses: ${(studentContext.completedCourseCodes || []).join(', ') || 'None'}
-- Selected Major Track: ${studentContext.selectedMajor || 'General CSE'}
+WHAT YOU ARE ANSWERING FROM
+Only the policy clauses supplied in the user message. They are transcribed from official UIU pages and carry a source link. If a question needs a rule that is not in those clauses, say the published UIU documents do not cover it and name the office that decides it. Do not supply a number, fee, deadline, threshold or date that is not in the clauses.
 
-Instructions:
-- Answer in plain, direct language with short paragraphs and bullets. Use a table only for genuinely tabular data.
-- Cite the document title when you state a rule, minimum, deadline or fee.
-- Never invent policy. If the sources do not cover it, say so.
-- No preamble, no filler like "Great question", no emojis, no jokes or pop-culture references, no exclamation marks.
+HOW TO WRITE
+- Start with the answer. No preamble, no restating the question, no closing summary.
+- Plain language, short paragraphs, bullets where they help.
+- Use a table only for genuinely tabular data, such as the grading scale.
+- Name the source document when you state a rule, minimum, deadline or fee.
+- Do not invent deadlines for the current trimester. UIU republishes the academic calendar each trimester; point the student at the Calendar tab or the academic calendar page.
+
+STYLE
+- No hype, no encouragement padding, no emoji, no jokes, no exclamation marks, no rhetorical questions.
+- No "Great question", no "Let's dive in", no summary of your own answer.
 - Markdown only: bold, lists, tables. Never HTML.
-`;
+- Use the second person. Be direct.
+
+STUDENT RECORD
+- CGPA: ${hasRecord ? cgpa.toFixed(2) : 'not imported'}
+- Completed credits: ${studentContext.completedCredits ?? 0}
+- Completed courses: ${(studentContext.completedCourseCodes || []).join(', ') || 'none imported'}
+- Selected specialisation: ${studentContext.selectedMajor || 'not selected'}
+- Current trimester: ${studentContext.currentTrimester ?? 'not set'}
+
+STUDENT-SPECIFIC NUMBERS
+When a question is about the student's own record, the computed tool results are authoritative. Use those figures exactly. Do not recompute them and do not soften them.`;
 }
 
+/* ------------------------------------------------------------------ *
+ * Offline rule engine
+ * ------------------------------------------------------------------ */
+
 /**
- * Intelligent Academic Q&A Rule-Engine (100% Client-side Offline Engine)
+ * Answer a policy question from the verified knowledge base, offline.
+ *
+ * The engine routes by intent, runs the matching deterministic tools, and
+ * renders the answer from the retrieved clauses. It never guesses.
  */
 export function generateAIAnswer(query, context = {}) {
-  const q = (query || '').toLowerCase();
-  const cgpa = typeof context.cgpa === 'number' ? context.cgpa : 0;
-  const completedCr = context.completedCredits || 0;
+  const q = String(query || '').toLowerCase();
+  const completedCourses = context.completedCourses || [];
+  const cgpa = typeof context.cgpa === 'number' ? context.cgpa : null;
+  const stats = computeTranscriptStats(completedCourses);
+  const earnedCredits = context.completedCredits ?? stats.earnedCredits;
 
-  const PROBATION_ANSWER = `**UIU academic probation rules**\n\n• **Threshold:** CGPA below 2.00 places you on academic probation.\n• **Notice limit:** Under 60 completed credits, a maximum of 3 consecutive probation notices.\n• **3rd probation:** Term GPA of 2.00 or above lets you continue; below 2.00 means dismissal.\n• **Registration cap:** 9 to 12 credits per trimester while on probation.\n• **Department transfers** are not allowed while on probation.\n• **Recovery:** Retaking low-credit F or D courses first replaces the old grade points directly.`;
+  const sources = {
+    probation: 'https://www.uiu.ac.bd/academics/probation-policy/',
+    grading: 'https://www.uiu.ac.bd/academics/grading/',
+    waiver:
+      'https://www.uiu.ac.bd/admission/tuition-fees-payment-policies/scholarship-tuition-fee-and-other-fees-waiver-policy/',
+    fees: 'https://www.uiu.ac.bd/admission/tuition-fees-payment-policies/tuition-fees-waiver/',
+    policies: 'https://www.uiu.ac.bd/academics/academic-information-policies/',
+    curriculum:
+      'https://cse.uiu.ac.bd/wp-content/uploads/sites/3/2026/04/BSCSE_Curriculum__UIU_2026.pdf',
+    fydp:
+      'https://cse.uiu.ac.bd/wp-content/uploads/sites/3/2025/09/FYDP_Handbookv1_FINAL.pdf',
+  };
 
-  if (q.includes('fydp') || q.includes('thesis') || q.includes('project')) {
-    if (completedCr >= 80) {
-      return `**You are eligible for FYDP I (CSE 4000A).**\n\n• **Requirement:** UIU requires 80 completed credits before registering for Final Year Design Project I.\n• **Passing grade:** FYDP must be passed with at least a 'C' to graduate.\n• **Tuition:** FYDP/thesis credits get 0% tuition waiver.\n\nStart forming your group and finalizing your supervisor before advising week.`;
+  const cite = (label, url) => `\n\n*Source: [${label}](${url})*`;
+
+  // ---- FYDP ----
+  if (/(fydp|final year design|thesis|capstone|supervisor|project\s*(i|ii|iii)\b)/.test(q)) {
+    const result = evaluateFydpEligibility({
+      completedCourses,
+      currentTrimester: context.currentTrimester,
+    });
+
+    if (result.basis === 'already-started') {
+      return `**FYDP sequence status**\n\n${result.headline}\n\n${result.requirements
+        .map((r) => `- ${r}`)
+        .join('\n')}${cite('FYDP Handbook v1.0', sources.fydp)}`;
     }
-    return `**FYDP eligibility**\n\n• **Your status:** ${completedCr} completed credits.\n• **Requirement:** UIU Department of CSE requires 80 completed credits before registering for CSE 4000A.\n• **Gap:** ${80 - completedCr} credits remaining.\n• **Tuition:** FYDP/thesis credits get 0% tuition waiver.`;
+
+    return `**FYDP-I eligibility**\n\n${result.headline}\n\n- **Credit gate:** at least ${FYDP_MIN_CREDITS} credits must be completed before FYDP-I. You have ${result.earnedCredits}.\n${
+      result.creditGap > 0 ? `- **Gap:** ${result.creditGap} credits still to earn.\n` : ''
+    }- **Trimester:** FYDP is restricted to 4th-year students, so it opens from trimester 9.\n\n${result.requirements
+      .map((r) => `- ${r}`)
+      .join('\n')}${cite('FYDP Handbook v1.0', sources.fydp)}`;
   }
 
-  if (q.includes('retake') || q.includes('repeat')) {
-    return `**UIU retake & repeat policy**\n\n• **Eligibility:** Retakes are allowed for C+, C, C-, D+, D and F.\n• **Grade replacement:** The new grade replaces the old one in your CGPA. The earlier attempt stays marked 'R' on the transcript with zero grade points.\n• **Fee:** First retake of a course is automatically waived 50%.\n• **Merit waivers** do not stack with retakes.`;
+  // ---- Probation ----
+  if (/(probation|dismissal|dismissed|suspended|low cgpa|warning letter)/.test(q)) {
+    const result = evaluateProbation({ completedCourses, cgpa });
+    const lines = [`**Academic probation**\n\n${result.headline}\n`];
+    if (result.onProbation) {
+      lines.push(`- **Credit band:** ${result.creditBand}.\n`);
+      lines.push(result.actions.map((a) => `- ${a}`).join('\n'));
+    } else {
+      lines.push(result.actions.map((a) => `- ${a}`).join('\n'));
+    }
+    return lines.join('\n') + cite('UIU Probation Policy 2025', sources.probation);
   }
 
-  if (q.includes('waiver') || q.includes('scholarship') || q.includes('merit')) {
-    return `**UIU merit scholarship & waiver policy**\n\n• **Minimum GPA:** 3.50 in the preceding trimester exam.\n• **Distribution by rank:**\n  - Top 2% of batch: 100% tuition waiver\n  - Next 4% of batch: 50% tuition waiver\n  - Next 4% of batch: 25% tuition waiver\n• **Minimum credit load:** At least 9 credits in the term (14 for Pharmacy).\n• **Exclusions:** No waiver on Thesis/FYDP, projects, internships or retakes.\n• **Stacking:** Only the single highest waiver applies.`;
+  // ---- Grading scale ----
+  if (/(grading scale|grade scale|marks|letter grade|what is an? ?a-|what is an? ?b\+|percentage.*grade|grade.*percentage)/.test(q) && !/cgpa|honou?rs|laude/.test(q)) {
+    return `**UIU grading scale**\n\n| Marks | Grade | Point | Assessment |\n| --- | --- | --- | --- |\n| 90-100 | A | 4.00 | Outstanding |\n| 86-89 | A- | 3.67 | Excellent |\n| 82-85 | B+ | 3.33 | Very Good |\n| 78-81 | B | 3.00 | Good |\n| 74-77 | B- | 2.67 | Above Average |\n| 70-73 | C+ | 2.33 | Average |\n| 66-69 | C | 2.00 | Below Average |\n| 62-65 | C- | 1.67 | Poor |\n| 58-61 | D+ | 1.33 | Very poor |\n| 55-57 | D | 1.00 | Pass |\n| 0-54 | F | 0.00 | Fail |\n\n- **Earned credit:** a course counts once you get D or above. An F does not count towards earned credits.\n- **Degree minimum:** CGPA 2.00 for undergraduate and graduate programmes.\n- **GPA:** weighted average of grade points in one trimester. **CGPA:** weighted average across all completed courses.${cite(
+      'UIU Grading & Performance Evaluation',
+      sources.grading
+    )}`;
   }
 
-  if (q.includes('probation')) {
-    return PROBATION_ANSWER;
+  // ---- Retake / repeat ----
+  if (/(retake|repeat|redo|resit|improve my grade|backlog|failed course|f grade)/.test(q)) {
+    return `**Repeat and retake**\n\n- **Repeat:** an F in any course means you must repeat it with full tuition payment.\n- **Retake:** you may take a course again to improve a grade. Retake also carries full tuition payment.\n- **Transcript:** repeated and retaken courses appear on your transcript as 'R'.\n- **Fee:** course fee for each retake or repeat is waived by 50%, only for the first time.\n- **Scholarship:** you are not entitled to scholarship or tuition fee waiver for Repeat/Retake courses.\n- **Earned credit:** an F gives no earned credit, so you must retake that course.${cite(
+      'UIU Academic Information Policies',
+      sources.policies
+    )}`;
   }
 
-  if (q.includes('honors') || q.includes('laude') || q.includes('summa') || q.includes('magna') || q.includes('convocation')) {
-    return `**UIU convocation Latin honors**\n\n• **Summa Cum Laude:** CGPA ≥ 3.90\n• **Magna Cum Laude:** CGPA ≥ 3.80\n• **Cum Laude:** CGPA ≥ 3.75\n• **Good standing:** CGPA ≥ 2.00 (graduation minimum)\n\nConvocation honors also require a clear academic record without disciplinary sanctions.`;
+  // ---- Merit scholarship and waivers ----
+  if (/(waiver|scholarship|merit|top 2%|next 4%|sibling|freedom fighter|waived)/.test(q)) {
+    const outlook = meritScholarshipOutlook({
+      termGpa: cgpa ?? 0,
+      rankPercent: context.rankPercent ?? null,
+    });
+
+    const lines = [`**Merit scholarship on results**\n\n`];
+    lines.push(`- **Minimum GPA:** ${MERIT_SCHOLARSHIP_GPA.toFixed(2)} in the just-previous trimester exam. Below that you are not considered at all, even inside the top 10%.\n`);
+    lines.push(`- **Bands by rank in your programme:**\n  - Top 2%: 100%\n  - Next 4%: 50%\n  - Next 4%: 25%\n`);
+    lines.push(`- **Credit floor:** register at least ${MIN_CREDITS_PER_TRIMESTER} credits (14 for B. Pharm) in the scholarship-receiving trimester.\n`);
+    lines.push(`- **Credit parity:** you receive the scholarship for the same number of credits you earned it on. If you register more, you only get the waiver for the awarded number.\n`);
+    lines.push(`- **Exclusions:** no waiver on Thesis, Project, Internship, Retake or Repeat courses.\n`);
+    lines.push(`- **No stacking:** you may avail only the best one of the scholarships and waivers.\n`);
+    lines.push(`- **I-grade or improvement exam:** you lose scholarship eligibility for the following trimester.\n`);
+    if (cgpa != null) {
+      lines.push(`\n**Your record:** CGPA ${cgpa.toFixed(2)}. ${outlook.reason}`);
+    }
+    return lines.join('\n') + cite(
+      'UIU Scholarship, Tuition and Other Fees, Waiver Policy',
+      sources.waiver
+    );
   }
 
-  if (q.includes('fee') || q.includes('cost') || q.includes('tuition') || q.includes('installment')) {
-    return `**UIU tuition fees & payment schedule**\n\n• **Per credit:** Tk. 6,500/- for batch 241 and later, Tk. 5,525/- for earlier batches. English/MSJ: Tk. 5,525/-.\n• **Trimester activity fee:** Tk. 6,500/- (Tk. 9,750/- per semester for B. Pharm).\n• **Installments (3):**\n  - 40% during registration/advising\n  - 30% before midterm exams\n  - 30% before final exams\n• **Down payment:** Tk. 15,000 at registration, then 40/30/30 of the remaining balance.`;
+  // ---- Tuition and installments ----
+  if (/(fee|tuition|cost|installment|per credit|payment|charge)/.test(q)) {
+    const credits = context.credits ?? 12;
+    const estimate = estimateTuition({
+      credits,
+      perCreditFee: context.perCreditFee ?? TUITION_PER_CREDIT,
+      waiverRate: context.waiverRate ?? 0,
+      fydpCredits: context.fydpCredits ?? 0,
+      retakeCredits: context.retakeCredits ?? 0,
+      transport: context.transport ?? false,
+    });
+
+    const lines = [`**Tuition and payment**\n\n`];
+    lines.push(`- **Per credit:** Tk. ${TUITION_PER_CREDIT.toLocaleString('en-BD')} for BSCSE. BA English and BSSMSJ are Tk. ${TUITION_PER_CREDIT_DISCOUNTED.toLocaleString('en-BD')} per credit (15% discount).\n`);
+    lines.push(`- **Trimester fee:** Tk. ${TRIMESTER_FEE.toLocaleString('en-BD')}. B. Pharm pays a semester fee of Tk. 9,750 instead.\n`);
+    lines.push(`- **Formula:** credits taken x per-credit fee + trimester fee.\n`);
+    lines.push(`- **At registration:** Tk. 20,000 as partial payment before course registration.\n`);
+    lines.push(`- **Installments:** 40% during registration and advising, 30% before mid-term exams, 30% before final exams. Semester-based B. Pharm pays four equal 25% installments.\n`);
+    lines.push(`- **Admission fee:** Tk. 20,000, non-refundable. **Caution money:** Tk. 2,000 for the ID card, refundable.\n`);
+    lines.push(`- **Transportation:** Tk. 4,000 per trimester, paid in full with the first installment.\n`);
+    lines.push(`\n**Estimate for ${credits} credits with no waiver: Tk. ${estimate.totalPayable.toLocaleString('en-BD')}** (tuition Tk. ${estimate.netTuition.toLocaleString('en-BD')} + trimester fee Tk. ${estimate.trimesterFee.toLocaleString('en-BD')}).\n`);
+    return lines.join('\n') + cite('UIU Tuition Fees & Waivers', sources.fees);
   }
 
-  if (q.includes('grade') || q.includes('grading') || q.includes('scale') || q.includes('marks')) {
-    return `**UIU grading scale**\n\n| Score | Grade | Point | Assessment |\n| --- | --- | --- | --- |\n| 90–100% | A | 4.00 | Outstanding |\n| 86–<90% | A- | 3.67 | Excellent |\n| 82–<86% | B+ | 3.33 | Good |\n| 78–<82% | B | 3.00 | Average |\n| 74–<78% | B- | 2.67 | Below average |\n| 70–<74% | C+ | 2.33 | Satisfactory |\n| 66–<70% | C | 2.00 | Pass |\n| 62–<66% | C- | 1.67 | Pass |\n| 58–<62% | D+ | 1.33 | Pass |\n| 55–<58% | D | 1.00 | Lowest passing grade |\n| Below 55% | F | 0.00 | Fail |\n\nMinimum passing grade is D (1.00). Graduation requires a CGPA of at least 2.00.`;
+  // ---- Honours / convocation ----
+  if (/(honou?rs|laude|summa|magna|convocation|gold medal)/.test(q)) {
+    return `**Convocation honours**\n\nUIU does not publish the CGPA cut-offs for Summa Cum Laude, Magna Cum Laude or Cum Laude on its website, so there is no published number I can quote here.\n\n- **What is published:** the degree minimum is a final CGPA of 2.00 for undergraduate and graduate programmes.\n- **Who decides:** the Controller of Examinations sets convocation honours. Ask the Controller of Examinations' Office for the current thresholds and the medal rules for your convocation.\n- **Gold medal:** students who appear for an improvement exam may not be eligible for the Gold Medalist award.${cite(
+      'UIU Grading & Performance Evaluation and Academic Information Policies',
+      sources.grading
+    )}`;
   }
 
-  if (q.includes('attendance') || q.includes('absence')) {
-    return `**UIU class attendance rule**\n\n• 80% minimum attendance is required in every course.\n• Below 80% without approved medical documentation, you are debarred from that course's final examination.`;
+  // ---- Attendance ----
+  if (/(attendance|absent|absentee|80%|debarred)/.test(q)) {
+    return `**Class attendance**\n\n- A student must attend at least **80% of classes in every course** to be eligible to sit for the final exam.\n- Attendance is part of continuous evaluation, alongside quizzes, class participation, assignment work, case study and the mid-term and final examinations.${cite(
+      'UIU Academic Information Policies',
+      sources.policies
+    )}`;
   }
 
-  if (q.includes('exam slot') || q.includes('exam time') || q.includes('t1') || q.includes('t2') || q.includes('t3')) {
-    return `**UIU final exam slots**\n\n• **T1:** 9:00 AM – 11:00 AM\n• **T2:** 11:30 AM – 1:30 PM\n• **T3:** 2:00 PM – 4:00 PM (or 2:30 PM – 4:30 PM)\n\nThe Schedule Auditor tab flags same-day slot collisions before you register.`;
+  // ---- Exam slots ----
+  if (/(exam slot|exam time|exam day|clash|t1|t2|t3|exam schedule)/.test(q)) {
+    return `**Final examination slots**\n\n- UIU runs three examination slots across seven exam days.\n- Each course published in the Course Offerings notice carries an **Exam Day** and an **Exam Slot**.\n- Laboratory courses show N/A for both, because they have no written final.\n- The Schedule Auditor flags two courses that share the same exam day and slot, because a candidate cannot sit two exams in one slot.\n- The day and slot assignment changes every trimester. Read the current Course Offerings and Exam Routine notices from the Department of CSE, or check the Routine tab in this app.${cite(
+      'UIU CSE Course Offerings notice',
+      'https://cse.uiu.ac.bd/notice/course-offerings-bscse-fall-26/'
+    )}`;
   }
 
-  if (q.includes('incomplete') || q.includes('withdraw') || q.includes('grade change')) {
-    return `**UIU academic status rules**\n\n• **W (Withdrawn):** Course dropped inside the withdrawal window. No effect on CGPA.\n• **I (Incomplete):** Only for documented medical emergencies. Clear it by taking the exam in the next term, or it converts to F.\n• **Grade change:** Petitions go to the department head within the first week of the following trimester.`;
+  // ---- Registration and minimum credits ----
+  if (/(register|registration|advising|ucam|add drop|late registration|minimum credit)/.test(q)) {
+    return `**Registration**\n\n- **Minimum load:** undergraduates register a minimum of 9 credits per trimester. Graduate students register a minimum of 6.\n- **Advising:** faculty advisors advise students before registration, and students should consult their advisor when planning courses.\n- **Late registration:** registering after the scheduled date needs the Head of Department's permission and a late registration fee. The calendar publishes the last day without a fine and the last day with a fine of Tk. 500.\n- **Dropping:** a course may be dropped only within the Academic Calendar date, with the Head of Department's approval. The last day to drop with a W record is on the calendar.\n- **On probation:** pre-advising and registration in UCAM stay locked and your advisor unlocks UCAM after counselling.\n- **Payment:** Tk. 20,000 is due before registration, then 40% of the rest by the first installment date.${cite(
+      'UIU Academic Information Policies',
+      sources.policies
+    )}`;
   }
 
-  if (q.includes('data science') || q.includes('software') || q.includes('major') || q.includes('track') || q.includes('specialization')) {
-    return `**BSCSE major concentration tracks**\n\nUIU's CSE department offers 5 tracks:\n1. **Software Engineering** (CSE 4451, 4435, 4181, 4495, 4945)\n2. **AI & Data Science** (CSE 4889, 4891, 4817, 4893)\n3. **Network & Cybersecurity** (CSE 4783, 4777, 4791, 4779)\n4. **Systems & Cloud** (CSE 4621, 4587, 4511, 4515)\n5. **Computational Theory** (CSE 4611, 4633, 4635, 4637)\n\n**Rule:** 4 elective courses (12 credits) from your track for the Summer 2026+ curriculum, 3 for legacy batches, to declare the specialization on your transcript.`;
+  // ---- Withdraw / incomplete ----
+  if (/(withdraw|withdrawal|incomplete|\bi grade\b|grade change|drop the trimester)/.test(q)) {
+    return `**Withdrawal, incomplete grade and grade change**\n\n- **W (Withdrawn):** collect the form from the Program Office, get the course teacher's endorsement and the Head of Department's approval, then submit to the Registrar's Office within 7 days of the end of Mid-Term II. Tuition is not refunded.\n- **I (Incomplete):** granted only in exceptional cases after the mid-term. You must appear in the exam within 15 days from the start of the following trimester, otherwise the I turns into an F automatically.\n- **Scholarship:** an I in a trimester makes you ineligible for any UIU scholarship in that trimester.\n- **Grade change:** apply to the Head/Director/Coordinator of the department within 1 week of the start of the following trimester.\n- **Dropping a trimester:** allowed on medical or other valid grounds. Pay 50% of tuition fee, trimester fee and transport fee. Any extra deposit is adjusted against the next trimester, never refunded.${cite(
+      'UIU Academic Information Policies',
+      sources.policies
+    )}`;
   }
 
-  if (completedCr > 0 && cgpa < 2.0) {
-    return PROBATION_ANSWER;
+  // ---- Specialisation and tracks ----
+  if (/(major|track|specialisation|specialization|elective)/.test(q)) {
+    const lines = [`**Specialisation tracks**\n\n`];
+    lines.push(
+      `- **Current curriculum (Summer 2026 onwards):** you take five electives (15 credits) in trimesters 10 to 12. A specialisation is declared when at least **four** of them come from one area.\n`
+    );
+    lines.push(`- **Areas:** ${Object.keys(MAJOR_TRACKS).join(', ')}.\n`);
+    lines.push(
+      `- **Previous curriculum (Spring 2023 to Spring 2026):** at least **three** courses from one area, with these areas: ${Object.keys(LEGACY_MAJOR_TRACKS).join(', ')}.\n`
+    );
+    lines.push(`- **Industry Internship (CSE 3542):** it is an elective in every area, and you must complete all other credits before starting it.\n`);
+
+    if (completedCourses.length) {
+      const progress = evaluateElectiveProgress(completedCourses);
+      lines.push(
+        `\n**Your electives:** ${progress.completedCount} of ${progress.totalRequired} completed${
+          progress.bestTrack && progress.bestTrack.completedCount > 0
+            ? `. Strongest area: ${progress.bestTrack.name} (${progress.bestTrack.completedCount} course${progress.bestTrack.completedCount === 1 ? '' : 's'})`
+            : ''
+        }.`
+      );
+    }
+    return lines.join('\n') + cite('BSCSE Curriculum, Summer 2026 onwards', sources.curriculum);
   }
 
-  const record =
-    completedCr > 0
-      ? `Your record: CGPA ${cgpa.toFixed(2)}, ${completedCr} credits completed.`
-      : `No transcript imported yet, so this is based on general UIU regulations.`;
+  // ---- Degree credits and curriculum ----
+  if (/(how many credit|total credit|degree requirement|curriculum|141|138|graduat)/.test(q)) {
+    const lines = [`**B.Sc. CSE degree requirements**\n\n`];
+    lines.push(`- **Current curriculum (Summer 2026 onwards):** ${DEGREE_CREDITS.current} credit hours.\n`);
+    lines.push(`- **Previous curriculum (Spring 2023 to Spring 2026):** ${DEGREE_CREDITS.legacy} credit hours.\n`);
+    lines.push(`- **In both:** FYDP completed with at least a C, every course passed individually, and a final CGPA of at least 2.00.\n`);
+    lines.push(`- **Trimester load:** the official plan runs 9, 10, 11, 11, 13, 11, 11, 12, 13, 12, 14 and 14 credits.\n`);
 
-  return `I don't have a specific rule for that question in the offline reference.\n\n${record}\n\nI can answer questions about FYDP eligibility, retakes, merit waivers, probation, tuition and installments, grading, attendance, exam slots and major tracks. Reconnect for answers beyond those topics.`;
+    if (completedCourses.length || earnedCredits) {
+      const progress = evaluateDegreeProgress({ completedCourses, cgpa });
+      lines.push(
+        `\n**Your record:** ${progress.earnedCredits} of ${progress.totalCredits} credits earned. ${
+          progress.remainingCredits > 0
+            ? `${progress.remainingCredits} credits left over ${progress.remainingTrimesters} trimester${
+                progress.remainingTrimesters === 1 ? '' : 's'
+              }, which needs about ${progress.creditsPerTermNeeded} credits per trimester.`
+            : 'You have met the credit requirement.'
+        }`
+      );
+    }
+    return lines.join('\n') + cite('BSCSE Curriculum, Summer 2026 onwards', sources.curriculum);
+  }
+
+  // ---- Internship ----
+  if (/(internship|industrial attachment|3542)/.test(q)) {
+    return `**Industry Internship (CSE 3542)**\n\n- It is a 3-credit elective listed in every specialisation area of the curriculum.\n- **Prerequisite:** completion of all credits except CSE 3542. You finish your academic requirements first, then do the internship.\n- Internship credits are excluded from every scholarship and tuition fee waiver.${cite(
+      'BSCSE Curriculum, Summer 2026 onwards',
+      sources.curriculum
+    )}`;
+  }
+
+  // ---- Degree standing of this student ----
+  if (cgpa != null && cgpa < GRADUATION_CGPA_MINIMUM) {
+    const result = evaluateProbation({ completedCourses, cgpa });
+    return `**Academic probation**\n\n${result.headline}\n\n${result.actions
+      .map((a) => `- ${a}`)
+      .join('\n')}${cite('UIU Probation Policy 2025', sources.probation)}`;
+  }
+
+  // ---- Fallback: RAG over the verified knowledge base ----
+  const retrieved = retrieveRelevantDocuments(query, 3);
+  if (retrieved.length) {
+    const body = retrieved
+      .map(
+        (doc) =>
+          `**${doc.title}**\n${doc.summary}\n\n> ${doc.snippet.split('\n').slice(0, 4).join('\n')}\n\n*Source: [${doc.source}](${doc.url})*`
+      )
+      .join('\n\n---\n\n');
+    return body;
+  }
+
+  return `The published UIU documents do not cover that question.\n\n${
+    completedCourses.length
+      ? `Your record: CGPA ${cgpa != null ? cgpa.toFixed(2) : 'not imported'}, ${earnedCredits} credits completed.\n\n`
+      : 'No transcript is imported yet, so this is general policy.\n\n'
+  }I can answer questions on FYDP eligibility, probation, retakes, merit waivers, tuition and installments, the grading scale, attendance, exam slots, registration rules, specialisation tracks and the degree curriculum. For anything else, the Registrar's Office and the Department of CSE publish the answer.`;
 }
 
+/* ------------------------------------------------------------------ *
+ * Serverless connector
+ * ------------------------------------------------------------------ */
+
 /**
- * Universal AI Academic Advisor Connector with RAG retrieval, a client response cache, and multi-turn memory.
+ * Ask the hosted model, grounded in the retrieved clauses and the computed
+ * tool results, with a local fallback to the rule engine.
  */
 export async function queryUniversalAIAdvisor({
   provider = 'openrouter',
@@ -701,11 +989,9 @@ export async function queryUniversalAIAdvisor({
   if (!cleanPrompt) throw new Error('Question prompt cannot be empty.');
   const startTime = Date.now();
 
-  // Step 1: Perform RAG Document Retrieval over verified UIU knowledge base
-  const retrievedSources = retrieveRelevantDocuments(cleanPrompt, 3);
-
-  // Step 2: Check the client-side response cache
+  const retrievedSources = retrieveRelevantDocuments(cleanPrompt, 4);
   const chosenModel = model || AI_PROVIDERS[provider]?.defaultModel || 'auto-free';
+
   if (!bypassCache && provider !== 'offline') {
     const cached = promptCache.get({
       prompt: cleanPrompt,
@@ -716,84 +1002,75 @@ export async function queryUniversalAIAdvisor({
       major: studentContext.selectedMajor,
     });
     if (cached) {
-      return {
-        ...cached,
-        retrievedSources,
-        isClientCached: true,
-        latencyMs: 0,
-      };
+      return { ...cached, retrievedSources, isClientCached: true, latencyMs: 0 };
     }
   }
 
-  // Step 3: Build RAG-augmented prompt embedding verified policy clauses
   const augmentedPrompt = buildRagAugmentedPrompt({
     query: cleanPrompt,
     studentContext,
     retrievedDocs: retrievedSources,
   });
 
-  // Provider 1: Offline Engine
   if (provider === 'offline') {
-    const offlineReply = generateAIAnswer(cleanPrompt, studentContext);
     return {
-      text: offlineReply,
+      text: generateAIAnswer(cleanPrompt, studentContext),
       retrievedSources,
       latencyMs: Date.now() - startTime,
       isClientCached: false,
+      provider: 'UIU Regulations Engine',
     };
   }
 
   const systemInstructions = buildUIUSystemPrompt(studentContext);
 
-  // Serverless Cloud AI (Vercel): Queries /api/chat which uses OPENROUTER_API_KEY from Vercel environment
-  if (provider === 'openrouter') {
-    try {
-      const serverlessRes = await fetch('/api/chat', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          provider: 'openrouter',
-          model: chosenModel,
-          prompt: cleanPrompt,
-          augmentedPrompt,
-          systemInstructions,
-          conversationHistory,
-          studentContext,
-        }),
-      });
+  try {
+    const serverlessRes = await fetch('/api/chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        provider: 'openrouter',
+        model: chosenModel,
+        prompt: cleanPrompt,
+        augmentedPrompt,
+        systemInstructions,
+        conversationHistory,
+        studentContext,
+      }),
+    });
 
-      if (serverlessRes.ok) {
-        const json = await serverlessRes.json();
-        if (json?.text) {
-          const resultPayload = {
-            text: json.text,
-            retrievedSources,
-            usage: json.usage || {},
-            latencyMs: json.latencyMs || Date.now() - startTime,
-            isClientCached: false,
-            isServerless: true,
-            model: json.model || chosenModel,
-          };
+    if (serverlessRes.ok) {
+      const json = await serverlessRes.json();
+      if (json?.text) {
+        const payload = {
+          text: json.text,
+          retrievedSources,
+          usage: json.usage || {},
+          latencyMs: json.latencyMs || Date.now() - startTime,
+          isClientCached: false,
+          isServerless: true,
+          model: json.model || chosenModel,
+        };
 
-          promptCache.set(
-            {
-              prompt: cleanPrompt,
-              model: chosenModel,
-              provider,
-              cgpa: studentContext.cgpa,
-              completedCredits: studentContext.completedCredits,
-              major: studentContext.selectedMajor,
-            },
-            resultPayload
-          );
+        promptCache.set(
+          {
+            prompt: cleanPrompt,
+            model: chosenModel,
+            provider,
+            cgpa: studentContext.cgpa,
+            completedCredits: studentContext.completedCredits,
+            major: studentContext.selectedMajor,
+          },
+          payload
+        );
 
-          return resultPayload;
-        }
+        return payload;
       }
-    } catch {}
+    }
+  } catch {
+    /* fall through to the offline engine */
   }
 
-  // Fallback to verified deterministic UIU regulations engine (zero network/setup needed)
   return {
     text: generateAIAnswer(cleanPrompt, studentContext),
     retrievedSources,
@@ -802,56 +1079,61 @@ export async function queryUniversalAIAdvisor({
     provider: 'UIU Regulations Engine',
   };
 }
-
 /**
- * Generate context-aware follow-up question suggestions
+ * Follow-up questions, chosen from the intent that was just answered.
  */
 export function generateFollowUpSuggestions(query = '', reply = '') {
-  const q = (query + ' ' + reply).toLowerCase();
+  const q = `${query} ${reply}`.toLowerCase();
   const suggestions = [];
 
-  if (q.includes('fydp') || q.includes('thesis')) {
+  if (/(fydp|thesis|capstone|project)/.test(q)) {
+    suggestions.push('How many credits do I need before FYDP-I?');
     suggestions.push('What grade do I need in FYDP to graduate?');
-    suggestions.push('Can I get a scholarship waiver on FYDP credits?');
-    suggestions.push('What are the prerequisites for CSE 4000B?');
-  } else if (q.includes('retake') || q.includes('repeat')) {
-    suggestions.push('How much is the tuition fee for a retake course?');
-    suggestions.push('Will the old grade show on my transcript?');
+    suggestions.push('What are the requirements for CSE 4000B?');
+  } else if (/(retake|repeat|f grade|fail)/.test(q)) {
+    suggestions.push('How much is the tuition fee for a retake?');
+    suggestions.push('Does the old grade stay on my transcript?');
     suggestions.push('Can I retake a course if I got a B-?');
-  } else if (q.includes('waiver') || q.includes('scholarship')) {
+  } else if (/(waiver|scholarship|merit)/.test(q)) {
     suggestions.push('What is the minimum credit load for a scholarship?');
-    suggestions.push('Does UIU have a sibling waiver discount?');
-    suggestions.push('What happens if I take an Incomplete grade?');
-  } else if (q.includes('probation') || q.includes('cgpa')) {
-    suggestions.push('How many probation notices can I get before dismissal?');
+    suggestions.push('How much is the transportation fee?');
+    suggestions.push('What happens to my scholarship if I get an I grade?');
+  } else if (/(probation|dismissal)/.test(q)) {
+    suggestions.push('How many probation notices can I get?');
     suggestions.push('Can I change my department while on probation?');
-    suggestions.push('What is the maximum credit limit on probation?');
-  } else if (q.includes('fee') || q.includes('tuition') || q.includes('installment')) {
-    suggestions.push('What are the 3 installment payment deadlines?');
+    suggestions.push('What is the minimum credit load on probation?');
+  } else if (/(fee|tuition|installment|cost)/.test(q)) {
+    suggestions.push('What are the three installment deadlines?');
     suggestions.push('What is the per-credit fee for BSCSE?');
-    suggestions.push('Is there a late fee penalty at UIU?');
-  } else if (q.includes('track') || q.includes('major') || q.includes('specialization')) {
-    suggestions.push('How many elective courses do I need for Software Engineering?');
-    suggestions.push('What courses are in the AI & Data Science track?');
-    suggestions.push('Can I take electives from different tracks?');
+    suggestions.push('How much is the trimester fee?');
+  } else if (/(major|track|specialisation|elective)/.test(q)) {
+    suggestions.push('How many electives do I need for my specialisation?');
+    suggestions.push('Which courses are in the AI & Data Science area?');
+    suggestions.push('Can I take electives from two different areas?');
+  } else if (/(attendance|absent)/.test(q)) {
+    suggestions.push('What happens if I miss the attendance requirement?');
+    suggestions.push('Is attendance part of the grade?');
+  } else if (/(exam slot|clash|t1|t2|t3)/.test(q)) {
+    suggestions.push('How does the Schedule Auditor detect a clash?');
+    suggestions.push('When is the exam routine published?');
   } else {
-    suggestions.push('What are the requirements for Summa Cum Laude?');
-    suggestions.push('When do final exam schedules get published?');
-    suggestions.push('What is the minimum attendance required for finals?');
+    suggestions.push('What are the requirements for FYDP-I?');
+    suggestions.push('How does the merit scholarship work?');
+    suggestions.push('What is the minimum passing grade?');
   }
 
   return suggestions.slice(0, 3);
 }
 
 /**
- * Detects if EZ_UIU is deployed on Vercel with serverless AI environment variables configured
+ * Detect whether the app is deployed with a working serverless AI endpoint.
  */
 export async function checkVercelServerlessStatus() {
   try {
     const res = await fetch('/api/chat', { method: 'GET' });
-    if (res.ok) {
-      return await res.json();
-    }
-  } catch {}
+    if (res.ok) return await res.json();
+  } catch {
+    /* not deployed or offline */
+  }
   return null;
 }

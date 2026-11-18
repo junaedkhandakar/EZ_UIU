@@ -130,7 +130,7 @@ export default function GradeChart({ history = [] }) {
           }`}
         >
           <Award className="h-3.5 w-3.5" />
-          Honors Thresholds {showHonorsThresholds ? 'ON' : 'OFF'}
+          Published Thresholds {showHonorsThresholds ? 'ON' : 'OFF'}
         </button>
       </div>
 
@@ -172,64 +172,26 @@ export default function GradeChart({ history = [] }) {
             </g>
           ))}
 
-          {/* Honors Threshold Lines & Non-Colliding Staggered Labels */}
+          {/* Published UIU thresholds: probation 2.00, merit scholarship 3.50 */}
           {showHonorsThresholds && (
             <>
-              {/* Summa Cum Laude 3.90 */}
+              {/* Merit Scholarship GPA 3.50 — UIU Scholarship Policy item 04 */}
               <line
                 x1={m.left}
                 x2={W - m.right}
-                y1={y(3.90)}
-                y2={y(3.90)}
-                stroke="#c084fc"
-                strokeOpacity="0.5"
-                strokeDasharray="3 4"
-              />
-              <text
-                x={W - m.right}
-                y={y(3.90) - 5}
-                textAnchor="end"
-                className="fill-purple-400 text-[9px] font-bold tracking-wider"
-              >
-                SUMMA 3.90
-              </text>
-
-              {/* Magna Cum Laude 3.80 — Staggered horizontally to prevent collision */}
-              <line
-                x1={m.left}
-                x2={W - m.right}
-                y1={y(3.80)}
-                y2={y(3.80)}
+                y1={y(3.5)}
+                y2={y(3.5)}
                 stroke="#38bdf8"
                 strokeOpacity="0.5"
                 strokeDasharray="3 4"
               />
               <text
                 x={W - m.right - 95}
-                y={y(3.80) - 5}
+                y={y(3.5) - 5}
                 textAnchor="end"
                 className="fill-sky-400 text-[9px] font-bold tracking-wider"
               >
-                MAGNA 3.80
-              </text>
-
-              {/* Cum Laude 3.75 — Staggered horizontally to prevent collision */}
-              <line
-                x1={m.left}
-                x2={W - m.right}
-                y1={y(3.75)}
-                y2={y(3.75)}
-                stroke="#34d399"
-                strokeOpacity="0.5"
-                strokeDasharray="3 4"
-              />
-              <text
-                x={W - m.right - 190}
-                y={y(3.75) - 5}
-                textAnchor="end"
-                className="fill-emerald-400 text-[9px] font-bold tracking-wider"
-              >
-                CUM LAUDE 3.75
+                MERIT SCHOLARSHIP 3.50
               </text>
             </>
           )}

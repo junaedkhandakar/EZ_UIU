@@ -19,7 +19,7 @@ export const FYDP_STAGES = [
   { code: 'CSE 4000C', label: 'FYDP III', title: 'Final Year Design Project III', credit: 2 },
 ];
 
-export const FYDP_MIN_CREDITS = 80;
+export const FYDP_MIN_CREDITS = 85;
 export const FYDP_DECISION_KEY = 'ez_fydp_registration';
 
 const normalize = (code) => String(code || '').toUpperCase().replace(/[^A-Z0-9]/g, '');

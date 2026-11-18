@@ -225,53 +225,79 @@ export function getCourseInCgpaStatus(course, effectiveCourses, runningOverrides
 }
 
 /**
- * Determine Honors Designation based on UIU Convocation Regulations
+ * Academic standing from CGPA.
+ *
+ * UIU publishes exactly two CGPA thresholds:
+ *   - 2.00, the minimum for acceptable academic standing and for the degree.
+ *   - 3.50, the minimum term GPA for the merit scholarship.
+ *
+ * UIU does NOT publish the CGPA cut-offs for the convocation Latin honours
+ * (Summa, Magna, Cum Laude) anywhere on its website, so this function does
+ * not invent them. It reports the published standing and points at the
+ * Controller of Examinations for the honours decision.
  */
-export function getHonorsStanding(cgpa, earnedCredits, minRequiredCredits = 138) {
+export const UIU_MIN_CGPA = 2.0;
+export const UIU_MERIT_SCHOLARSHIP_GPA = 3.5;
+
+/**
+ * Determine academic standing.
+ *
+ * @param {number} cgpa              cumulative GPA
+ * @param {number} earnedCredits     credits earned so far
+ * @param {number} minRequiredCredits credits needed for the degree
+ */
+export function getHonorsStanding(cgpa, earnedCredits, minRequiredCredits = 141) {
   if (!earnedCredits || earnedCredits === 0) {
     return {
       tier: 'No Grades Yet',
       badgeColor: 'bg-zinc-100 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300 border-zinc-200 dark:border-zinc-700',
       progressPercent: 0,
       description: 'Import your UCAM grade report to compute your standing and CGPA.',
+      publishedThresholds: false,
     };
   }
-  if (cgpa >= 3.90) {
+
+  const value = Number(cgpa) || 0;
+
+  if (value >= UIU_MIN_CGPA) {
+    const creditComplete = earnedCredits >= minRequiredCredits;
     return {
-      tier: 'Summa Cum Laude',
-      badgeColor: 'bg-purple-100 text-purple-700 dark:bg-purple-900/40 dark:text-purple-300 border-purple-200 dark:border-purple-800',
-      progressPercent: 100,
-      description: 'Highest academic distinction (CGPA ≥ 3.90)',
-    };
-  } else if (cgpa >= 3.80) {
-    return {
-      tier: 'Magna Cum Laude',
-      badgeColor: 'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300 border-blue-200 dark:border-blue-800',
-      progressPercent: ((cgpa - 3.80) / 0.10) * 100,
-      description: 'High distinction (CGPA ≥ 3.80)',
-    };
-  } else if (cgpa >= 3.75) {
-    return {
-      tier: 'Cum Laude',
-      badgeColor: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800',
-      progressPercent: ((cgpa - 3.75) / 0.05) * 100,
-      description: 'With distinction (CGPA ≥ 3.75)',
-    };
-  } else if (cgpa >= 2.00) {
-    return {
-      tier: 'Good Standing',
-      badgeColor: 'bg-zinc-100 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300 border-zinc-200 dark:border-zinc-700',
-      progressPercent: ((cgpa - 2.00) / 1.75) * 100,
-      description: 'Satisfactory academic standing',
-    };
-  } else {
-    return {
-      tier: 'Academic Probation',
-      badgeColor: 'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300 border-red-200 dark:border-red-800',
-      progressPercent: (cgpa / 2.00) * 100,
-      description: 'Below minimum CGPA threshold (CGPA < 2.00)',
+      tier: creditComplete ? 'Eligible for Degree' : 'Good Standing',
+      badgeColor:
+        'bg-zinc-100 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300 border-zinc-200 dark:border-zinc-700',
+      progressPercent: Math.min(100, ((value - UIU_MIN_CGPA) / 2) * 100),
+      description: creditComplete
+        ? `CGPA ${value.toFixed(2)} meets the 2.00 minimum and the ${minRequiredCredits}-credit requirement.`
+        : `CGPA ${value.toFixed(2)} meets the 2.00 minimum. ${minRequiredCredits - earnedCredits} credits still to complete.`,
+      publishedThresholds: true,
     };
   }
+
+  return {
+    tier: 'Academic Probation',
+    badgeColor:
+      'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300 border-red-200 dark:border-red-800',
+    progressPercent: (value / UIU_MIN_CGPA) * 100,
+    description: `Below the 2.00 minimum for acceptable academic standing (CGPA ${value.toFixed(2)}).`,
+    publishedThresholds: true,
+  };
+}
+
+/**
+ * The convocation honours situation, stated honestly.
+ *
+ * UIU publishes no CGPA cut-off for Summa, Magna or Cum Laude, so the app
+ * says so rather than showing a made-up number.
+ */
+export function getHonorsGuidance() {
+  return {
+    published: false,
+    summary:
+      'UIU does not publish the CGPA cut-offs for Summa Cum Laude, Magna Cum Laude or Cum Laude on its website.',
+    where:
+      'The Controller of Examinations decides convocation honours. Ask the Controller of Examinations Office for the thresholds that apply to your convocation.',
+    note: 'Students who appear for an improvement exam may not be eligible for the Gold Medalist award.',
+  };
 }
 
 /**

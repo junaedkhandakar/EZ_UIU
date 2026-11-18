@@ -45,9 +45,14 @@ import {
   queryUniversalAIAdvisor,
   getPassedCoursesSet,
   checkVercelServerlessStatus,
+  normalizeCode,
 } from '../../utils/advisorEngine';
 import { UIU_KNOWLEDGE_DOCUMENTS } from '../../data/uiuKnowledgeBase';
-import { ALL_COURSES, MAJOR_TRACKS } from '../../data/advisorData';
+import {
+  ALL_COURSES,
+  MAJOR_TRACKS,
+  CURRENT_MAJOR_MIN_ELECTIVES,
+} from '../../data/advisorData';
 import { calculateAcademicMetrics, getEffectiveCourses } from '../../utils/cgpaUtils';
 import { useToast } from '../../context/ToastContext';
 
@@ -220,8 +225,9 @@ export default function AdvisorView({
       currentCgpa,
       maxCreditsPerSem: targetCredits,
       selectedMajor,
+      totalDegreeCredits: settings.programCredits || 141,
     });
-  }, [courses, currentCgpa, targetCredits, selectedMajor]);
+  }, [courses, currentCgpa, targetCredits, selectedMajor, settings.programCredits]);
 
   // Mode 3: Custom Schedule Audit
   const customAudit = useMemo(() => {
@@ -240,20 +246,22 @@ export default function AdvisorView({
   // Graduation Timeline
   const timeline = useMemo(() => {
     return calculateDegreeTimeline({
+      completedCourses: courses,
       completedCredits,
-      totalDegreeCredits: settings.programCredits || 138,
+      totalDegreeCredits: settings.programCredits || 141,
       currentTrimester: Math.min(12, Math.max(1, Math.ceil(completedCredits / 12) + 1)),
       targetTrimester: 12,
+      cgpa: currentCgpa,
     });
-  }, [completedCredits, settings.programCredits]);
+  }, [courses, completedCredits, currentCgpa, settings.programCredits]);
 
   // Major Track Progress Audit (Supports 4 electives for Summer 2026+ and 3 for legacy)
   const majorStats = useMemo(() => {
     return Object.entries(MAJOR_TRACKS).map(([name, track]) => {
       const completedInTrack = track.courses.filter((c) =>
-        passedCodes.has(c.course_code.toUpperCase())
+        passedCodes.has(normalizeCode(c.course_code))
       );
-      const req = track.minElectives || 4;
+      const req = track.minElectives || CURRENT_MAJOR_MIN_ELECTIVES;
       return {
         name,
         track,
@@ -285,6 +293,7 @@ export default function AdvisorView({
           completedCredits,
           completedCourseCodes: Array.from(passedCodes),
           selectedMajor,
+          currentTrimester: timeline.currentTrimester,
         },
         conversationHistory: chatMessages.slice(-6),
       });
@@ -317,14 +326,20 @@ export default function AdvisorView({
       ]);
     } catch (err) {
       showToast(err.message || 'Could not reach the AI service', 'error');
-      const fallback = generateAIAnswer(query, { cgpa: currentCgpa, completedCredits });
+      const fallback = generateAIAnswer(query, {
+        cgpa: currentCgpa,
+        completedCredits,
+        completedCourses: courses,
+        selectedMajor,
+        currentTrimester: timeline.currentTrimester,
+      });
       const followUps = generateFollowUpSuggestions(query, fallback);
       setChatMessages((prev) => [
         ...prev,
         {
           role: 'ai',
           provider: 'UIU Regulations Engine',
-          text: `${fallback}\n\n(Couldn't reach the AI service, so this answer came from the built-in regulations reference.)`,
+          text: fallback,
           retrievedSources: [],
           followUps,
         },
@@ -1103,7 +1118,9 @@ export default function AdvisorView({
                 )}
               </div>
               <div className="mt-1 text-xs text-ink-3">
-                {timeline.fydpEligible ? 'Ready for CSE 4000A' : 'Credits left to reach 80 cr'}
+                {timeline.fydpEligible
+                  ? 'Ready for CSE 4000A'
+                  : `Credits left to reach ${timeline.fydpRequiredCredits} cr`}
               </div>
             </Surface>
           </div>
@@ -1119,24 +1136,42 @@ export default function AdvisorView({
                   </h3>
                 </div>
                 <p className="mt-1 text-xs text-ink-2 max-w-2xl">
-                  UIU Department of CSE requires 80 completed credits before enrollment in FYDP I.
+                  The UIU CSE FYDP Handbook requires at least{' '}
+                  {timeline.fydpRequiredCredits} completed credits before enrollment in FYDP I.
                   {timeline.fydpEligible
-                    ? ' You have passed the 80-credit mark and can register for CSE 4000A.'
+                    ? ` You have passed the ${timeline.fydpRequiredCredits}-credit mark and can register for CSE 4000A.`
                     : ` You currently need ${timeline.creditsToFydp} more credits to qualify.`}
                 </p>
+                <a
+                  href="https://cse.uiu.ac.bd/wp-content/uploads/sites/3/2025/09/FYDP_Handbookv1_FINAL.pdf"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="mt-1.5 inline-flex items-center gap-1 text-[10.5px] font-semibold text-accent hover:underline"
+                >
+                  <Globe className="h-3 w-3 shrink-0" />
+                  FYDP Handbook v1.0 (16 September 2025)
+                </a>
               </div>
 
               <div className="shrink-0 w-full sm:w-64">
                 <div className="flex justify-between text-xs font-semibold mb-1.5">
-                  <span className="text-ink-3">Progress to 80 cr</span>
+                  <span className="text-ink-3">
+                    Progress to {timeline.fydpRequiredCredits} cr
+                  </span>
                   <span className="num text-accent">
-                    {Math.min(80, timeline.safeCompleted)} / 80 cr
+                    {Math.min(timeline.fydpRequiredCredits, timeline.safeCompleted)} /{' '}
+                    {timeline.fydpRequiredCredits} cr
                   </span>
                 </div>
                 <div className="h-2.5 rounded-full bg-surface2 overflow-hidden">
                   <div
                     className="h-full bg-gradient-to-r from-accent to-accent2 transition-[width] duration-700"
-                    style={{ width: `${Math.min(100, (timeline.safeCompleted / 80) * 100)}%` }}
+                    style={{
+                      width: `${Math.min(
+                        100,
+                        (timeline.safeCompleted / timeline.fydpRequiredCredits) * 100
+                      )}%`,
+                    }}
                   />
                 </div>
               </div>
@@ -1230,7 +1265,7 @@ export default function AdvisorView({
                     Elective Courses in this Track:
                   </div>
                   {track.courses.map((c) => {
-                    const isPassed = passedCodes.has(c.course_code.toUpperCase());
+                    const isPassed = passedCodes.has(normalizeCode(c.course_code));
                     return (
                       <div
                         key={c.course_code}
@@ -1426,18 +1461,38 @@ export default function AdvisorView({
 
                       {expandedSources[i] && (
                         <div className="mt-2 space-y-2 fade-in">
-                          {msg.retrievedSources.map((src) => (
+                          {msg.retrievedSources.map((src, srcIdx) => (
                             <div
-                              key={src.id}
+                              key={`${src.id}-${srcIdx}`}
                               className="rounded-xl border border-line bg-surface p-3 text-xs shadow-card"
                             >
-                              <div className="font-bold text-ink text-[12px]">{src.title}</div>
+                              <div className="flex flex-wrap items-start justify-between gap-2">
+                                <div className="font-bold text-ink text-[12px]">{src.title}</div>
+                                <span
+                                  className="inline-flex items-center gap-1 rounded-md border border-ok/30 bg-ok/10 px-1.5 py-0.5 text-[9.5px] font-bold uppercase tracking-wide text-ok"
+                                  title={`Checked against the official source on ${src.verified}`}
+                                >
+                                  <ShieldCheck className="h-2.5 w-2.5" />
+                                  Verified {src.verified}
+                                </span>
+                              </div>
                               <div className="text-[10.5px] text-ink-3 mt-0.5">
                                 {src.source} · {src.category}
                               </div>
-                              <p className="mt-2 rounded-lg bg-surface2/60 p-2.5 text-[11px] leading-relaxed text-ink-2 border border-line/60">
+                              <p className="mt-2 rounded-lg bg-surface2/60 p-2.5 text-[11px] leading-relaxed text-ink-2 border border-line/60 whitespace-pre-line">
                                 {src.snippet}
                               </p>
+                              {src.url && (
+                                <a
+                                  href={src.url}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="mt-2 inline-flex items-center gap-1 text-[10.5px] font-semibold text-accent hover:underline break-all"
+                                >
+                                  <Globe className="h-3 w-3 shrink-0" />
+                                  {src.url.replace(/^https?:\/\//, '')}
+                                </a>
+                              )}
                             </div>
                           ))}
                         </div>
@@ -1548,9 +1603,16 @@ export default function AdvisorView({
                   >
                     <div className="flex items-start justify-between gap-3">
                       <div>
-                        <div className="flex items-center gap-2">
+                        <div className="flex flex-wrap items-center gap-2">
                           <span className="rounded-md bg-accentSoft text-accent px-2 py-0.5 text-[10px] font-bold">
                             {doc.category}
+                          </span>
+                          <span
+                            className="inline-flex items-center gap-1 rounded-md border border-ok/30 bg-ok/10 px-1.5 py-0.5 text-[9.5px] font-bold uppercase tracking-wide text-ok"
+                            title={`Checked against the official source on ${doc.verified}`}
+                          >
+                            <ShieldCheck className="h-2.5 w-2.5" />
+                            Verified {doc.verified}
                           </span>
                           <span className="text-[10.5px] text-ink-3 font-mono">
                             Authority: {doc.source}
@@ -1558,6 +1620,17 @@ export default function AdvisorView({
                         </div>
                         <h4 className="mt-1.5 text-sm font-bold text-ink">{doc.title}</h4>
                         <p className="mt-1 text-xs text-ink-2 leading-relaxed">{doc.summary}</p>
+                        {doc.url && (
+                          <a
+                            href={doc.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="mt-1.5 inline-flex items-center gap-1 text-[10.5px] font-semibold text-accent hover:underline break-all"
+                          >
+                            <Globe className="h-3 w-3 shrink-0" />
+                            {doc.url.replace(/^https?:\/\//, '')}
+                          </a>
+                        )}
                       </div>
 
                       <button
