@@ -43,7 +43,6 @@ import {
   auditCustomSchedule,
   getPrerequisiteTree,
   calculateDegreeTimeline,
-  generateAIAnswer,
   generateFollowUpSuggestions,
   queryUniversalAIAdvisor,
   getPassedCoursesSet,
@@ -254,6 +253,29 @@ export default function AdvisorView({
 
       const followUps = generateFollowUpSuggestions(query, replyText);
 
+      if (hostedUnavailable) {
+        // The advisor only answers with the model. There is no offline
+        // engine, so say plainly that the answer could not be produced.
+        showToast(
+          'The AI advisor is unavailable right now. Please try again in a moment.',
+          'error'
+        );
+        setChatMessages((prev) => [
+          ...prev,
+          {
+            role: 'ai',
+            text: '',
+            error: true,
+            errorMessage:
+              hostedErrorMessage ||
+              'The AI advisor is unavailable right now. Please try again in a moment.',
+            retrievedSources: [],
+            followUps: [],
+          },
+        ]);
+        return;
+      }
+
       setChatMessages((prev) => [
         ...prev,
         {
@@ -264,39 +286,21 @@ export default function AdvisorView({
           latencyMs,
           isClientCached,
           followUps,
-          ...(hostedUnavailable
-            ? {
-                offlineNotice:
-                  'Live advisor temporarily unavailable — this answer comes from the built-in UIU regulations reference.',
-                offlineDetail: hostedErrorMessage,
-              }
-            : {}),
         },
       ]);
-
-      if (hostedUnavailable) {
-        showToast(
-          'Live advisor temporarily unavailable — showing the built-in UIU regulations reference.',
-          'warning'
-        );
-      }
     } catch (err) {
       showToast(err.message || 'Could not reach the AI service', 'error');
-      const fallback = generateAIAnswer(query, {
-        cgpa: currentCgpa,
-        completedCredits,
-        completedCourses: courses,
-        selectedMajor,
-        currentTrimester: timeline.currentTrimester,
-      });
-      const followUps = generateFollowUpSuggestions(query, fallback);
       setChatMessages((prev) => [
         ...prev,
         {
           role: 'ai',
-          text: fallback,
+          text: '',
+          error: true,
+          errorMessage:
+            err.message ||
+            'Could not reach the AI advisor. Please check your connection and try again.',
           retrievedSources: [],
-          followUps,
+          followUps: [],
         },
       ]);
     } finally {
@@ -1194,20 +1198,22 @@ export default function AdvisorView({
                     </div>
                   )}
 
-                  {/* Neutral notice when the live advisor could not answer */}
-                  {msg.offlineNotice && (
-                    <div className="mb-2.5 flex items-start gap-2 rounded-lg border border-warn/30 bg-warn/10 px-2.5 py-2 text-[11px] leading-relaxed text-ink-2">
-                      <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0 text-warn" />
+                  {/* Explicit failure notice when the advisor could not answer */}
+                  {msg.error && (
+                    <div className="mb-2.5 flex items-start gap-2 rounded-lg border border-bad/30 bg-bad/10 px-2.5 py-2 text-[11px] leading-relaxed text-ink-2">
+                      <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0 text-bad" />
                       <div>
-                        <div className="font-semibold text-ink">{msg.offlineNotice}</div>
-                        {msg.offlineDetail && (
-                          <div className="mt-0.5 text-ink-3">{msg.offlineDetail}</div>
+                        <div className="font-semibold text-ink">
+                          The AI advisor could not answer this question.
+                        </div>
+                        {msg.errorMessage && (
+                          <div className="mt-0.5 text-ink-3">{msg.errorMessage}</div>
                         )}
                       </div>
                     </div>
                   )}
 
-                  <ChatText text={msg.text} />
+                  {msg.text && <ChatText text={msg.text} />}
 
                   {/* Contextual Suggested Follow-up Chips */}
                   {msg.followUps && msg.followUps.length > 0 && (
@@ -1290,7 +1296,7 @@ export default function AdvisorView({
                   <Bot className="h-4 w-4" />
                 </div>
                 <div className="flex items-center rounded-xl border border-line bg-surface2/60 px-4 py-3 text-xs text-ink-3">
-                  <span className="animate-pulse">Checking UIU regulations…</span>
+                  <span className="animate-pulse">Thinking…</span>
                 </div>
               </div>
             )}

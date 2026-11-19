@@ -1,16 +1,17 @@
 /**
  * EZ_UIU - Academic Advisor Engine
  *
- * Three layers:
+ * Two layers:
  *
  *   1. Deterministic tools (advisorTools.js) compute every number about a
  *      student. The advisor never asks a language model to do arithmetic on a
  *      transcript.
- *   2. The rule engine (generateAIAnswer) answers policy questions offline
- *      from the same verified clauses the RAG index uses, so the offline mode
- *      is not a second, weaker source of truth.
- *   3. The serverless model (queryUniversalAIAdvisor) receives the retrieved
+ *   2. The serverless model (queryUniversalAIAdvisor) receives the retrieved
  *      clauses as its only policy source and the tool results as facts.
+ *
+ * There is no offline rule engine: every answer comes from the model, so a
+ * question is never answered by canned text that could be mistaken for the
+ * model's own reply.
  *
  * The prompts are deliberately flat: no cheerleading, no invented facts, no
  * filler, and an explicit instruction to say when the published UIU documents
@@ -20,13 +21,11 @@
 import {
   MAJOR_TRACKS,
   LEGACY_MAJOR_TRACKS,
-  CURRENT_MAJOR_MIN_ELECTIVES,
   TOTAL_ELECTIVES_REQUIRED,
   ELECTIVE_TRIMESTERS,
   GED_TRIMESTERS,
   COURSE_CATEGORY,
 } from '../data/advisorData';
-import { GRADE_POINTS } from './cgpaUtils';
 import { retrieveRelevantDocuments, buildRagAugmentedPrompt } from './ragEngine';
 import { promptCache } from './cacheUtils';
 import {
@@ -661,268 +660,16 @@ When a question is about the student's own record, the computed tool results are
 }
 
 /* ------------------------------------------------------------------ *
- * Offline rule engine
- * ------------------------------------------------------------------ */
-
-/**
- * Answer a policy question from the verified knowledge base, offline.
- *
- * The engine routes by intent, runs the matching deterministic tools, and
- * renders the answer from the retrieved clauses. It never guesses.
- */
-export function generateAIAnswer(query, context = {}) {
-  const q = String(query || '').toLowerCase();
-  const completedCourses = context.completedCourses || [];
-  const cgpa = typeof context.cgpa === 'number' ? context.cgpa : null;
-  const stats = computeTranscriptStats(completedCourses);
-  const earnedCredits = context.completedCredits ?? stats.earnedCredits;
-
-  const sources = {
-    probation: 'https://www.uiu.ac.bd/academics/probation-policy/',
-    grading: 'https://www.uiu.ac.bd/academics/grading/',
-    waiver:
-      'https://www.uiu.ac.bd/admission/tuition-fees-payment-policies/scholarship-tuition-fee-and-other-fees-waiver-policy/',
-    fees: 'https://www.uiu.ac.bd/admission/tuition-fees-payment-policies/tuition-fees-waiver/',
-    policies: 'https://www.uiu.ac.bd/academics/academic-information-policies/',
-    curriculum:
-      'https://cse.uiu.ac.bd/wp-content/uploads/sites/3/2026/04/BSCSE_Curriculum__UIU_2026.pdf',
-    fydp:
-      'https://cse.uiu.ac.bd/wp-content/uploads/sites/3/2025/09/FYDP_Handbookv1_FINAL.pdf',
-  };
-
-  const cite = (label, url) => `\n\n*Source: [${label}](${url})*`;
-
-  // ---- FYDP ----
-  if (/(fydp|final year design|thesis|capstone|supervisor|project\s*(i|ii|iii)\b)/.test(q)) {
-    const result = evaluateFydpEligibility({
-      completedCourses,
-      currentTrimester: context.currentTrimester,
-    });
-
-    if (result.basis === 'already-started') {
-      return `**FYDP sequence status**\n\n${result.headline}\n\n${result.requirements
-        .map((r) => `- ${r}`)
-        .join('\n')}${cite('FYDP Handbook v1.0', sources.fydp)}`;
-    }
-
-    return `**FYDP-I eligibility**\n\n${result.headline}\n\n- **Credit gate:** at least ${FYDP_MIN_CREDITS} credits must be completed before FYDP-I. You have ${result.earnedCredits}.\n${
-      result.creditGap > 0 ? `- **Gap:** ${result.creditGap} credits still to earn.\n` : ''
-    }- **Trimester:** FYDP is restricted to 4th-year students, so it opens from trimester 9.\n\n${result.requirements
-      .map((r) => `- ${r}`)
-      .join('\n')}${cite('FYDP Handbook v1.0', sources.fydp)}`;
-  }
-
-  // ---- Probation ----
-  if (/(probation|dismissal|dismissed|suspended|low cgpa|warning letter)/.test(q)) {
-    const result = evaluateProbation({ completedCourses, cgpa });
-    const lines = [`**Academic probation**\n\n${result.headline}\n`];
-    if (result.onProbation) {
-      lines.push(`- **Credit band:** ${result.creditBand}.\n`);
-      lines.push(result.actions.map((a) => `- ${a}`).join('\n'));
-    } else {
-      lines.push(result.actions.map((a) => `- ${a}`).join('\n'));
-    }
-    return lines.join('\n') + cite('UIU Probation Policy 2025', sources.probation);
-  }
-
-  // ---- Grading scale ----
-  if (/(grading scale|grade scale|marks|letter grade|what is an? ?a-|what is an? ?b\+|percentage.*grade|grade.*percentage)/.test(q) && !/cgpa|honou?rs|laude/.test(q)) {
-    return `**UIU grading scale**\n\n| Marks | Grade | Point | Assessment |\n| --- | --- | --- | --- |\n| 90-100 | A | 4.00 | Outstanding |\n| 86-89 | A- | 3.67 | Excellent |\n| 82-85 | B+ | 3.33 | Very Good |\n| 78-81 | B | 3.00 | Good |\n| 74-77 | B- | 2.67 | Above Average |\n| 70-73 | C+ | 2.33 | Average |\n| 66-69 | C | 2.00 | Below Average |\n| 62-65 | C- | 1.67 | Poor |\n| 58-61 | D+ | 1.33 | Very poor |\n| 55-57 | D | 1.00 | Pass |\n| 0-54 | F | 0.00 | Fail |\n\n- **Earned credit:** a course counts once you get D or above. An F does not count towards earned credits.\n- **Degree minimum:** CGPA 2.00 for undergraduate and graduate programmes.\n- **GPA:** weighted average of grade points in one trimester. **CGPA:** weighted average across all completed courses.${cite(
-      'UIU Grading & Performance Evaluation',
-      sources.grading
-    )}`;
-  }
-
-  // ---- Retake / repeat ----
-  if (/(retake|repeat|redo|resit|improve my grade|backlog|failed course|f grade)/.test(q)) {
-    return `**Repeat and retake**\n\n- **Repeat:** an F in any course means you must repeat it with full tuition payment.\n- **Retake:** you may take a course again to improve a grade. Retake also carries full tuition payment.\n- **Transcript:** repeated and retaken courses appear on your transcript as 'R'.\n- **Fee:** course fee for each retake or repeat is waived by 50%, only for the first time.\n- **Scholarship:** you are not entitled to scholarship or tuition fee waiver for Repeat/Retake courses.\n- **Earned credit:** an F gives no earned credit, so you must retake that course.${cite(
-      'UIU Academic Information Policies',
-      sources.policies
-    )}`;
-  }
-
-  // ---- Merit scholarship and waivers ----
-  if (/(waiver|scholarship|merit|top 2%|next 4%|sibling|freedom fighter|waived)/.test(q)) {
-    const outlook = meritScholarshipOutlook({
-      termGpa: cgpa ?? 0,
-      rankPercent: context.rankPercent ?? null,
-    });
-
-    const lines = [`**Merit scholarship on results**\n\n`];
-    lines.push(`- **Minimum GPA:** ${MERIT_SCHOLARSHIP_GPA.toFixed(2)} in the just-previous trimester exam. Below that you are not considered at all, even inside the top 10%.\n`);
-    lines.push(`- **Bands by rank in your programme:**\n  - Top 2%: 100%\n  - Next 4%: 50%\n  - Next 4%: 25%\n`);
-    lines.push(`- **Credit floor:** register at least ${MIN_CREDITS_PER_TRIMESTER} credits (14 for B. Pharm) in the scholarship-receiving trimester.\n`);
-    lines.push(`- **Credit parity:** you receive the scholarship for the same number of credits you earned it on. If you register more, you only get the waiver for the awarded number.\n`);
-    lines.push(`- **Exclusions:** no waiver on Thesis, Project, Internship, Retake or Repeat courses.\n`);
-    lines.push(`- **No stacking:** you may avail only the best one of the scholarships and waivers.\n`);
-    lines.push(`- **I-grade or improvement exam:** you lose scholarship eligibility for the following trimester.\n`);
-    if (cgpa != null) {
-      lines.push(`\n**Your record:** CGPA ${cgpa.toFixed(2)}. ${outlook.reason}`);
-    }
-    return lines.join('\n') + cite(
-      'UIU Scholarship, Tuition and Other Fees, Waiver Policy',
-      sources.waiver
-    );
-  }
-
-  // ---- Tuition and installments ----
-  if (/(fee|tuition|cost|installment|per credit|payment|charge)/.test(q)) {
-    const credits = context.credits ?? 12;
-    const estimate = estimateTuition({
-      credits,
-      perCreditFee: context.perCreditFee ?? TUITION_PER_CREDIT,
-      waiverRate: context.waiverRate ?? 0,
-      fydpCredits: context.fydpCredits ?? 0,
-      retakeCredits: context.retakeCredits ?? 0,
-      transport: context.transport ?? false,
-    });
-
-    const lines = [`**Tuition and payment**\n\n`];
-    lines.push(`- **Per credit:** Tk. ${TUITION_PER_CREDIT.toLocaleString('en-BD')} for BSCSE. BA English and BSSMSJ are Tk. ${TUITION_PER_CREDIT_DISCOUNTED.toLocaleString('en-BD')} per credit (15% discount).\n`);
-    lines.push(`- **Trimester fee:** Tk. ${TRIMESTER_FEE.toLocaleString('en-BD')}. B. Pharm pays a semester fee of Tk. 9,750 instead.\n`);
-    lines.push(`- **Formula:** credits taken x per-credit fee + trimester fee.\n`);
-    lines.push(`- **At registration:** Tk. 20,000 as partial payment before course registration.\n`);
-    lines.push(`- **Installments:** 40% during registration and advising, 30% before mid-term exams, 30% before final exams. Semester-based B. Pharm pays four equal 25% installments.\n`);
-    lines.push(`- **Admission fee:** Tk. 20,000, non-refundable. **Caution money:** Tk. 2,000 for the ID card, refundable.\n`);
-    lines.push(`- **Transportation:** Tk. 4,000 per trimester, paid in full with the first installment.\n`);
-    lines.push(`\n**Estimate for ${credits} credits with no waiver: Tk. ${estimate.totalPayable.toLocaleString('en-BD')}** (tuition Tk. ${estimate.netTuition.toLocaleString('en-BD')} + trimester fee Tk. ${estimate.trimesterFee.toLocaleString('en-BD')}).\n`);
-    return lines.join('\n') + cite('UIU Tuition Fees & Waivers', sources.fees);
-  }
-
-  // ---- Honours / convocation ----
-  if (/(honou?rs|laude|summa|magna|convocation|gold medal)/.test(q)) {
-    return `**Convocation honours**\n\nUIU does not publish the CGPA cut-offs for Summa Cum Laude, Magna Cum Laude or Cum Laude on its website, so there is no published number I can quote here.\n\n- **What is published:** the degree minimum is a final CGPA of 2.00 for undergraduate and graduate programmes.\n- **Who decides:** the Controller of Examinations sets convocation honours. Ask the Controller of Examinations' Office for the current thresholds and the medal rules for your convocation.\n- **Gold medal:** students who appear for an improvement exam may not be eligible for the Gold Medalist award.${cite(
-      'UIU Grading & Performance Evaluation and Academic Information Policies',
-      sources.grading
-    )}`;
-  }
-
-  // ---- Attendance ----
-  if (/(attendance|absent|absentee|80%|debarred)/.test(q)) {
-    return `**Class attendance**\n\n- A student must attend at least **80% of classes in every course** to be eligible to sit for the final exam.\n- Attendance is part of continuous evaluation, alongside quizzes, class participation, assignment work, case study and the mid-term and final examinations.${cite(
-      'UIU Academic Information Policies',
-      sources.policies
-    )}`;
-  }
-
-  // ---- Exam slots ----
-  if (/(exam slot|exam time|exam day|clash|t1|t2|t3|exam schedule)/.test(q)) {
-    return `**Final examination slots**\n\n- UIU runs three examination slots across seven exam days.\n- Each course published in the Course Offerings notice carries an **Exam Day** and an **Exam Slot**.\n- Laboratory courses show N/A for both, because they have no written final.\n- The Schedule Auditor flags two courses that share the same exam day and slot, because a candidate cannot sit two exams in one slot.\n- The day and slot assignment changes every trimester. Read the current Course Offerings and Exam Routine notices from the Department of CSE, or check the Routine tab in this app.${cite(
-      'UIU CSE Course Offerings notice',
-      'https://cse.uiu.ac.bd/notice/course-offerings-bscse-fall-26/'
-    )}`;
-  }
-
-  // ---- Registration and minimum credits ----
-  if (/(register|registration|advising|ucam|add drop|late registration|minimum credit)/.test(q)) {
-    return `**Registration**\n\n- **Minimum load:** undergraduates register a minimum of 9 credits per trimester. Graduate students register a minimum of 6.\n- **Advising:** faculty advisors advise students before registration, and students should consult their advisor when planning courses.\n- **Late registration:** registering after the scheduled date needs the Head of Department's permission and a late registration fee. The calendar publishes the last day without a fine and the last day with a fine of Tk. 500.\n- **Dropping:** a course may be dropped only within the Academic Calendar date, with the Head of Department's approval. The last day to drop with a W record is on the calendar.\n- **On probation:** pre-advising and registration in UCAM stay locked and your advisor unlocks UCAM after counselling.\n- **Payment:** Tk. 20,000 is due before registration, then 40% of the rest by the first installment date.${cite(
-      'UIU Academic Information Policies',
-      sources.policies
-    )}`;
-  }
-
-  // ---- Withdraw / incomplete ----
-  if (/(withdraw|withdrawal|incomplete|\bi grade\b|grade change|drop the trimester)/.test(q)) {
-    return `**Withdrawal, incomplete grade and grade change**\n\n- **W (Withdrawn):** collect the form from the Program Office, get the course teacher's endorsement and the Head of Department's approval, then submit to the Registrar's Office within 7 days of the end of Mid-Term II. Tuition is not refunded.\n- **I (Incomplete):** granted only in exceptional cases after the mid-term. You must appear in the exam within 15 days from the start of the following trimester, otherwise the I turns into an F automatically.\n- **Scholarship:** an I in a trimester makes you ineligible for any UIU scholarship in that trimester.\n- **Grade change:** apply to the Head/Director/Coordinator of the department within 1 week of the start of the following trimester.\n- **Dropping a trimester:** allowed on medical or other valid grounds. Pay 50% of tuition fee, trimester fee and transport fee. Any extra deposit is adjusted against the next trimester, never refunded.${cite(
-      'UIU Academic Information Policies',
-      sources.policies
-    )}`;
-  }
-
-  // ---- Specialisation and tracks ----
-  if (/(major|track|specialisation|specialization|elective)/.test(q)) {
-    const lines = [`**Specialisation tracks**\n\n`];
-    lines.push(
-      `- **Current curriculum (Summer 2026 onwards):** you take five electives (15 credits) in trimesters 10 to 12. A specialisation is declared when at least **four** of them come from one area.\n`
-    );
-    lines.push(`- **Areas:** ${Object.keys(MAJOR_TRACKS).join(', ')}.\n`);
-    lines.push(
-      `- **Previous curriculum (Spring 2023 to Spring 2026):** at least **three** courses from one area, with these areas: ${Object.keys(LEGACY_MAJOR_TRACKS).join(', ')}.\n`
-    );
-    lines.push(`- **Industry Internship (CSE 3542):** it is an elective in every area, and you must complete all other credits before starting it.\n`);
-
-    if (completedCourses.length) {
-      const progress = evaluateElectiveProgress(completedCourses);
-      lines.push(
-        `\n**Your electives:** ${progress.completedCount} of ${progress.totalRequired} completed${
-          progress.bestTrack && progress.bestTrack.completedCount > 0
-            ? `. Strongest area: ${progress.bestTrack.name} (${progress.bestTrack.completedCount} course${progress.bestTrack.completedCount === 1 ? '' : 's'})`
-            : ''
-        }.`
-      );
-    }
-    return lines.join('\n') + cite('BSCSE Curriculum, Summer 2026 onwards', sources.curriculum);
-  }
-
-  // ---- Degree credits and curriculum ----
-  if (/(how many credit|total credit|degree requirement|curriculum|141|138|graduat)/.test(q)) {
-    const lines = [`**B.Sc. CSE degree requirements**\n\n`];
-    lines.push(`- **Current curriculum (Summer 2026 onwards):** ${DEGREE_CREDITS.current} credit hours.\n`);
-    lines.push(`- **Previous curriculum (Spring 2023 to Spring 2026):** ${DEGREE_CREDITS.legacy} credit hours.\n`);
-    lines.push(`- **In both:** FYDP completed with at least a C, every course passed individually, and a final CGPA of at least 2.00.\n`);
-    lines.push(`- **Trimester load:** the official plan runs 9, 10, 11, 11, 13, 11, 11, 12, 13, 12, 14 and 14 credits.\n`);
-
-    if (completedCourses.length || earnedCredits) {
-      const progress = evaluateDegreeProgress({ completedCourses, cgpa });
-      lines.push(
-        `\n**Your record:** ${progress.earnedCredits} of ${progress.totalCredits} credits earned. ${
-          progress.remainingCredits > 0
-            ? `${progress.remainingCredits} credits left over ${progress.remainingTrimesters} trimester${
-                progress.remainingTrimesters === 1 ? '' : 's'
-              }, which needs about ${progress.creditsPerTermNeeded} credits per trimester.`
-            : 'You have met the credit requirement.'
-        }`
-      );
-    }
-    return lines.join('\n') + cite('BSCSE Curriculum, Summer 2026 onwards', sources.curriculum);
-  }
-
-  // ---- Internship ----
-  if (/(internship|industrial attachment|3542)/.test(q)) {
-    return `**Industry Internship (CSE 3542)**\n\n- It is a 3-credit elective listed in every specialisation area of the curriculum.\n- **Prerequisite:** completion of all credits except CSE 3542. You finish your academic requirements first, then do the internship.\n- Internship credits are excluded from every scholarship and tuition fee waiver.${cite(
-      'BSCSE Curriculum, Summer 2026 onwards',
-      sources.curriculum
-    )}`;
-  }
-
-  // ---- Degree standing of this student ----
-  if (cgpa != null && cgpa < GRADUATION_CGPA_MINIMUM) {
-    const result = evaluateProbation({ completedCourses, cgpa });
-    return `**Academic probation**\n\n${result.headline}\n\n${result.actions
-      .map((a) => `- ${a}`)
-      .join('\n')}${cite('UIU Probation Policy 2025', sources.probation)}`;
-  }
-
-  // ---- Fallback: RAG over the verified knowledge base ----
-  const retrieved = retrieveRelevantDocuments(query, 3);
-  if (retrieved.length) {
-    const body = retrieved
-      .map(
-        (doc) =>
-          `**${doc.title}**\n${doc.summary}\n\n> ${doc.snippet.split('\n').slice(0, 4).join('\n')}\n\n*Source: [${doc.source}](${doc.url})*`
-      )
-      .join('\n\n---\n\n');
-    return body;
-  }
-
-  return `The published UIU documents do not cover that question.\n\n${
-    completedCourses.length
-      ? `Your record: CGPA ${cgpa != null ? cgpa.toFixed(2) : 'not imported'}, ${earnedCredits} credits completed.\n\n`
-      : 'No transcript is imported yet, so this is general policy.\n\n'
-  }I can answer questions on FYDP eligibility, probation, retakes, merit waivers, tuition and installments, the grading scale, attendance, exam slots, registration rules, specialisation tracks and the degree curriculum. For anything else, the Registrar's Office and the Department of CSE publish the answer.`;
-}
-
-/* ------------------------------------------------------------------ *
  * Serverless connector
  * ------------------------------------------------------------------ */
 
 /**
  * Ask the hosted model, grounded in the retrieved clauses and the computed
- * tool results, with a local fallback to the rule engine.
-
- * The engine is picked automatically: the hosted model is tried first and the
- * built-in UIU regulations engine answers when the hosted model is
- * unavailable. Students never choose a provider or a model.
+ * tool results.
+ *
+ * The engine is picked automatically and students never choose a provider or a
+ * model. There is no offline fallback: if the hosted model cannot answer, the
+ * caller is told so rather than being handed a canned reply.
  */
 export async function queryUniversalAIAdvisor({
   apiKey = "[REDACTED]",
@@ -1044,10 +791,11 @@ export async function queryUniversalAIAdvisor({
     return hosted.payload;
   }
 
-  // The live advisor is down: answer from the built-in regulations engine and
-  // tell the caller (and the UI) that this is a fallback, not a live answer.
+  // The live advisor is down. There is no offline engine any more: the
+  // student gets an explicit failure instead of a canned answer that looks
+  // like the model said it.
   return {
-    text: generateAIAnswer(cleanPrompt, studentContext),
+    text: '',
     retrievedSources,
     latencyMs: Date.now() - startTime,
     isClientCached: false,

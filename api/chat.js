@@ -34,6 +34,65 @@ const CATALOGUE_TTL_MS = 30 * 60 * 1000;
 let catalogueCache = { at: 0, models: null };
 
 /**
+ * Answer cache.
+ *
+ * A repeat question must not cost anything, so the cache lives here on the
+ * server and is keyed by the question itself — not by the student. Two
+ * different students asking "what is the FYDP credit gate?" hit the same
+ * entry, and the second one costs nothing because no upstream call is made.
+ *
+ * The answer is reused as-is: the retrieved policy clauses and the academic
+ * context are the same for everyone, so the reply does not depend on who
+ * asked. Only the grounding documents are part of the key, because a change
+ * in the statute set must not serve a stale answer.
+ */
+const ANSWER_CACHE_TTL_MS = 12 * 60 * 60 * 1000; // 12 hours
+const ANSWER_CACHE_MAX_ENTRIES = 500;
+const answerCache = new Map();
+
+/**
+ * A stable key for a question.
+ *
+ * The question is normalised so that casing, trailing punctuation and
+ * repeated whitespace still match, which is what makes "How many credits do
+ * I need for FYDP?" and "how many credits do i need for fydp" the same
+ * request.
+ */
+function answerCacheKey(prompt, systemInstructions) {
+  const norm = (text) =>
+    String(text || '')
+      .toLowerCase()
+      .replace(/[^\p{L}\p{N}\s]/gu, ' ')
+      .replace(/\s+/g, ' ')
+      .trim();
+
+  return `${norm(prompt)}::${norm(systemInstructions).slice(0, 400)}`;
+}
+
+function readCachedAnswer(key) {
+  const entry = answerCache.get(key);
+  if (!entry) return null;
+
+  if (Date.now() - entry.at > ANSWER_CACHE_TTL_MS) {
+    answerCache.delete(key);
+    return null;
+  }
+
+  // Refresh recency so the least-recently-used entry is evicted first.
+  answerCache.delete(key);
+  answerCache.set(key, entry);
+  return entry;
+}
+
+function writeCachedAnswer(key, value) {
+  if (answerCache.size >= ANSWER_CACHE_MAX_ENTRIES) {
+    const oldestKey = answerCache.keys().next().value;
+    if (oldestKey) answerCache.delete(oldestKey);
+  }
+  answerCache.set(key, { at: Date.now(), ...value });
+}
+
+/**
  * Fetch the live list of :free models from the OpenRouter catalogue.
  * Cached for 30 minutes so a chat burst does not hammer the catalogue.
  */
@@ -138,6 +197,22 @@ export default async function handler(req, res) {
   const startTime = Date.now();
   const isAutoFree = !model || model === 'auto-free' || model === 'openrouter/auto';
 
+  /**
+   * A repeat question costs nothing. The cache is checked before any
+   * upstream call, so a cached answer never reaches the paid endpoint.
+   */
+  const cacheKey = answerCacheKey(cleanPrompt, systemInstructions);
+  const cachedAnswer = readCachedAnswer(cacheKey);
+  if (cachedAnswer) {
+    return res.status(200).json({
+      text: cachedAnswer.text,
+      usage: cachedAnswer.usage || {},
+      latencyMs: Date.now() - startTime,
+      isServerless: true,
+      isCached: true,
+    });
+  }
+
   let modelsToAttempt;
   if (isAutoFree) {
     modelsToAttempt = await getFreeModels(effectiveKey);
@@ -208,6 +283,16 @@ export default async function handler(req, res) {
         data.usage?.cache_read_input_tokens ||
         0;
 
+      // Cache the answer so this exact question is free from now on.
+      writeCachedAnswer(cacheKey, {
+        text: reply,
+        usage: {
+          promptTokens: data?.usage?.prompt_tokens || 0,
+          completionTokens: data?.usage?.completion_tokens || 0,
+          cachedTokens,
+        },
+      });
+
       return res.status(200).json({
         text: reply,
         usage: {
@@ -217,12 +302,12 @@ export default async function handler(req, res) {
         },
         latencyMs: Date.now() - startTime,
         isServerless: true,
+        isCached: false,
       });
     } catch (err) {
       lastError = err.message || 'Network error';
     }
   }
-
   return res.status(503).json({
     error: `All AI models are busy right now (${sanitize(lastError) || 'Service unavailable'}). Try again in a few seconds.`,
   });
