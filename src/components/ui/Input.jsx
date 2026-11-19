@@ -8,7 +8,7 @@ import { type, control } from './tokens';
  * The app had roughly thirty hand-written <input> elements, each with its own
  * height, padding, radius and focus treatment. They are all here now.
  *
- * Heights match Button: sm 30 / md 34 / lg 40.
+ * Heights match Button: sm 30 / md 38 / lg 44.
  *
  * @param {'sm'|'md'|'lg'} size
  * @param {Function} icon     leading icon component
@@ -25,7 +25,7 @@ const SIZES = {
     icon: 'left-2.5 h-3.5 w-3.5',
   },
   md: {
-    box: 'h-[34px] rounded-lg text-[13px]',
+    box: 'h-[38px] rounded-xl text-[13px]',
     plain: 'pl-3 pr-3',
     iconOnly: 'pl-[32px] pr-3',
     clearOnly: 'pl-3 pr-[30px]',
@@ -33,11 +33,11 @@ const SIZES = {
     icon: 'left-2.5 h-4 w-4',
   },
   lg: {
-    box: 'h-[40px] rounded-xl text-[13.5px]',
-    plain: 'pl-3.5 pr-3.5',
-    iconOnly: 'pl-[34px] pr-3.5',
-    clearOnly: 'pl-3.5 pr-[32px]',
-    iconAndClear: 'pl-[34px] pr-[32px]',
+    box: 'h-11 rounded-xl text-sm',
+    plain: 'pl-4 pr-4',
+    iconOnly: 'pl-[34px] pr-4',
+    clearOnly: 'pl-4 pr-[30px]',
+    iconAndClear: 'pl-[34px] pr-[30px]',
     icon: 'left-3 h-4 w-4',
   },
 };
@@ -65,9 +65,7 @@ export default function Input({
         />
       )}
       <input
-        className={`w-full border border-line bg-surface2/60 font-medium text-ink placeholder-ink-3/80 transition-[background-color,border-color,box-shadow] duration-150 hover:border-line-strong hover:bg-surface2/80 ${control.focus} ${
-          s.box
-        } ${padding} ${className}`}
+        className={`w-full border border-line bg-surface2/70 font-medium text-ink placeholder-ink-3 transition-colors duration-150 hover:border-line-strong hover:bg-surface2/80 ${control.focus} ${s.box} ${padding} ${className}`}
         {...rest}
       />
       {hasClear && (
@@ -115,7 +113,7 @@ export function Field({
 export function Textarea({ className = '', ...rest }) {
   return (
     <textarea
-      className={`w-full resize-none rounded-xl border border-line bg-surface2/60 px-3 py-2.5 text-[13px] leading-relaxed text-ink placeholder-ink-3/80 transition-[background-color,border-color,box-shadow] duration-150 hover:border-line-strong hover:bg-surface2/80 ${control.focus} ${className}`}
+      className={`w-full resize-none rounded-xl border border-line bg-surface2/70 px-3 py-2.5 text-[13px] leading-relaxed text-ink placeholder-ink-3 transition-colors duration-150 hover:border-line-strong hover:bg-surface2/80 ${control.focus} ${className}`}
       {...rest}
     />
   );

@@ -1,7 +1,6 @@
 import { useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { X } from 'lucide-react';
-import { type, control } from './tokens';
 
 /**
  * The one modal in the app.
@@ -25,27 +24,26 @@ export default function Modal({ open, onClose, title, sub, width = 'max-w-lg', c
   if (!open) return null;
 
   return createPortal(
-    <div className="fixed inset-0 z-[100] flex items-end justify-center sm:items-center sm:p-4">
-      <div className="fade-in absolute inset-0 bg-black/60 backdrop-blur-md" onClick={onClose} />
+    <div className="fixed inset-0 z-[100] flex items-end justify-center sm:items-center">
+      <div className="fade-in absolute inset-0 bg-black/55 backdrop-blur-sm" onClick={onClose} />
       <div
         role="dialog"
         aria-modal="true"
-        className={`slide-up-in relative z-10 flex max-h-[92dvh] w-full flex-col overflow-hidden rounded-t-2xl border border-line bg-surface shadow-pop sm:rounded-2xl ${width}`}
+        className={`slide-up-in relative z-10 flex max-h-[92dvh] w-full flex-col overflow-hidden rounded-t-3xl border border-line bg-surface shadow-pop sm:rounded-3xl ${width}`}
       >
-        <div className="flex items-start justify-between gap-4 border-b border-line px-5 py-3.5">
-          <div className="min-w-0">
-            <h2 className={type.sectionTitle}>{title}</h2>
-            {sub && <p className={`${type.small} mt-0.5`}>{sub}</p>}
+        <div className="flex items-start justify-between gap-4 border-b border-line px-5 py-4">
+          <div>
+            <h2 className="text-[15px] font-bold tracking-tight text-ink">{title}</h2>
+            {sub && <p className="mt-0.5 text-xs text-ink-3">{sub}</p>}
           </div>
           <button
             onClick={onClose}
-            aria-label="Close"
-            className={`${control.iconButton} -mr-1 shrink-0`}
+            className="rounded-lg p-1.5 text-ink-3 transition-colors hover:bg-surface2 hover:text-ink"
           >
             <X className="h-4 w-4" />
           </button>
         </div>
-        <div className="flex-1 overflow-y-auto overscroll-contain px-5 py-4">{children}</div>
+        <div className="max-h-[calc(92dvh-64px)] overflow-y-auto overscroll-contain p-5">{children}</div>
       </div>
     </div>,
     document.body

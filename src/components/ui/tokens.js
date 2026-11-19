@@ -9,6 +9,9 @@
  * The scale is deliberately small. A handful of text sizes, one radius
  * family, one border weight, one shadow. Anything a view needs beyond that
  * is a bug.
+ *
+ * These values follow the 04ee66a visual language: tighter letter tracking,
+ * softer surfaces, smaller radii and the `rounded-xl` card family.
  */
 
 /* ------------------------------------------------------------------ *
@@ -16,29 +19,30 @@
  * ------------------------------------------------------------------ */
 export const type = {
   /** View-level heading. Exactly one per page. */
-  pageTitle: 'text-[22px] font-bold leading-tight tracking-[-0.02em] text-ink sm:text-[26px]',
+  pageTitle:
+    'text-xl font-bold tracking-tight text-ink sm:text-2xl',
   /** Heading of a panel or section inside a view. */
-  sectionTitle: 'text-[15px] font-semibold leading-snug tracking-[-0.01em] text-ink',
+  sectionTitle: 'text-sm font-semibold text-ink',
   /** Heading of a single card, list row or dialog. */
-  cardTitle: 'text-[13.5px] font-semibold leading-snug text-ink',
+  cardTitle: 'text-sm font-semibold text-ink',
   /** Default reading size. */
   body: 'text-[13px] leading-relaxed text-ink-2',
   /** Default reading size when the text itself is the point. */
   bodyStrong: 'text-[13px] font-medium leading-relaxed text-ink',
   /** Secondary reading size — captions, helper text. */
-  small: 'text-[12px] leading-relaxed text-ink-3',
+  small: 'text-xs text-ink-3',
   /** Smallest supporting text — footnotes, timestamps. */
-  micro: 'text-[11px] leading-relaxed text-ink-3',
+  micro: 'text-[10.5px] leading-snug text-ink-3',
   /** Uppercase field label above an input. */
-  label: 'text-[11px] font-semibold uppercase tracking-[0.06em] text-ink-3',
+  label: 'text-[10.5px] font-semibold uppercase tracking-[0.09em] text-ink-3',
   /** Uppercase eyebrow above a metric or a list. */
-  eyebrow: 'text-[10.5px] font-semibold uppercase tracking-[0.07em] text-ink-3',
+  eyebrow: 'text-[10.5px] font-semibold uppercase tracking-[0.09em] text-ink-3',
   /** Large numeric readout. */
-  metric: 'num text-[26px] font-bold leading-none tracking-[-0.02em] text-ink',
+  metric: 'num text-[26px] font-bold leading-none tracking-tight text-ink',
   /** Hero numeric readout. */
-  metricLg: 'num text-[32px] font-bold leading-none tracking-[-0.02em] text-ink',
+  metricLg: 'num text-[32px] font-bold leading-none tracking-tight text-ink',
   /** Compact numeric readout — inside dense rows and tables. */
-  metricSm: 'num text-[19px] font-bold leading-none tracking-[-0.01em] text-ink',
+  metricSm: 'num text-[19px] font-bold leading-none tracking-tight text-ink',
   /** A course code, room or identifier. */
   code: 'font-mono text-[12.5px] font-semibold tracking-tight text-ink',
   /** A course code that acts as a link or an accent. */
@@ -80,7 +84,8 @@ export const icon = {
  * ------------------------------------------------------------------ */
 export const control = {
   /** Focus ring shared by inputs, selects and textareas. */
-  focus: 'focus:border-accent/60 focus:outline-none focus:ring-2 focus:ring-accent/25',
+  focus:
+    'focus:border-line-strong focus:outline-none focus:ring-2 focus:ring-accent/40',
   /** A square, icon-only control. */
   iconButton:
     'inline-flex h-7 w-7 items-center justify-center rounded-lg text-ink-3 transition-colors hover:bg-surface2 hover:text-ink',

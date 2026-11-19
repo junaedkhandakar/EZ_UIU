@@ -247,6 +247,10 @@ export default function AdvisorView({
       const usage = typeof response === 'object' ? response.usage : null;
       const latencyMs = typeof response === 'object' ? response.latencyMs : null;
       const isClientCached = typeof response === 'object' ? response.isClientCached : false;
+      const hostedUnavailable =
+        typeof response === 'object' ? Boolean(response.hostedUnavailable) : false;
+      const hostedErrorMessage =
+        typeof response === 'object' ? response.hostedErrorMessage || '' : '';
 
       const followUps = generateFollowUpSuggestions(query, replyText);
 
@@ -260,8 +264,22 @@ export default function AdvisorView({
           latencyMs,
           isClientCached,
           followUps,
+          ...(hostedUnavailable
+            ? {
+                offlineNotice:
+                  'Live advisor temporarily unavailable — this answer comes from the built-in UIU regulations reference.',
+                offlineDetail: hostedErrorMessage,
+              }
+            : {}),
         },
       ]);
+
+      if (hostedUnavailable) {
+        showToast(
+          'Live advisor temporarily unavailable — showing the built-in UIU regulations reference.',
+          'warning'
+        );
+      }
     } catch (err) {
       showToast(err.message || 'Could not reach the AI service', 'error');
       const fallback = generateAIAnswer(query, {
@@ -1173,6 +1191,19 @@ export default function AdvisorView({
                           <Copy className="h-3 w-3" />
                         )}
                       </button>
+                    </div>
+                  )}
+
+                  {/* Neutral notice when the live advisor could not answer */}
+                  {msg.offlineNotice && (
+                    <div className="mb-2.5 flex items-start gap-2 rounded-lg border border-warn/30 bg-warn/10 px-2.5 py-2 text-[11px] leading-relaxed text-ink-2">
+                      <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0 text-warn" />
+                      <div>
+                        <div className="font-semibold text-ink">{msg.offlineNotice}</div>
+                        {msg.offlineDetail && (
+                          <div className="mt-0.5 text-ink-3">{msg.offlineDetail}</div>
+                        )}
+                      </div>
                     </div>
                   )}
 

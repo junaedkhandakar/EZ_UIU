@@ -41,7 +41,7 @@ export default function Segmented({
               size === 'sm' ? 'px-2.5 py-1 text-[11px]' : 'px-3 py-1.5 text-[12px]'
             } ${block ? 'flex-1' : ''} ${
               active
-                ? 'border border-line bg-surface text-accent shadow-sm'
+                ? 'border border-line bg-surface text-ink shadow-sm'
                 : 'border border-transparent text-ink-3 hover:text-ink'
             }`}
           >

@@ -12,7 +12,7 @@ import React from 'react';
  */
 
 const ACTIVE = {
-  accent: 'border-accent/40 bg-accentSoft text-accent',
+  accent: 'border-accent bg-accentSoft text-accent',
   solid: 'border-accent bg-accent text-white',
   ok: 'border-ok/40 bg-ok/10 text-ok',
   bad: 'border-bad/40 bg-bad/10 text-bad',
@@ -23,7 +23,7 @@ const INACTIVE =
   'border-line bg-surface text-ink-3 hover:border-line-strong hover:text-ink';
 
 const SIZES = {
-  sm: 'h-[26px] gap-1 rounded-md px-2 text-[11px]',
+  sm: 'h-[26px] gap-1 rounded-lg px-2 text-[11px]',
   md: 'h-[30px] gap-1.5 rounded-lg px-2.5 text-[12px]',
 };
 

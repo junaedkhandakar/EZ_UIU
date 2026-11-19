@@ -961,57 +961,99 @@ export async function queryUniversalAIAdvisor({
 
   const systemInstructions = buildUIUSystemPrompt(studentContext);
 
-  try {
-    const serverlessRes = await fetch('/api/chat', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        provider: 'auto',
-        model: chosenModel,
-        prompt: cleanPrompt,
-        augmentedPrompt,
-        systemInstructions,
-        conversationHistory,
-        studentContext,
-      }),
-    });
+  /**
+   * Ask the hosted endpoint. Returns either
+   *   { ok: true, payload }  -> the live answer, or
+   *   { ok: false, message } -> a neutral reason the live engine is down.
+   * The endpoint answers 500 when it is not configured and 503 when every
+   * upstream candidate failed, so a non-2xx response MUST be treated as a
+   * failure and not silently fall through to the offline answer.
+   */
+  const requestHostedAnswer = async () => {
+    try {
+      const serverlessRes = await fetch('/api/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          provider: 'auto',
+          model: chosenModel,
+          prompt: cleanPrompt,
+          augmentedPrompt,
+          systemInstructions,
+          conversationHistory,
+          studentContext,
+        }),
+      });
 
-    if (serverlessRes.ok) {
+      if (!serverlessRes.ok) {
+        // The request resolved, but the server reported a failure (4xx / 5xx).
+        const body = await serverlessRes.json().catch(() => null);
+        return {
+          ok: false,
+          message:
+            body?.error ||
+            `The online advisor is temporarily unavailable (HTTP ${serverlessRes.status}).`,
+        };
+      }
+
       const json = await serverlessRes.json();
-      if (json?.text) {
-        const payload = {
+      if (!json?.text) {
+        return {
+          ok: false,
+          message: 'The online advisor returned an empty answer. Please try again.',
+        };
+      }
+
+      return {
+        ok: true,
+        payload: {
           text: json.text,
           retrievedSources,
           usage: json.usage || {},
           latencyMs: json.latencyMs || Date.now() - startTime,
           isClientCached: false,
           isServerless: true,
-        };
-
-        promptCache.set(
-          {
-            prompt: cleanPrompt,
-            model: chosenModel,
-            provider: 'auto',
-            cgpa: studentContext.cgpa,
-            completedCredits: studentContext.completedCredits,
-            major: studentContext.selectedMajor,
-          },
-          payload
-        );
-
-        return payload;
-      }
+          hostedUnavailable: false,
+          hostedErrorMessage: '',
+        },
+      };
+    } catch {
+      // The hosted engine could not be reached at all (offline, DNS, CORS).
+      return {
+        ok: false,
+        message: 'The online advisor could not be reached.',
+      };
     }
-  } catch {
-    /* fall through to the offline engine */
+  };
+
+  const hosted = await requestHostedAnswer();
+
+  if (hosted.ok) {
+    promptCache.set(
+      {
+        prompt: cleanPrompt,
+        model: chosenModel,
+        provider: 'auto',
+        cgpa: studentContext.cgpa,
+        completedCredits: studentContext.completedCredits,
+        major: studentContext.selectedMajor,
+      },
+      hosted.payload
+    );
+
+    return hosted.payload;
   }
 
+  // The live advisor is down: answer from the built-in regulations engine and
+  // tell the caller (and the UI) that this is a fallback, not a live answer.
   return {
     text: generateAIAnswer(cleanPrompt, studentContext),
     retrievedSources,
     latencyMs: Date.now() - startTime,
     isClientCached: false,
+    isServerless: false,
+    hostedUnavailable: true,
+    hostedErrorMessage: hosted.message,
   };
 }
 /**

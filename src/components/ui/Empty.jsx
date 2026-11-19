@@ -21,15 +21,15 @@ export default function Empty({
 }) {
   return (
     <div
-      className={`flex flex-col items-center justify-center rounded-xl border border-dashed border-line-strong bg-surface2/25 text-center ${
-        compact ? 'px-6 py-8' : 'px-6 py-12'
+      className={`flex flex-col items-center justify-center rounded-2xl border border-dashed border-line-strong px-6 py-12 text-center ${
+        compact ? 'py-8' : ''
       } ${className}`}
     >
-      <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-surface2 text-ink-3">
-        <Icon className="h-4 w-4" strokeWidth={2} />
-      </span>
-      <p className={`mt-3 ${type.cardTitle}`}>{title}</p>
-      {sub && <p className={`${type.small} mt-1 max-w-sm`}>{sub}</p>}
+      <div className="rounded-xl bg-surface2 p-2.5 text-ink-3">
+        <Icon className="h-5 w-5" strokeWidth={2} />
+      </div>
+      <p className={`mt-3 ${type.cardTitle} text-ink-2`}>{title}</p>
+      {sub && <p className="mt-1 max-w-xs text-xs leading-relaxed text-ink-3">{sub}</p>}
       {action && <div className="mt-4">{action}</div>}
     </div>
   );

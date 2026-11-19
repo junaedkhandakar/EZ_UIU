@@ -21,10 +21,10 @@ export default function StatCard({
 }) {
   const toneStyles = {
     default: 'border-line bg-surface',
-    accent: 'border-accent/30 bg-accentSoft/40',
-    ok: 'border-ok/25 bg-ok/[0.07]',
-    warn: 'border-warn/25 bg-warn/[0.07]',
-    bad: 'border-bad/25 bg-bad/[0.07]',
+    accent: 'border-accent/25 bg-accentSoft',
+    ok: 'border-ok/25 bg-ok/10',
+    warn: 'border-warn/25 bg-warn/10',
+    bad: 'border-bad/25 bg-bad/10',
   };
   const labelTone = {
     default: 'text-ink-3',

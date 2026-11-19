@@ -275,7 +275,7 @@ export default function CommandPalette({
       />
 
       <div
-        className="pop-in relative z-10 w-full max-w-2xl overflow-hidden rounded-xl border border-line-specular bg-surface shadow-pop"
+        className="pop-in relative z-10 w-full max-w-2xl overflow-hidden rounded-2xl border border-line-specular bg-surface shadow-pop"
       >
             {/* Search Input Bar */}
             <div className="flex items-center gap-3 border-b border-line px-4 py-3.5">
@@ -291,7 +291,7 @@ export default function CommandPalette({
               />
               <button
                 type="button"
-                onClick={onClose}
+                onClick={() => onClose()}
                 className="kbd-shortcut cursor-pointer transition-colors hover:border-line-strong hover:text-ink"
                 title="Press ESC to close"
               >
@@ -306,9 +306,8 @@ export default function CommandPalette({
               role="listbox"
             >
               {items.length === 0 ? (
-                <div className="p-8 text-center">
-                  <p className="text-sm font-semibold text-ink-2">No commands or courses found</p>
-                  <p className="mt-1 text-xs text-ink-3">Nothing matches “{query}”.</p>
+                <div className="p-8 text-center text-sm text-ink-3">
+                  No commands or courses found for "{query}"
                 </div>
               ) : (
                 items.map((item, index) => {
@@ -345,7 +344,7 @@ export default function CommandPalette({
                       <div className="flex items-center gap-2">
                         {item.type === 'course' && (
                           <span
-                            className={`rounded-md px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.08em] ${
+                            className={`rounded-md px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider ${
                               isSelected ? 'bg-white/20 text-white' : 'bg-surface2 text-accent'
                             }`}
                           >
@@ -373,7 +372,7 @@ export default function CommandPalette({
                   <span className="kbd-shortcut">↵</span> Select
                 </span>
               </div>
-              <span className="text-[11px] font-semibold text-accent">EZ_UIU</span>
+              <span className="text-[11px] font-semibold text-accent">UIU Intelligence Suite</span>
             </div>
           </div>
         </div>

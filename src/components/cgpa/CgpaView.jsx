@@ -70,13 +70,13 @@ function GaugeRing({ cgpa, probation }) {
       </svg>
       <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
         <div
-          className={`num text-[34px] font-bold leading-none tracking-[-0.02em] ${
+          className={`num text-[34px] font-bold leading-none tracking-tight ${
             probation ? 'text-bad' : 'text-ink'
           }`}
         >
           <CountUp value={cgpa} />
         </div>
-        <div className="mt-1.5 text-[10px] font-semibold uppercase tracking-[0.08em] text-ink-3">
+        <div className="mt-1 text-[10px] font-medium uppercase tracking-wider text-ink-3">
           of 4.00
         </div>
       </div>
@@ -92,7 +92,7 @@ function ProgressBar({ label, valueText, pct, children }) {
         <span>{label}</span>
         <span className="num text-[11px] font-bold text-ink">{valueText}</span>
       </div>
-      <div className="h-1.5 overflow-hidden rounded-full bg-surface2">
+      <div className="h-2 overflow-hidden rounded-full bg-surface2">
         <motion.div
           className="h-full rounded-full bg-gradient-to-r from-accent to-accent2"
           initial={{ width: 0 }}
@@ -221,20 +221,22 @@ export function CgpaView({
       {/* ---------------- Header ---------------- */}
       <header className="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <h1 className={type.pageTitle}>CGPA &amp; Academic Standing</h1>
-          <p className={`${type.small} mt-1`}>
-            {deptConfig.name} · {programCredits} credits
+          <h1 className="text-xl font-bold tracking-tight text-ink sm:text-2xl">
+            CGPA &amp; Academic Standing
+          </h1>
+          <p className="mt-0.5 text-xs text-ink-3">
+            {deptConfig.name} · {programCredits} Credits
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
-          <Button variant="secondary" size="sm" icon={Upload} onClick={() => setUcamOpen(true)}>
+          <Button variant="secondary" size="md" icon={Upload} onClick={() => setUcamOpen(true)}>
             From UCam
           </Button>
-          <Button variant="secondary" size="sm" icon={Upload} onClick={() => fileRef.current?.click()}>
+          <Button variant="secondary" size="md" icon={Upload} onClick={() => fileRef.current?.click()}>
             CSV
           </Button>
           <input ref={fileRef} type="file" accept=".csv" className="hidden" onChange={importCSV} />
-          <Button variant="secondary" size="sm" icon={Download} onClick={() => exportCSV(courses)}>
+          <Button variant="secondary" size="md" icon={Download} onClick={() => exportCSV(courses)}>
             Export
           </Button>
           <Button
@@ -261,24 +263,26 @@ export function CgpaView({
         >
           {courses.length === 0 && (
             <Surface
-              tone="accent"
-              className="flex flex-col items-start justify-between gap-3 sm:flex-row sm:items-center"
+              className="border-accent/40 bg-accentSoft/30 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-sm"
             >
-              <div className="flex items-start gap-3">
-                <span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-surface text-accent">
-                  <Upload className="h-4 w-4" strokeWidth={2.2} />
-                </span>
-                <div>
-                  <h3 className={type.cardTitle}>No transcript loaded yet</h3>
-                  <p className={`${type.small} mt-1`}>
-                    Import your grades from UCam or a CSV file to compute your cumulative CGPA,
-                    standing, and degree progress.
-                  </p>
-                </div>
+              <div>
+                <h3 className="text-sm font-bold text-ink flex items-center gap-2">
+                  <Upload className="h-4 w-4 text-accent" />
+                  No transcript loaded yet
+                </h3>
+                <p className="text-xs text-ink-3 mt-0.5">
+                  Import your grades from UCam or a CSV file to compute your cumulative CGPA,
+                  standing, and degree progress.
+                </p>
               </div>
-              <Button variant="primary" size="sm" icon={Upload} onClick={() => setUcamOpen(true)}>
-                Import from UCam
-              </Button>
+              <div className="flex items-center gap-2 shrink-0">
+                <Button variant="primary" size="sm" icon={Upload} onClick={() => setUcamOpen(true)}>
+                  Import from UCam
+                </Button>
+                <Button variant="secondary" size="sm" icon={Upload} onClick={() => fileRef.current?.click()}>
+                  Upload CSV
+                </Button>
+              </div>
             </Surface>
           )}
 
@@ -368,8 +372,8 @@ export function CgpaView({
           </div>
 
           {/* chart */}
-          <Surface>
-            <h3 className={`${type.sectionTitle} mb-2`}>Progression</h3>
+          <Surface pad="lg">
+            <h3 className="text-[15px] font-bold tracking-tight text-ink">Progression</h3>
             <GradeChart history={history} />
           </Surface>
         </motion.div>
@@ -435,8 +439,8 @@ export function CgpaView({
           transition={{ type: 'spring', stiffness: 450, damping: 30 }}
           className="grid grid-cols-1 gap-4 lg:grid-cols-2"
         >
-          <Surface>
-            <h3 className={type.sectionTitle}>Program</h3>
+          <Surface pad="lg">
+            <h3 className="text-[15px] font-bold tracking-tight text-ink">Program</h3>
             <div className="mt-4 flex flex-col gap-4">
               <Field label="Department profile">
                 <Select
@@ -473,9 +477,9 @@ export function CgpaView({
             </div>
           </Surface>
 
-          <Surface>
-            <h3 className={type.sectionTitle}>Data</h3>
-            <p className={`${type.small} mt-1`}>Everything lives in this browser only.</p>
+          <Surface pad="lg">
+            <h3 className="text-[15px] font-bold tracking-tight text-ink">Data</h3>
+            <p className="mt-1 text-xs text-ink-3">Everything lives in this browser only.</p>
             <div className="mt-4 flex flex-col gap-2">
               <Button variant="secondary" icon={Download} onClick={() => exportCSV(courses)}>
                 Export transcript as CSV

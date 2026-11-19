@@ -11,7 +11,7 @@ const TONES = {
   A: 'border-ok/30 bg-ok/10 text-ok',
   B: 'border-accent/30 bg-accentSoft text-accent',
   C: 'border-warn/30 bg-warn/10 text-warn',
-  D: 'border-orange/30 bg-orange/10 text-orange',
+  D: 'border-warn/40 bg-warn/10 text-warn',
   F: 'border-bad/30 bg-bad/10 text-bad',
   none: 'border-line bg-surface2 text-ink-3',
 };

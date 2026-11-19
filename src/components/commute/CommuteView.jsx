@@ -17,7 +17,6 @@ import Tabs from '../ui/Tabs';
 import Badge from '../ui/Badge';
 import Segmented from '../ui/Segmented';
 import Input from '../ui/Input';
-import { type } from '../ui/tokens';
 import {
   SHUTTLE_SCHEDULE,
   KURIL_SHUTTLE_SCHEDULE,
@@ -63,28 +62,30 @@ function NextDepartureCard({ caption, info, tone = 'accent' }) {
       : 'border-ok/25 bg-ok/[0.07]';
 
   return (
-    <div className={`mt-4 rounded-xl border p-4 ${toneRing}`}>
-      <span className={type.eyebrow}>{caption}</span>
+    <div className={`mt-4 rounded-2xl border p-4 ${toneRing}`}>
+      <span className="text-[10.5px] font-semibold uppercase tracking-[0.09em] text-ink-3">
+        {caption}
+      </span>
       {info.upcoming ? (
         <>
-          <div className="num mt-1.5 text-[24px] font-bold leading-none tracking-[-0.02em] text-ink">
+          <div className="num mt-1.5 text-[24px] font-bold leading-none tracking-tight text-ink">
             {info.upcoming.period}
           </div>
           <div className="mt-2 flex items-center gap-2">
             <Badge tone={info.status === 'soon' ? 'warn' : 'accent'}>
               {info.status === 'soon' ? 'Departing soon' : 'Scheduled'}
             </Badge>
-            <span className="text-[12px] font-medium text-ink-2">
+            <span className="text-xs font-medium text-ink-2">
               in ≈ {info.minutesAway} min
             </span>
           </div>
         </>
       ) : (
         <>
-          <div className="mt-1.5 text-[19px] font-bold leading-none tracking-[-0.02em] text-ink-3">
+          <div className="mt-1.5 text-[19px] font-bold leading-none tracking-tight text-ink-3">
             Done for the day
           </div>
-          <p className={`${type.small} mt-2`}>
+          <p className="mt-2 text-xs text-ink-3">
             All scheduled shifts for today have concluded.
           </p>
         </>
@@ -96,14 +97,14 @@ function NextDepartureCard({ caption, info, tone = 'accent' }) {
 /* ---------- Numbered stoppage rail ---------- */
 function StoppageRail({ stoppages, lastCaption = 'Destination' }) {
   return (
-    <ol className="relative mt-3 space-y-3 border-l-2 border-accent/30 pl-5">
+    <ol className="relative mt-3 space-y-2.5 border-l-2 border-accent/40 pl-5">
       {stoppages.map((stop, i) => (
-        <li key={stop} className="relative flex items-center justify-between gap-3">
+        <li key={stop} className="relative flex items-center justify-between text-xs">
           <span className="absolute -left-[27px] flex h-5 w-5 items-center justify-center rounded-full border-2 border-accent bg-surface text-[10px] font-bold text-accent">
             {i + 1}
           </span>
-          <span className="truncate text-[12.5px] font-semibold text-ink">{stop}</span>
-          <span className="shrink-0 text-[10.5px] text-ink-3">
+          <span className="truncate font-semibold text-ink text-[12.5px]">{stop}</span>
+          <span className="rounded bg-surface2 px-2 py-0.5 text-[10px] text-ink-3">
             {i === 0 ? 'Origin' : i === stoppages.length - 1 ? lastCaption : 'Pickup / Drop'}
           </span>
         </li>
@@ -117,10 +118,10 @@ function DepartureRow({ index, period, tag, tagTone = 'neutral' }) {
   return (
     <li className="flex items-center justify-between gap-3 rounded-lg border border-line bg-surface2/40 px-3 py-2.5">
       <span className="flex items-center gap-2.5">
-        <span className="num flex h-5 w-5 items-center justify-center rounded-md bg-accentSoft text-[10px] font-bold text-accent">
+        <span className="num flex h-5 w-5 items-center justify-center rounded-full bg-accentSoft text-[10px] font-bold text-accent">
           {index + 1}
         </span>
-        <span className="num font-mono text-[12.5px] font-bold text-ink">{period}</span>
+        <span className="num font-mono text-[13px] font-bold text-ink">{period}</span>
       </span>
       <Badge tone={tagTone}>{tag}</Badge>
     </li>
@@ -153,7 +154,7 @@ function ShuttleTab({
       <div className="flex flex-col gap-4 lg:col-span-5">
         <Surface pad="lg">
           <div className="flex items-center justify-between gap-3 border-b border-line pb-3">
-            <h3 className={`${type.sectionTitle} flex items-center gap-2`}>
+            <h3 className="text-[15px] font-bold text-ink flex items-center gap-2">
               <Icon className="h-4 w-4 text-accent" />
               {title}
             </h3>
@@ -171,7 +172,9 @@ function ShuttleTab({
           <NextDepartureCard caption={heroCaption} info={info} />
 
           <div className="mt-5 border-t border-line pt-4">
-            <span className={type.eyebrow}>Route sequence ({schedules.stoppages.length} points)</span>
+            <span className="text-xs font-bold uppercase tracking-wider text-ink-3">
+              Route sequence ({schedules.stoppages.length} points)
+            </span>
             <StoppageRail stoppages={schedules.stoppages} lastCaption={lastCaption} />
           </div>
         </Surface>
@@ -179,8 +182,8 @@ function ShuttleTab({
 
       <div className="flex flex-col gap-4 lg:col-span-7">
         <Surface pad="lg">
-          <h3 className={type.sectionTitle}>All scheduled departures</h3>
-          <p className={`${type.small} mt-1`}>{note}</p>
+          <h3 className="text-[15px] font-bold text-ink">All scheduled departures</h3>
+          <p className="mt-1 text-xs text-ink-3">{note}</p>
           <ul className="mt-4 grid grid-cols-1 gap-2 sm:grid-cols-2">
             {schedules.list.map((item, idx) => (
               <DepartureRow
@@ -240,15 +243,19 @@ export default function CommuteView() {
       {/* Header */}
       <header className="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <h1 className={type.pageTitle}>Shuttle &amp; campus commute</h1>
-          <p className={`${type.small} mt-1`}>
+          <h1 className="text-xl font-bold tracking-tight text-ink sm:text-2xl">
+            Shuttle &amp; Campus Commute
+          </h1>
+          <p className="mt-0.5 text-xs text-ink-3">
             Notun Bazar &amp; Kuril shuttles, route navigation, and campus contacts
           </p>
         </div>
         <div className="flex items-center gap-2 rounded-xl border border-line bg-surface px-3 py-1.5 shadow-card">
           <Clock className="h-3.5 w-3.5 text-accent" />
-          <span className={type.eyebrow}>Dhaka</span>
-          <span className="num font-mono text-[13px] font-bold text-ink">
+          <span className="text-[11px] font-semibold uppercase tracking-wider text-ink-3">
+            Dhaka Time
+          </span>
+          <span className="num font-mono text-sm font-bold text-ink">
             {dhakaNow(currentTime)}
           </span>
         </div>
@@ -329,11 +336,11 @@ export default function CommuteView() {
         <div className="grid grid-cols-1 gap-4 lg:grid-cols-12">
           <div className="flex flex-col gap-4 lg:col-span-5">
             <Surface pad="lg">
-              <h3 className={`${type.sectionTitle} flex items-center gap-2`}>
+              <h3 className="text-[15px] font-bold text-ink flex items-center gap-2">
                 <Search className="h-4 w-4 text-accent" />
                 Find my student bus
               </h3>
-              <p className={`${type.small} mt-1`}>
+              <p className="mt-1 text-xs text-ink-3">
                 Type your area (Dhanmondi, Mirpur 10, Uttara, Farmgate, Rampura…) to find the route
                 that stops near you.
               </p>
@@ -350,8 +357,8 @@ export default function CommuteView() {
               </div>
 
               <div className="mt-4">
-                <span className={type.eyebrow}>
-                  Select route ({filteredRoutes.length})
+                <span className="text-[11px] font-bold uppercase tracking-wider text-ink-3">
+                  Select Route ({filteredRoutes.length}):
                 </span>
                 <div className="mt-2 space-y-1.5">
                   {filteredRoutes.map((r) => {
@@ -381,7 +388,7 @@ export default function CommuteView() {
                     );
                   })}
                   {filteredRoutes.length === 0 && (
-                    <p className={`${type.small} rounded-lg border border-dashed border-line-strong px-3 py-4 text-center`}>
+                    <p className="rounded-lg border border-dashed border-line-strong px-3 py-4 text-center text-xs text-ink-3">
                       No route matches “{routeSearch}”.
                     </p>
                   )}
@@ -395,23 +402,25 @@ export default function CommuteView() {
               <div className="flex flex-wrap items-start justify-between gap-3 border-b border-line pb-3">
                 <div>
                   <div className="flex items-center gap-2">
-                    <span className="font-mono text-[15px] font-extrabold tracking-tight text-accent">
+                    <span className="font-mono text-base font-extrabold text-accent">
                       {activeRoute.name}
                     </span>
                     {activeRoute.expressway && (
                       <Badge tone="ok">Elevated expressway on return</Badge>
                     )}
                   </div>
-                  <h3 className={`${type.sectionTitle} mt-0.5`}>{activeRoute.title}</h3>
+                  <h3 className="text-[15px] font-bold text-ink mt-0.5">{activeRoute.title}</h3>
                 </div>
 
                 <div className="text-right">
-                  <span className={type.eyebrow}>Campus return slots</span>
+                  <span className="text-[11px] font-bold uppercase tracking-wider text-ink-3">
+                    Campus Return Slots
+                  </span>
                   <div className="mt-1 flex flex-wrap justify-end gap-1.5">
                     {activeRoute.returnTimes.map((slot) => (
                       <span
                         key={slot}
-                        className="num rounded-md bg-surface2 px-2 py-[3px] font-mono text-[11px] font-bold text-ink"
+                        className="num rounded bg-surface px-2 py-0.5 font-mono text-[10px] font-bold text-ink border border-line"
                       >
                         {slot}
                       </span>
@@ -420,13 +429,13 @@ export default function CommuteView() {
                 </div>
               </div>
 
-              <div className="my-3 rounded-lg border border-line bg-surface2/40 px-3.5 py-3 text-[12px] leading-relaxed text-ink-2">
+              <div className="my-3 rounded-xl border border-line bg-surface2/40 p-3 text-xs text-ink-2">
                 <b className="text-ink">Transit policy:</b> {activeRoute.notes}
               </div>
 
               <div className="mt-4">
-                <h4 className={`${type.eyebrow} mb-3`}>
-                  Stoppage sequence ({activeRoute.stoppages.length} stops)
+                <h4 className="text-xs font-bold uppercase tracking-wider text-ink-3 mb-3">
+                  Stoppage Sequence ({activeRoute.stoppages.length} Stops):
                 </h4>
                 <StoppageRail
                   stoppages={activeRoute.stoppages}
@@ -458,18 +467,18 @@ export default function CommuteView() {
             },
           ].map((block) => (
             <Surface pad="lg" key={block.title}>
-              <h3 className={`${type.sectionTitle} flex items-center gap-2`}>
+              <h3 className="text-base font-bold text-ink flex items-center gap-2">
                 <Compass className="h-4 w-4 text-accent" />
                 {block.title}
               </h3>
-              <p className={`${type.small} mt-1`}>{block.sub}</p>
+              <p className="mt-1 text-xs text-ink-3">{block.sub}</p>
               <ul className="mt-4 space-y-2">
                 {block.list.map((slot, i) => (
                   <li
                     key={i}
-                    className="flex items-center justify-between gap-3 rounded-lg border border-line bg-surface2/40 px-3 py-2.5"
+                    className="flex items-center justify-between rounded-xl border border-line bg-surface2/50 p-3 text-xs"
                   >
-                    <span className="num font-mono text-[12.5px] font-bold text-ink">
+                    <span className="num font-mono font-bold text-ink">
                       {slot.period}
                     </span>
                     <Badge tone={block.tone}>{block.tag}</Badge>
@@ -487,20 +496,20 @@ export default function CommuteView() {
           {CAMPUS_OFFICE_DIRECTORY.map((office) => (
             <Surface hover key={office.name} className="flex flex-col justify-between">
               <div>
-                <h3 className={`${type.cardTitle} flex items-center gap-1.5`}>
+                <h3 className="text-sm font-bold text-ink flex items-center gap-1.5">
                   <Building2 className="h-4 w-4 shrink-0 text-accent" />
                   {office.name}
                 </h3>
-                <div className="mt-1 flex items-center gap-1.5 text-[11.5px] font-medium text-ink-2">
+                <div className="mt-1 flex items-center gap-1.5 text-xs font-semibold text-accent">
                   <MapPin className="h-3.5 w-3.5 shrink-0 text-ink-3" />
                   {office.location}
                 </div>
-                <p className={`${type.small} mt-2`}>{office.desc}</p>
+                <p className="mt-2 text-xs text-ink-3 leading-relaxed">{office.desc}</p>
               </div>
               <div className="mt-4 border-t border-line pt-3">
                 <a
                   href={`mailto:${office.email}`}
-                  className="inline-flex items-center gap-1.5 text-[11.5px] font-semibold text-accent hover:underline"
+                  className="inline-flex items-center gap-1.5 text-xs font-bold text-accent hover:underline"
                 >
                   <Mail className="h-3.5 w-3.5" />
                   {office.email}
