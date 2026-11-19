@@ -23,6 +23,7 @@ export default {
         ok: 'rgb(var(--ok-rgb) / <alpha-value>)',
         warn: 'rgb(var(--warn-rgb) / <alpha-value>)',
         bad: 'rgb(var(--bad-rgb) / <alpha-value>)',
+        orange: 'rgb(var(--orange-rgb) / <alpha-value>)',
         // Baked-alpha tint; must not use <alpha-value> (plain bg-accentSoft stays subtle)
         accentSoft: 'var(--accent-soft)',
       },

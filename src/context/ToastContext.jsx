@@ -34,15 +34,16 @@ export function ToastProvider({ children }) {
           return (
             <div
               key={toast.id}
-              className="glass pointer-events-auto flex items-center gap-3 rounded-2xl border border-line p-3 shadow-pop slide-up-in"
+              role="status"
+              className="pointer-events-auto flex items-start gap-2.5 rounded-xl border border-line bg-surface p-3 shadow-pop slide-up-in"
             >
-              <span className={`shrink-0 rounded-lg p-1.5 ${cls}`}>
-                <Icon className="h-4 w-4" strokeWidth={2.2} />
+              <span className={`mt-px shrink-0 rounded-md p-1.5 ${cls}`}>
+                <Icon className="h-3.5 w-3.5" strokeWidth={2.2} />
               </span>
-              <p className="flex-1 text-[13px] font-medium leading-snug text-ink">{toast.message}</p>
+              <p className="flex-1 text-[12.5px] font-medium leading-snug text-ink">{toast.message}</p>
               <button
                 onClick={() => removeToast(toast.id)}
-                className="rounded-lg p-1 text-ink-3 transition-colors hover:bg-surface2 hover:text-ink"
+                className="-mr-1 -mt-0.5 shrink-0 rounded-md p-1 text-ink-3 transition-colors hover:bg-surface2 hover:text-ink"
                 aria-label="Dismiss"
               >
                 <X className="h-3.5 w-3.5" />

@@ -81,7 +81,7 @@ export default function Timetable({ sections = [], hoveredSection = null }) {
 
   if (!model) {
     return (
-      <div className="flex h-[320px] items-center justify-center rounded-2xl border border-dashed border-line-strong text-sm text-ink-3">
+      <div className="flex h-[320px] items-center justify-center rounded-xl border border-dashed border-line-strong text-sm text-ink-3">
         {sections.length
           ? 'The courses in your routine have no fixed class times.'
           : 'Upload your class routine PDF to preview your weekly timetable.'}
@@ -94,7 +94,7 @@ export default function Timetable({ sections = [], hoveredSection = null }) {
   return (
     <>
       <div
-        className={`overflow-x-auto rounded-2xl border bg-surface shadow-card transition-colors duration-200 ${
+        className={`overflow-x-auto rounded-xl border bg-surface shadow-card transition-colors duration-200 ${
           hasClash ? 'border-bad/40 shadow-[0_0_20px_rgba(239,68,68,0.1)]' : 'border-line'
         }`}
       >
@@ -205,7 +205,7 @@ export default function Timetable({ sections = [], hoveredSection = null }) {
             {/* Highlights row */}
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
               <div className="rounded-xl border border-line bg-surface2/60 p-3">
-                <span className="text-[10px] font-bold uppercase tracking-wider text-ink-3">
+                <span className="text-[10.5px] font-semibold uppercase tracking-[0.08em] text-ink-3">
                   Credits
                 </span>
                 <div className="num mt-1 text-lg font-extrabold text-accent">
@@ -213,7 +213,7 @@ export default function Timetable({ sections = [], hoveredSection = null }) {
                 </div>
               </div>
               <div className="rounded-xl border border-line bg-surface2/60 p-3">
-                <span className="text-[10px] font-bold uppercase tracking-wider text-ink-3">
+                <span className="text-[10.5px] font-semibold uppercase tracking-[0.08em] text-ink-3">
                   Program
                 </span>
                 <div className="mt-1 text-base font-bold text-ink">
@@ -221,7 +221,7 @@ export default function Timetable({ sections = [], hoveredSection = null }) {
                 </div>
               </div>
               <div className="col-span-2 rounded-xl border border-line bg-surface2/60 p-3 sm:col-span-1">
-                <span className="text-[10px] font-bold uppercase tracking-wider text-ink-3">
+                <span className="text-[10.5px] font-semibold uppercase tracking-[0.08em] text-ink-3">
                   Capacity / Status
                 </span>
                 <div className="mt-1 text-base font-bold text-ok">
@@ -232,7 +232,7 @@ export default function Timetable({ sections = [], hoveredSection = null }) {
 
             {/* Meetings list */}
             <div>
-              <h4 className="text-xs font-bold uppercase tracking-wider text-ink-3 mb-2">
+              <h4 className="text-[11px] font-bold uppercase tracking-[0.07em] text-ink-3 mb-2">
                 Class Schedule & Venue
               </h4>
               <div className="space-y-2">
@@ -264,7 +264,7 @@ export default function Timetable({ sections = [], hoveredSection = null }) {
             {/* Faculty Instructors */}
             {inspectedSec.faculty && inspectedSec.faculty.length > 0 && (
               <div>
-                <h4 className="text-xs font-bold uppercase tracking-wider text-ink-3 mb-2">
+                <h4 className="text-[11px] font-bold uppercase tracking-[0.07em] text-ink-3 mb-2">
                   Faculty Instructors
                 </h4>
                 <div className="flex flex-wrap gap-2">

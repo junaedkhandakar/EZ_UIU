@@ -26,6 +26,9 @@ import {
 import Button from '../ui/Button';
 import Surface from '../ui/Surface';
 import Select from '../ui/Select';
+import Segmented from '../ui/Segmented';
+import Input, { Field } from '../ui/Input';
+import { type } from '../ui/tokens';
 import { useToast } from '../../context/ToastContext';
 import { COURSE_CATALOG } from '../../data/courseCatalog';
 import { UIU_LOGO_BASE64 } from '../../data/uiuLogoBase64';
@@ -400,12 +403,13 @@ export default function CoverPageView() {
       {/* Header */}
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <h1 className="text-xl font-bold tracking-tight text-ink sm:text-2xl flex items-center gap-2">
+          <h1 className={`${type.pageTitle} flex items-center gap-2`}>
             <FileCheck2 className="h-5 w-5 text-accent" />
-            UIU Assignment & Lab Cover Page Studio
+            Cover page studio
           </h1>
-          <p className="mt-0.5 text-xs text-ink-3">
-            Official UIU emblem, authentic department formats, auto-saved in your browser, vector A4 print & Word export
+          <p className={`${type.small} mt-0.5`}>
+            Official UIU emblem, authentic department formats, auto-saved in your browser, vector A4
+            print &amp; Word export
           </p>
         </div>
 
@@ -448,7 +452,7 @@ export default function CoverPageView() {
                 <FileUp className="h-4 w-4 text-accent" />
                 <h3 className="text-sm font-bold text-ink">Merge with Assignment PDF</h3>
               </div>
-              <span className="rounded bg-accentSoft px-1.5 py-0.5 text-[9.5px] font-bold text-accent border border-accent/25 uppercase tracking-wider">
+              <span className="rounded bg-accentSoft px-1.5 py-0.5 text-[9.5px] font-semibold text-accent border border-accent/25 uppercase tracking-[0.08em]">
                 Cover = Page 1
               </span>
             </div>
@@ -526,77 +530,55 @@ export default function CoverPageView() {
           {/* Document Type Selector */}
           <Surface className="space-y-3">
             <div className="flex items-center justify-between border-b border-line pb-2.5">
-              <h3 className="text-sm font-bold text-ink">Submission Type</h3>
-              <div className="flex rounded-lg border border-line bg-surface2 p-0.5 text-xs">
-                <button
-                  type="button"
-                  onClick={() => setIsGroup(false)}
-                  className={`flex items-center gap-1 rounded px-2.5 py-1 font-semibold transition-colors ${
-                    !isGroup ? 'bg-surface text-accent shadow-sm' : 'text-ink-3 hover:text-ink'
-                  }`}
-                >
-                  <User className="h-3 w-3" /> Individual
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setIsGroup(true)}
-                  className={`flex items-center gap-1 rounded px-2.5 py-1 font-semibold transition-colors ${
-                    isGroup ? 'bg-surface text-accent shadow-sm' : 'text-ink-3 hover:text-ink'
-                  }`}
-                >
-                  <Users className="h-3 w-3" /> Group
-                </button>
-              </div>
+              <h3 className={type.cardTitle}>Submission type</h3>
+              <Segmented
+                size="sm"
+                value={isGroup ? 'group' : 'individual'}
+                onChange={(v) => setIsGroup(v === 'group')}
+                options={[
+                  { value: 'individual', label: 'Individual', icon: User },
+                  { value: 'group', label: 'Group', icon: Users },
+                ]}
+              />
             </div>
 
-            <div className="grid grid-cols-3 gap-1.5">
-              {DOC_TYPES.map((dt) => {
-                const Icon = dt.icon;
-                return (
-                  <button
-                    key={dt.id}
-                    type="button"
-                    onClick={() => setDocType(dt.id)}
-                    className={`flex items-center gap-1.5 p-2 rounded-xl border text-xs font-semibold text-left transition-all ${
-                      docType === dt.id
-                        ? 'border-accent bg-accentSoft text-accent font-bold shadow-sm'
-                        : 'border-line bg-surface2/50 text-ink-3 hover:text-ink hover:bg-surface2'
-                    }`}
-                  >
-                    <Icon className="h-3.5 w-3.5 shrink-0" />
-                    <span className="truncate">{dt.label}</span>
-                  </button>
-                );
-              })}
-            </div>
+            <Segmented
+              block
+              value={docType}
+              onChange={setDocType}
+              options={DOC_TYPES.map((dt) => ({
+                value: dt.id,
+                label: dt.label,
+                icon: dt.icon,
+              }))}
+            />
 
             {/* Template Selector */}
-            <div className="pt-2 border-t border-line">
-                <label className="block text-[10.5px] font-semibold text-ink-3 uppercase tracking-wider mb-1.5">
-                  Design Template
-                </label>
-                <div className="grid grid-cols-4 gap-1.5">
-                  {[
-                    { id: 'classic', label: 'Classic', desc: 'Faculty standard' },
-                    { id: 'modern', label: 'Modern', desc: 'Header banner' },
-                    { id: 'professional', label: 'Bordered', desc: 'Outer frame' },
-                    { id: 'elegant', label: 'Elegant', desc: 'Double border' },
-                  ].map((t) => (
-                    <button
-                      key={t.id}
-                      type="button"
-                      onClick={() => setTemplate(t.id)}
-                      className={`p-2 rounded-xl border text-center transition-all ${
-                        template === t.id
-                          ? 'border-accent bg-accentSoft text-accent font-bold shadow-sm'
-                          : 'border-line bg-surface2/50 text-ink-3 hover:text-ink'
-                      }`}
-                    >
-                      <div className="text-xs font-bold">{t.label}</div>
-                      <div className="text-[9px] opacity-75">{t.desc}</div>
-                    </button>
-                  ))}
-                </div>
+            <div className="border-t border-line pt-3">
+              <span className={`${type.label} mb-1.5 block`}>Design template</span>
+              <div className="grid grid-cols-4 gap-1.5">
+                {[
+                  { id: 'classic', label: 'Classic', desc: 'Faculty standard' },
+                  { id: 'modern', label: 'Modern', desc: 'Header banner' },
+                  { id: 'professional', label: 'Bordered', desc: 'Outer frame' },
+                  { id: 'elegant', label: 'Elegant', desc: 'Double border' },
+                ].map((t) => (
+                  <button
+                    key={t.id}
+                    type="button"
+                    onClick={() => setTemplate(t.id)}
+                    aria-pressed={template === t.id}
+                    className={`rounded-xl border p-2 text-center transition-colors ${
+                      template === t.id
+                        ? 'border-accent bg-accentSoft font-bold text-accent shadow-sm'
+                        : 'border-line bg-surface2/50 text-ink-3 hover:bg-surface2 hover:text-ink'
+                    }`}
+                  >
+                    <div className="text-xs font-bold">{t.label}</div>
+                    <div className="text-[9px] opacity-75">{t.desc}</div>
+                  </button>
+                ))}
+              </div>
             </div>
           </Surface>
 
@@ -664,132 +646,102 @@ export default function CoverPageView() {
 
             {/* Manual Fields: visible if toggled or if no routine is saved */}
             {(isEditingCourse || routine.length === 0) && (
-              <div className={`space-y-2.5 ${routine.length > 0 ? 'pt-2 border-t border-line' : ''}`}>
+              <div className={`space-y-2.5 ${routine.length > 0 ? 'border-t border-line pt-3' : ''}`}>
                 <div className="grid grid-cols-2 gap-2.5">
-                  <div>
-                    <label className="block text-[10.5px] font-semibold text-ink-3 uppercase tracking-wider mb-1">
-                      Course Code
-                    </label>
-                    <input
+                  <Field label="Course code">
+                    <Input
                       type="text"
                       value={courseCode}
                       onChange={(e) => setCourseCode(e.target.value)}
-                      className="h-[38px] w-full rounded-xl border border-line bg-surface2/60 px-3 text-xs font-mono font-bold text-ink outline-none focus:border-accent"
+                      className="font-mono font-bold"
                     />
-                  </div>
+                  </Field>
 
-                  <div>
-                    <label className="block text-[10.5px] font-semibold text-ink-3 uppercase tracking-wider mb-1">
-                      Course Section
-                    </label>
-                    <input
+                  <Field label="Course section">
+                    <Input
                       type="text"
                       value={courseSection}
                       onChange={(e) => setCourseSection(e.target.value)}
-                      className="h-[38px] w-full rounded-xl border border-line bg-surface2/60 px-3 text-xs font-bold text-ink outline-none focus:border-accent"
+                      className="font-bold"
                     />
-                  </div>
+                  </Field>
                 </div>
 
-                <div>
-                  <label className="block text-[10.5px] font-semibold text-ink-3 uppercase tracking-wider mb-1">
-                    Course Title
-                  </label>
-                  <input
+                <Field label="Course title">
+                  <Input
                     type="text"
                     value={courseTitle}
                     onChange={(e) => setCourseTitle(e.target.value)}
-                    className="h-[38px] w-full rounded-xl border border-line bg-surface2/60 px-3 text-xs font-medium text-ink outline-none focus:border-accent"
                   />
-                </div>
+                </Field>
               </div>
             )}
 
             <div className="grid grid-cols-2 gap-2.5 pt-1">
-              <div>
-                <label className="block text-[10.5px] font-semibold text-ink-3 uppercase tracking-wider mb-1">
-                  {docType === 'lab' ? 'Experiment No.' : 'Assignment / Report No.'}
-                </label>
-                <input
+              <Field label={docType === 'lab' ? 'Experiment no.' : 'Assignment / report no.'}>
+                <Input
                   type="text"
                   value={docNumber}
                   onChange={(e) => setDocNumber(e.target.value)}
-                  className="h-[38px] w-full rounded-xl border border-line bg-surface2/60 px-3 text-xs font-mono font-bold text-ink outline-none focus:border-accent"
+                  className="font-mono font-bold"
                 />
-              </div>
+              </Field>
 
-              <div>
-                <label className="block text-[10.5px] font-semibold text-ink-3 uppercase tracking-wider mb-1">
-                  Trimester
-                </label>
-                <input
+              <Field label="Trimester">
+                <Input
                   type="text"
                   value={trimester}
                   onChange={(e) => setTrimester(e.target.value)}
-                  className="h-[38px] w-full rounded-xl border border-line bg-surface2/60 px-3 text-xs font-medium text-ink outline-none focus:border-accent"
                 />
-              </div>
+              </Field>
             </div>
 
-            <div>
-              <label className="block text-[10.5px] font-semibold text-ink-3 uppercase tracking-wider mb-1">
-                Topic / Experiment Name
-              </label>
-              <input
+            <Field label="Topic / experiment name">
+              <Input
                 type="text"
                 value={topicTitle}
                 onChange={(e) => setTopicTitle(e.target.value)}
-                className="h-[38px] w-full rounded-xl border border-line bg-surface2/60 px-3 text-xs font-medium text-ink outline-none focus:border-accent"
               />
-            </div>
+            </Field>
 
-            <div>
+            <Field label="Submission date">
               <div className="flex items-center justify-between mb-1">
-                <label className="block text-[10.5px] font-semibold text-ink-3 uppercase tracking-wider">
-                  Submission Date
-                </label>
+                <span className="hidden" />
                 {submissionDate !== getBrowserLocalDate() && (
                   <button
                     type="button"
                     onClick={() => setSubmissionDate(getBrowserLocalDate())}
                     className="text-[10px] font-semibold text-accent hover:underline"
                   >
-                    Set to Today
+                    Set to today
                   </button>
                 )}
               </div>
-              <input
+              <Input
                 type="date"
                 value={submissionDate}
                 onChange={(e) => setSubmissionDate(e.target.value)}
-                className="h-[38px] w-full rounded-xl border border-line bg-surface2/60 px-3 text-xs font-medium text-ink outline-none focus:border-accent"
               />
-            </div>
+            </Field>
           </Surface>
 
           {/* Faculty (Submitted To) */}
           <Surface className="space-y-3">
-            <h3 className="text-sm font-bold text-ink border-b border-line pb-2.5">
-              Faculty Information (Submitted To)
+            <h3 className={`${type.cardTitle} border-b border-line pb-2.5`}>
+              Faculty information (submitted to)
             </h3>
 
             <div className="grid grid-cols-2 gap-2.5">
-              <div>
-                <label className="block text-[10.5px] font-semibold text-ink-3 uppercase tracking-wider mb-1">
-                  Faculty Name
-                </label>
-                <input
+              <Field label="Faculty name">
+                <Input
                   type="text"
                   value={facultyName}
                   onChange={(e) => setFacultyName(e.target.value)}
-                  className="h-[38px] w-full rounded-xl border border-line bg-surface2/60 px-3 text-xs font-semibold text-ink outline-none focus:border-accent"
+                  className="font-semibold"
                 />
-              </div>
+              </Field>
 
-              <div>
-                <label className="block text-[10.5px] font-semibold text-ink-3 uppercase tracking-wider mb-1">
-                  Designation
-                </label>
+              <Field label="Designation">
                 <Select
                   value={facultyDesignation}
                   onChange={(e) => setFacultyDesignation(e.target.value)}
@@ -800,13 +752,10 @@ export default function CoverPageView() {
                     </option>
                   ))}
                 </Select>
-              </div>
+              </Field>
             </div>
 
-            <div>
-              <label className="block text-[10.5px] font-semibold text-ink-3 uppercase tracking-wider mb-1">
-                Department
-              </label>
+            <Field label="Department">
               <Select value={facultyDept} onChange={(e) => setFacultyDept(e.target.value)}>
                 {DEPARTMENTS.map((d) => (
                   <option key={d} value={d}>
@@ -814,22 +763,22 @@ export default function CoverPageView() {
                   </option>
                 ))}
               </Select>
-            </div>
+            </Field>
           </Surface>
 
           {/* Student Information (Submitted By) */}
           <Surface className="space-y-3">
             <div className="flex items-center justify-between border-b border-line pb-2.5">
-              <h3 className="text-sm font-bold text-ink">
-                {isGroup ? `Group Members (${students.length})` : 'Student Information (Submitted By)'}
+              <h3 className={type.cardTitle}>
+                {isGroup ? `Group members (${students.length})` : 'Student information (submitted by)'}
               </h3>
               {isGroup && (
                 <button
                   type="button"
                   onClick={handleAddStudent}
-                  className="text-xs font-bold text-accent hover:underline flex items-center gap-1"
+                  className="flex items-center gap-1 text-xs font-bold text-accent hover:underline"
                 >
-                  <Plus className="h-3 w-3" /> Add Member
+                  <Plus className="h-3 w-3" /> Add member
                 </button>
               )}
             </div>
@@ -838,17 +787,18 @@ export default function CoverPageView() {
               {students.map((st, idx) => (
                 <div
                   key={idx}
-                  className="rounded-xl border border-line bg-surface2/40 p-3 space-y-2 relative"
+                  className="relative space-y-2 rounded-xl border border-line bg-surface2/40 p-3"
                 >
                   <div className="flex items-center justify-between">
-                    <span className="text-[10px] font-bold uppercase tracking-wider text-ink-3">
+                    <span className={type.eyebrow}>
                       {isGroup ? `Member #${idx + 1}` : 'Student'}
                     </span>
                     {isGroup && students.length > 1 && (
                       <button
                         type="button"
                         onClick={() => handleRemoveStudent(idx)}
-                        className="text-ink-3 hover:text-bad p-0.5"
+                        aria-label="Remove member"
+                        className="p-0.5 text-ink-3 transition-colors hover:text-bad"
                       >
                         <Trash2 className="h-3.5 w-3.5" />
                       </button>
@@ -856,28 +806,23 @@ export default function CoverPageView() {
                   </div>
 
                   <div className="grid grid-cols-2 gap-2">
-                    <div>
-                      <label className="block text-[9.5px] font-semibold text-ink-3 uppercase mb-0.5">
-                        Name
-                      </label>
-                      <input
+                    <Field label="Name" labelClassName="text-[9.5px]">
+                      <Input
+                        size="sm"
                         type="text"
                         value={st.name}
                         onChange={(e) => handleStudentChange(idx, 'name', e.target.value)}
-                        className="h-8 w-full rounded-lg border border-line bg-surface px-2.5 text-xs text-ink outline-none focus:border-accent"
                       />
-                    </div>
-                    <div>
-                      <label className="block text-[9.5px] font-semibold text-ink-3 uppercase mb-0.5">
-                        Student ID
-                      </label>
-                      <input
+                    </Field>
+                    <Field label="Student ID" labelClassName="text-[9.5px]">
+                      <Input
+                        size="sm"
                         type="text"
                         value={st.id}
                         onChange={(e) => handleStudentChange(idx, 'id', e.target.value)}
-                        className="h-8 w-full rounded-lg border border-line bg-surface px-2.5 font-mono text-xs text-ink outline-none focus:border-accent"
+                        className="font-mono"
                       />
-                    </div>
+                    </Field>
                   </div>
                 </div>
               ))}

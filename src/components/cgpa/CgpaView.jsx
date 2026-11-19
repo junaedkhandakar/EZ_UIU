@@ -18,6 +18,10 @@ import {
 import Tabs from '../ui/Tabs';
 import Button from '../ui/Button';
 import Surface from '../ui/Surface';
+import StatCard from '../ui/StatCard';
+import Badge from '../ui/Badge';
+import Input, { Field } from '../ui/Input';
+import { type } from '../ui/tokens';
 import CountUp from '../ui/CountUp';
 import { CourseTable } from './CourseTable';
 import { AddCourseModal } from './AddCourseModal';
@@ -66,16 +70,37 @@ function GaugeRing({ cgpa, probation }) {
       </svg>
       <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
         <div
-          className={`num text-[34px] font-bold leading-none tracking-tight ${
+          className={`num text-[34px] font-bold leading-none tracking-[-0.02em] ${
             probation ? 'text-bad' : 'text-ink'
           }`}
         >
           <CountUp value={cgpa} />
         </div>
-        <div className="mt-1 text-[10px] font-medium uppercase tracking-wider text-ink-3">
+        <div className="mt-1.5 text-[10px] font-semibold uppercase tracking-[0.08em] text-ink-3">
           of 4.00
         </div>
       </div>
+    </div>
+  );
+}
+
+/* ---------- A labelled progress bar used by two panels ---------- */
+function ProgressBar({ label, valueText, pct, children }) {
+  return (
+    <div>
+      <div className={`mb-1.5 flex items-baseline justify-between ${type.eyebrow}`}>
+        <span>{label}</span>
+        <span className="num text-[11px] font-bold text-ink">{valueText}</span>
+      </div>
+      <div className="h-1.5 overflow-hidden rounded-full bg-surface2">
+        <motion.div
+          className="h-full rounded-full bg-gradient-to-r from-accent to-accent2"
+          initial={{ width: 0 }}
+          animate={{ width: `${pct}%` }}
+          transition={{ type: 'spring', stiffness: 200, damping: 25 }}
+        />
+      </div>
+      {children}
     </div>
   );
 }
@@ -189,316 +214,288 @@ export function CgpaView({
     { value: 'settings', label: 'Settings', icon: Settings },
   ];
 
+  const latestTerm = history.length ? history[history.length - 1] : null;
+
   return (
     <div className="flex flex-col gap-5">
-      {/* header */}
-      <div className="flex flex-wrap items-end justify-between gap-3">
+      {/* ---------------- Header ---------------- */}
+      <header className="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <h1 className="text-xl font-bold tracking-tight text-ink sm:text-2xl">
-            CGPA & Academic Standing
-          </h1>
-          <p className="mt-0.5 text-xs text-ink-3">
-            {deptConfig.name} · {programCredits} Credits
+          <h1 className={type.pageTitle}>CGPA &amp; Academic Standing</h1>
+          <p className={`${type.small} mt-1`}>
+            {deptConfig.name} · {programCredits} credits
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
-          <Button variant="secondary" size="md" icon={Upload} onClick={() => setUcamOpen(true)}>
+          <Button variant="secondary" size="sm" icon={Upload} onClick={() => setUcamOpen(true)}>
             From UCam
           </Button>
-          <Button variant="secondary" size="md" icon={Upload} onClick={() => fileRef.current?.click()}>
+          <Button variant="secondary" size="sm" icon={Upload} onClick={() => fileRef.current?.click()}>
             CSV
           </Button>
           <input ref={fileRef} type="file" accept=".csv" className="hidden" onChange={importCSV} />
-          <Button variant="secondary" size="md" icon={Download} onClick={() => exportCSV(courses)}>
+          <Button variant="secondary" size="sm" icon={Download} onClick={() => exportCSV(courses)}>
             Export
           </Button>
-          <Button variant="ghost" size="icon" icon={RotateCcw} onClick={resetAll} title="Clear transcript" />
+          <Button
+            variant="ghost"
+            size="icon"
+            icon={RotateCcw}
+            onClick={resetAll}
+            title="Clear transcript"
+            aria-label="Clear transcript"
+          />
         </div>
-      </div>
+      </header>
 
       <Tabs tabs={tabs} value={tab} onChange={setTab} layoutId="cgpa-subtabs" />
 
       {/* ================= TAB PANELS (instant swap + CSS/motion entrance) ================= */}
-      {/* AnimatePresence mode="wait" removed: it deadlocked panel swaps (same fix as main tabs, cb888c8) */}
-        {tab === 'overview' && (
-          <motion.div
-            key="overview"
-            initial={{ opacity: 0, y: 8 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ type: 'spring', stiffness: 450, damping: 30 }}
-            className="flex flex-col gap-4"
-          >
-            {courses.length === 0 && (
-              <Surface className="p-4 sm:p-5 border-accent/40 bg-accentSoft/30 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-sm">
+      {tab === 'overview' && (
+        <motion.div
+          key="overview"
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ type: 'spring', stiffness: 450, damping: 30 }}
+          className="flex flex-col gap-4"
+        >
+          {courses.length === 0 && (
+            <Surface
+              tone="accent"
+              className="flex flex-col items-start justify-between gap-3 sm:flex-row sm:items-center"
+            >
+              <div className="flex items-start gap-3">
+                <span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-surface text-accent">
+                  <Upload className="h-4 w-4" strokeWidth={2.2} />
+                </span>
                 <div>
-                  <h3 className="text-sm font-bold text-ink flex items-center gap-2">
-                    <Upload className="h-4 w-4 text-accent" />
-                    No transcript loaded yet
-                  </h3>
-                  <p className="text-xs text-ink-3 mt-0.5">
-                    Import your course grades from UCAM or CSV to compute your cumulative CGPA, standing, and degree progress.
+                  <h3 className={type.cardTitle}>No transcript loaded yet</h3>
+                  <p className={`${type.small} mt-1`}>
+                    Import your grades from UCam or a CSV file to compute your cumulative CGPA,
+                    standing, and degree progress.
                   </p>
                 </div>
-                <div className="flex items-center gap-2 shrink-0">
-                  <Button variant="primary" size="sm" icon={Upload} onClick={() => setUcamOpen(true)}>
-                    Import from UCam
-                  </Button>
-                  <Button variant="secondary" size="sm" icon={Upload} onClick={() => fileRef.current?.click()}>
-                    Upload CSV
-                  </Button>
-                </div>
-              </Surface>
-            )}
+              </div>
+              <Button variant="primary" size="sm" icon={Upload} onClick={() => setUcamOpen(true)}>
+                Import from UCam
+              </Button>
+            </Surface>
+          )}
 
-            {/* bento row */}
-            <div className="grid grid-cols-1 gap-4 xl:grid-cols-12">
-              {/* hero gauge card */}
-              <Surface className="p-5 sm:p-6 xl:col-span-7">
-                <div className="flex flex-col items-center gap-6 sm:flex-row sm:items-center">
-                  <GaugeRing cgpa={metrics.cgpa} probation={probation} />
-                  <div className="min-w-0 flex-1">
-                    <motion.span
-                      whileHover={{ scale: 1.03 }}
-                      className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-[11px] font-bold ${
-                        probation
-                          ? 'border-bad/25 bg-bad/10 text-bad'
-                          : honors.tier === 'Good Standing'
-                            ? 'border-line bg-surface2 text-ink-2'
-                            : 'border-accent/30 bg-accentSoft text-accent'
-                      }`}
+          {/* bento row */}
+          <div className="grid grid-cols-1 gap-4 xl:grid-cols-12">
+            {/* hero gauge card */}
+            <Surface pad="lg" className="xl:col-span-7">
+              <div className="flex flex-col items-center gap-6 sm:flex-row sm:items-center">
+                <GaugeRing cgpa={metrics.cgpa} probation={probation} />
+                <div className="min-w-0 flex-1">
+                  <Badge
+                    tone={probation ? 'bad' : metrics.earnedCredits > 0 ? 'accent' : 'neutral'}
+                    icon={Award}
+                  >
+                    {honors.tier}
+                  </Badge>
+                  <p className={`${type.body} mt-2.5`}>{honors.description}</p>
+
+                  <div className="mt-5">
+                    <ProgressBar
+                      label="Degree progress"
+                      valueText={`${metrics.earnedCredits} / ${programCredits} cr`}
+                      pct={creditPct}
                     >
-                      <Award className="h-3.5 w-3.5" />
-                      {honors.tier}
-                    </motion.span>
-                    <p className="mt-2.5 text-xs leading-relaxed text-ink-2">{honors.description}</p>
-
-                    <div className="mt-5">
-                      <div className="mb-1.5 flex items-baseline justify-between text-[11px]">
-                        <span className="font-semibold uppercase tracking-[0.08em] text-ink-3">
-                          Degree progress
-                        </span>
-                        <span className="num font-bold text-ink">
-                          {metrics.earnedCredits}
-                          <span className="font-medium text-ink-3"> / {programCredits} cr</span>
-                        </span>
-                      </div>
-                      <div className="h-2 overflow-hidden rounded-full bg-surface2">
-                        <motion.div
-                          className="h-full rounded-full bg-gradient-to-r from-accent to-accent2"
-                          initial={{ width: 0 }}
-                          animate={{ width: `${creditPct}%` }}
-                          transition={{ type: 'spring', stiffness: 200, damping: 25 }}
-                        />
-                      </div>
-                      <div className="num mt-1.5 text-right text-[10.5px] font-semibold text-ink-3">
+                      <div className={`num mt-1.5 text-right ${type.micro} font-semibold`}>
                         {creditPct.toFixed(1)}% of program
                       </div>
-                    </div>
+                    </ProgressBar>
                   </div>
                 </div>
-              </Surface>
+              </div>
+            </Surface>
 
-              {/* stat grid */}
-              <div className="grid grid-cols-2 gap-4 xl:col-span-5">
-                <Surface hover className="p-4 sm:p-5">
-                  <div className="text-[10.5px] font-semibold uppercase tracking-[0.09em] text-ink-3">
-                    Latest term GPA
-                  </div>
-                  <div className="num mt-2 flex items-baseline gap-2 text-[26px] font-bold leading-none tracking-tight text-ink">
-                    {history.length ? (
-                      <>
-                        <CountUp value={history[history.length - 1].gpa} />
-                        {Math.abs(termDelta) > 0.005 &&
-                          (termDelta > 0 ? (
-                            <ArrowUpRight className="h-4 w-4 text-ok" strokeWidth={2.6} />
-                          ) : (
-                            <ArrowDownRight className="h-4 w-4 text-bad" strokeWidth={2.6} />
-                          ))}
-                      </>
-                    ) : (
-                      '—'
-                    )}
-                  </div>
-                  <div className="mt-1.5 text-[11px] text-ink-3">
-                    {history.length ? history[history.length - 1].trimester : 'no graded terms'}
-                  </div>
-                </Surface>
+            {/* stat grid */}
+            <div className="grid grid-cols-2 gap-4 xl:col-span-5">
+              <StatCard
+                label="Latest term GPA"
+                sub={latestTerm ? latestTerm.trimester : 'no graded terms'}
+                bodyClassName="num flex items-baseline gap-2 text-[26px] font-bold leading-none tracking-[-0.02em] text-ink"
+              >
+                {latestTerm ? (
+                  <>
+                    <CountUp value={latestTerm.gpa} />
+                    {Math.abs(termDelta) > 0.005 &&
+                      (termDelta > 0 ? (
+                        <ArrowUpRight className="h-4 w-4 text-ok" strokeWidth={2.6} />
+                      ) : (
+                        <ArrowDownRight className="h-4 w-4 text-bad" strokeWidth={2.6} />
+                      ))}
+                  </>
+                ) : (
+                  '—'
+                )}
+              </StatCard>
 
-                <Surface hover className="p-4 sm:p-5">
-                  <div className="text-[10.5px] font-semibold uppercase tracking-[0.09em] text-ink-3">
-                    Earned credits
-                  </div>
-                  <div className="num mt-2 text-[26px] font-bold leading-none tracking-tight text-ink">
-                    <CountUp value={metrics.earnedCredits} decimals={0} />
-                  </div>
-                  <div className="mt-1.5 text-[11px] text-ink-3">of {programCredits} required</div>
-                </Surface>
+              <StatCard
+                label="Earned credits"
+                sub={`of ${programCredits} required`}
+                bodyClassName="num text-[26px] font-bold leading-none tracking-[-0.02em] text-ink"
+              >
+                <CountUp value={metrics.earnedCredits} decimals={0} />
+              </StatCard>
 
-                <Surface hover className="p-4 sm:p-5">
-                  <div className="text-[10.5px] font-semibold uppercase tracking-[0.09em] text-ink-3">
-                    Failed credits
-                  </div>
-                  <div
-                    className={`num mt-2 text-[26px] font-bold leading-none tracking-tight ${
-                      metrics.failedCredits > 0 ? 'text-bad' : 'text-ink'
-                    }`}
-                  >
-                    <CountUp value={metrics.failedCredits} decimals={0} />
-                  </div>
-                  <div className="mt-1.5 text-[11px] text-ink-3">
-                    {metrics.failedCredits > 0 ? 'retakes available' : 'clean record'}
-                  </div>
-                </Surface>
+              <StatCard
+                label="Failed credits"
+                tone={metrics.failedCredits > 0 ? 'bad' : 'default'}
+                sub={metrics.failedCredits > 0 ? 'retakes available' : 'clean record'}
+                bodyClassName={`num text-[26px] font-bold leading-none tracking-[-0.02em] ${
+                  metrics.failedCredits > 0 ? 'text-bad' : 'text-ink'
+                }`}
+              >
+                <CountUp value={metrics.failedCredits} decimals={0} />
+              </StatCard>
 
-                <Surface hover className="p-4 sm:p-5">
-                  <div className="text-[10.5px] font-semibold uppercase tracking-[0.09em] text-ink-3">
-                    Grade points
-                  </div>
-                  <div className="num mt-2 text-[26px] font-bold leading-none tracking-tight text-ink">
-                    <CountUp value={metrics.points} />
-                  </div>
-                  <div className="mt-1.5 text-[11px] text-ink-3">
+              <StatCard
+                label="Grade points"
+                sub={
+                  <>
                     over <span className="num">{metrics.credits}</span> CGPA credits
-                  </div>
-                </Surface>
-              </div>
+                  </>
+                }
+                bodyClassName="num text-[26px] font-bold leading-none tracking-[-0.02em] text-ink"
+              >
+                <CountUp value={metrics.points} />
+              </StatCard>
             </div>
+          </div>
 
-            {/* chart */}
-            <Surface className="p-4 sm:p-5">
-              <div className="mb-2 flex items-center justify-between px-1">
-                <h3 className="text-[15px] font-bold tracking-tight text-ink">Progression</h3>
-              </div>
-              <GradeChart history={history} />
-            </Surface>
-          </motion.div>
-        )}
+          {/* chart */}
+          <Surface>
+            <h3 className={`${type.sectionTitle} mb-2`}>Progression</h3>
+            <GradeChart history={history} />
+          </Surface>
+        </motion.div>
+      )}
 
-        {tab === 'courses' && (
-          <motion.div
-            key="courses"
-            initial={{ opacity: 0, y: 8 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ type: 'spring', stiffness: 450, damping: 30 }}
-          >
-            <CourseTable
-              courses={courses}
-              effectiveCourses={effective}
-              runningOverrides={runningOverrides}
-              onUpdateCourse={updateCourse}
-              onDeleteCourse={deleteCourse}
-              onSetRunningGrade={setRunningGrade}
-              onAddCourseClick={() => setAddOpen(true)}
-            />
-          </motion.div>
-        )}
+      {tab === 'courses' && (
+        <motion.div
+          key="courses"
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ type: 'spring', stiffness: 450, damping: 30 }}
+        >
+          <CourseTable
+            courses={courses}
+            effectiveCourses={effective}
+            runningOverrides={runningOverrides}
+            onUpdateCourse={updateCourse}
+            onDeleteCourse={deleteCourse}
+            onSetRunningGrade={setRunningGrade}
+            onAddCourseClick={() => setAddOpen(true)}
+          />
+        </motion.div>
+      )}
 
-        {tab === 'retake' && (
-          <motion.div
-            key="retake"
-            initial={{ opacity: 0, y: 8 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ type: 'spring', stiffness: 450, damping: 30 }}
-          >
-            <RetakeLab courses={courses} effectiveCourses={effective} />
-          </motion.div>
-        )}
+      {tab === 'retake' && (
+        <motion.div
+          key="retake"
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ type: 'spring', stiffness: 450, damping: 30 }}
+        >
+          <RetakeLab courses={courses} effectiveCourses={effective} />
+        </motion.div>
+      )}
 
-        {tab === 'target' && (
-          <motion.div
-            key="target"
-            initial={{ opacity: 0, y: 8 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ type: 'spring', stiffness: 450, damping: 30 }}
-          >
-            <TargetPlanner courses={courses} totalDegreeCredits={programCredits} />
-          </motion.div>
-        )}
+      {tab === 'target' && (
+        <motion.div
+          key="target"
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ type: 'spring', stiffness: 450, damping: 30 }}
+        >
+          <TargetPlanner courses={courses} totalDegreeCredits={programCredits} />
+        </motion.div>
+      )}
 
-        {tab === 'probation' && (
-          <motion.div
-            key="probation"
-            initial={{ opacity: 0, y: 8 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ type: 'spring', stiffness: 450, damping: 30 }}
-          >
-            <ProbationRecovery courses={courses} minCgpa={deptConfig.minCgpa} dept={settings.dept} />
-          </motion.div>
-        )}
+      {tab === 'probation' && (
+        <motion.div
+          key="probation"
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ type: 'spring', stiffness: 450, damping: 30 }}
+        >
+          <ProbationRecovery courses={courses} minCgpa={deptConfig.minCgpa} dept={settings.dept} />
+        </motion.div>
+      )}
 
-        {tab === 'settings' && (
-          <motion.div
-            key="settings"
-            initial={{ opacity: 0, y: 8 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ type: 'spring', stiffness: 450, damping: 30 }}
-            className="grid grid-cols-1 gap-4 lg:grid-cols-2"
-          >
-            <Surface className="p-5">
-              <h3 className="text-[15px] font-bold tracking-tight text-ink">Program</h3>
-              <div className="mt-4 flex flex-col gap-4">
-                <div>
-                  <label className="mb-1.5 block text-[11px] font-semibold uppercase tracking-[0.07em] text-ink-3">
-                    Department profile
-                  </label>
-                  <Select
-                    value={settings.dept}
-                    onChange={(e) => {
-                      const dept = e.target.value;
-                      setSettings((p) => ({
-                        ...p,
-                        dept,
-                        programCredits: DEPT_PROFILES[dept]?.defaultCredits || p.programCredits,
-                      }));
-                    }}
-                  >
-                    {Object.entries(DEPT_PROFILES).map(([k, v]) => (
-                      <option key={k} value={k}>
-                        {v.name}
-                      </option>
-                    ))}
-                  </Select>
-                </div>
-                <div>
-                  <label className="mb-1.5 block text-[11px] font-semibold uppercase tracking-[0.07em] text-ink-3">
-                    Program total credits
-                  </label>
-                  <input
-                    type="number"
-                    value={settings.programCredits}
-                    onChange={(e) => setSettings((p) => ({ ...p, programCredits: parseFloat(e.target.value) || 138 }))}
-                    className="num w-36 rounded-xl border border-line bg-surface2/70 px-3.5 py-2.5 font-mono text-[13px] font-semibold text-ink transition-colors hover:border-line-strong focus:outline-none focus:ring-2 focus:ring-accent/40"
-                  />
-                </div>
-                <p className="rounded-xl bg-surface2/60 px-3.5 py-2.5 text-[11px] leading-relaxed text-ink-3">
-                  Honors tiers follow the official UIU convocation policy.
-                </p>
-              </div>
-            </Surface>
+      {tab === 'settings' && (
+        <motion.div
+          key="settings"
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ type: 'spring', stiffness: 450, damping: 30 }}
+          className="grid grid-cols-1 gap-4 lg:grid-cols-2"
+        >
+          <Surface>
+            <h3 className={type.sectionTitle}>Program</h3>
+            <div className="mt-4 flex flex-col gap-4">
+              <Field label="Department profile">
+                <Select
+                  value={settings.dept}
+                  onChange={(e) => {
+                    const dept = e.target.value;
+                    setSettings((p) => ({
+                      ...p,
+                      dept,
+                      programCredits: DEPT_PROFILES[dept]?.defaultCredits || p.programCredits,
+                    }));
+                  }}
+                >
+                  {Object.entries(DEPT_PROFILES).map(([k, v]) => (
+                    <option key={k} value={k}>
+                      {v.name}
+                    </option>
+                  ))}
+                </Select>
+              </Field>
+              <Field label="Program total credits">
+                <Input
+                  type="number"
+                  className="num w-36 font-mono font-semibold"
+                  value={settings.programCredits}
+                  onChange={(e) =>
+                    setSettings((p) => ({ ...p, programCredits: parseFloat(e.target.value) || 138 }))
+                  }
+                />
+              </Field>
+              <p className="rounded-lg bg-surface2/60 px-3 py-2.5 text-[11px] leading-relaxed text-ink-3">
+                Honors tiers follow the official UIU convocation policy.
+              </p>
+            </div>
+          </Surface>
 
-            <Surface className="p-5">
-              <h3 className="text-[15px] font-bold tracking-tight text-ink">Data</h3>
-              <p className="mt-1 text-xs text-ink-3">Everything lives in this browser only.</p>
-              <div className="mt-4 flex flex-col gap-2">
-                <Button variant="secondary" icon={Download} onClick={() => exportCSV(courses)}>
-                  Export transcript as CSV
-                </Button>
-                <Button variant="secondary" icon={Upload} onClick={() => fileRef.current?.click()}>
-                  Import CSV file
-                </Button>
-                <Button variant="danger" icon={RotateCcw} onClick={resetAll}>
-                  Clear all data
-                </Button>
-              </div>
-            </Surface>
-          </motion.div>
-        )}
+          <Surface>
+            <h3 className={type.sectionTitle}>Data</h3>
+            <p className={`${type.small} mt-1`}>Everything lives in this browser only.</p>
+            <div className="mt-4 flex flex-col gap-2">
+              <Button variant="secondary" icon={Download} onClick={() => exportCSV(courses)}>
+                Export transcript as CSV
+              </Button>
+              <Button variant="secondary" icon={Upload} onClick={() => fileRef.current?.click()}>
+                Import CSV file
+              </Button>
+              <Button variant="danger" icon={RotateCcw} onClick={resetAll}>
+                Clear all data
+              </Button>
+            </div>
+          </Surface>
+        </motion.div>
+      )}
 
       <AddCourseModal
         isOpen={addOpen}
         onClose={() => setAddOpen(false)}
         onAddCourse={addCourse}
-        defaultTerm={history.length ? String(history[history.length - 1].trimester) : '251'}
+        defaultTerm={latestTerm ? String(latestTerm.trimester) : '251'}
       />
       <UcamImportModal isOpen={ucamOpen} onClose={() => setUcamOpen(false)} onImportSuccess={importUcam} />
     </div>

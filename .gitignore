@@ -1,6 +1,3 @@
-# User Request
-modelref.html
-
 # Dependencies
 node_modules/
 
@@ -19,6 +16,9 @@ node_modules/
 
 # Build Output
 dist/
+
+# Local logs
+*.log
 
 # OS generated files
 .DS_Store

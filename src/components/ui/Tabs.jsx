@@ -9,7 +9,7 @@ export default function Tabs({ tabs, value, onChange, className = '', layoutId =
   return (
     <div
       role="tablist"
-      className={`no-scrollbar relative inline-flex max-w-full items-center gap-1 overflow-x-auto rounded-2xl border border-line bg-surface2/60 p-1 backdrop-blur-md ${className}`}
+      className={`no-scrollbar relative inline-flex max-w-full items-center gap-0.5 overflow-x-auto rounded-xl border border-line bg-surface2/70 p-1 ${className}`}
     >
       {tabs.map((t) => {
         const active = t.value === value;
@@ -19,27 +19,24 @@ export default function Tabs({ tabs, value, onChange, className = '', layoutId =
             role="tab"
             aria-selected={active}
             onClick={() => onChange(t.value)}
-            className={`relative z-10 flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-xl px-3.5 py-2 text-[13px] font-semibold transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent ${
+            className={`relative z-10 flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-lg px-3 py-[7px] text-[12.5px] font-semibold transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 ${
               active ? 'text-ink' : 'text-ink-3 hover:text-ink'
             }`}
           >
             {active && (
               <motion.div
                 layoutId={layoutId}
-                className="absolute inset-0 rounded-xl border border-line bg-surface shadow-sm"
-                style={{
-                  zIndex: -1,
-                  boxShadow: '0 1px 3px rgba(0,0,0,0.1), inset 0 1px 0 var(--border-specular)',
-                }}
-                transition={{ type: 'spring', stiffness: 500, damping: 35 }}
+                className="absolute inset-0 rounded-lg border border-line bg-surface shadow-sm"
+                style={{ zIndex: -1 }}
+                transition={{ type: 'spring', stiffness: 520, damping: 38 }}
               />
             )}
-            {t.icon && <t.icon className="h-3.5 w-3.5" strokeWidth={2.2} />}
+            {t.icon && <t.icon className="h-3.5 w-3.5 shrink-0" strokeWidth={2.2} />}
             <span>{t.label}</span>
             {t.badge != null && (
               <span
-                className={`num rounded-md px-1.5 py-0.5 text-[10px] font-bold leading-none transition-colors ${
-                  active ? 'bg-accentSoft text-accent' : 'bg-surface text-ink-3'
+                className={`num rounded px-1 py-[1px] text-[9.5px] font-bold leading-none transition-colors ${
+                  active ? 'bg-accentSoft text-accent' : 'bg-surface2 text-ink-3'
                 }`}
               >
                 {t.badge}

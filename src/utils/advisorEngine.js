@@ -75,62 +75,6 @@ export {
   projectCgpa,
 };
 
-/**
- * Free models that exist in the live OpenRouter catalogue. The serverless
- * function re-checks this list at request time and drops any model that has
- * been retired, so a stale entry here cannot break the auto cascade.
- */
-export const FREE_MODELS_CASCADE = [
-  'nvidia/nemotron-3.5-lightning:free',
-  'google/gemma-4-31b-it:free',
-  'qwen/qwen3.5-flash-02-23:free',
-  'deepseek/deepseek-v3.2:free',
-  'mistralai/mistral-3b-2512:free',
-  'meta-llama/llama-3.3-70b-instruct:free',
-  'google/gemini-2.5-flash-lite:free',
-];
-
-/**
- * Paid models a student can pick if the deployment has a funded key.
- */
-export const PAID_MODELS = [
-  { id: 'deepseek/deepseek-chat', name: 'DeepSeek Chat' },
-  { id: 'openai/gpt-4o-mini', name: 'GPT-4o Mini' },
-  { id: 'google/gemini-2.5-flash', name: 'Gemini 2.5 Flash' },
-  { id: 'qwen/qwen3-235b-a22b', name: 'Qwen 3 235B' },
-  { id: 'mistralai/mistral-large-2512', name: 'Mistral Large' },
-];
-
-/**
- * Supported AI providers and the model list exposed to students.
- */
-export const AI_PROVIDERS = {
-  openrouter: {
-    id: 'openrouter',
-    name: 'OpenRouter AI',
-    badge: 'Online',
-    description:
-      'Answers grounded in the retrieved UIU policy clauses. Falls back to the built-in regulations engine when the hosted models are unavailable.',
-    requiresKey: false,
-    models: [
-      { id: 'auto-free', name: 'Auto (recommended)' },
-      ...FREE_MODELS_CASCADE.map((id) => ({ id, name: id.split('/').pop().replace(':free', '') })),
-      ...PAID_MODELS,
-    ],
-    defaultModel: 'auto-free',
-  },
-  offline: {
-    id: 'offline',
-    name: 'UIU Regulations Engine',
-    badge: 'Offline',
-    description:
-      'Answers from the verified UIU policy clauses stored in the app. Works without a connection.',
-    requiresKey: false,
-    models: [{ id: 'rule-engine', name: 'UIU Regulations Engine' }],
-    defaultModel: 'rule-engine',
-  },
-};
-
 /* ------------------------------------------------------------------ *
  * Prerequisite logic
  * ------------------------------------------------------------------ */
@@ -975,10 +919,13 @@ export function generateAIAnswer(query, context = {}) {
 /**
  * Ask the hosted model, grounded in the retrieved clauses and the computed
  * tool results, with a local fallback to the rule engine.
+
+ * The engine is picked automatically: the hosted model is tried first and the
+ * built-in UIU regulations engine answers when the hosted model is
+ * unavailable. Students never choose a provider or a model.
  */
 export async function queryUniversalAIAdvisor({
-  provider = 'openrouter',
-  apiKey = '',
+  apiKey = "[REDACTED]",
   model = '',
   prompt = '',
   studentContext = {},
@@ -990,13 +937,13 @@ export async function queryUniversalAIAdvisor({
   const startTime = Date.now();
 
   const retrievedSources = retrieveRelevantDocuments(cleanPrompt, 4);
-  const chosenModel = model || AI_PROVIDERS[provider]?.defaultModel || 'auto-free';
+  const chosenModel = model || 'auto-free';
 
-  if (!bypassCache && provider !== 'offline') {
+  if (!bypassCache) {
     const cached = promptCache.get({
       prompt: cleanPrompt,
       model: chosenModel,
-      provider,
+      provider: 'auto',
       cgpa: studentContext.cgpa,
       completedCredits: studentContext.completedCredits,
       major: studentContext.selectedMajor,
@@ -1012,16 +959,6 @@ export async function queryUniversalAIAdvisor({
     retrievedDocs: retrievedSources,
   });
 
-  if (provider === 'offline') {
-    return {
-      text: generateAIAnswer(cleanPrompt, studentContext),
-      retrievedSources,
-      latencyMs: Date.now() - startTime,
-      isClientCached: false,
-      provider: 'UIU Regulations Engine',
-    };
-  }
-
   const systemInstructions = buildUIUSystemPrompt(studentContext);
 
   try {
@@ -1029,7 +966,7 @@ export async function queryUniversalAIAdvisor({
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        provider: 'openrouter',
+        provider: 'auto',
         model: chosenModel,
         prompt: cleanPrompt,
         augmentedPrompt,
@@ -1049,14 +986,13 @@ export async function queryUniversalAIAdvisor({
           latencyMs: json.latencyMs || Date.now() - startTime,
           isClientCached: false,
           isServerless: true,
-          model: json.model || chosenModel,
         };
 
         promptCache.set(
           {
             prompt: cleanPrompt,
             model: chosenModel,
-            provider,
+            provider: 'auto',
             cgpa: studentContext.cgpa,
             completedCredits: studentContext.completedCredits,
             major: studentContext.selectedMajor,
@@ -1076,7 +1012,6 @@ export async function queryUniversalAIAdvisor({
     retrievedSources,
     latencyMs: Date.now() - startTime,
     isClientCached: false,
-    provider: 'UIU Regulations Engine',
   };
 }
 /**
@@ -1123,17 +1058,4 @@ export function generateFollowUpSuggestions(query = '', reply = '') {
   }
 
   return suggestions.slice(0, 3);
-}
-
-/**
- * Detect whether the app is deployed with a working serverless AI endpoint.
- */
-export async function checkVercelServerlessStatus() {
-  try {
-    const res = await fetch('/api/chat', { method: 'GET' });
-    if (res.ok) return await res.json();
-  } catch {
-    /* not deployed or offline */
-  }
-  return null;
 }

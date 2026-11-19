@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { AnimatePresence, motion, MotionConfig } from 'motion/react';
+import { MotionConfig } from 'motion/react';
 import { ThemeProvider } from './context/ThemeContext';
 import { ToastProvider, useToast } from './context/ToastContext';
 import Sidebar from './components/layout/Sidebar';
@@ -114,29 +114,31 @@ export function AppContent() {
       />
       <MobileTopBar onOpenCommandPalette={() => setCommandPaletteOpen(true)} />
 
-      <main className="mx-auto w-full max-w-[1180px] px-4 pb-28 pt-5 sm:px-6 lg:pb-10 lg:pl-[calc(228px+2rem)] lg:pr-8 lg:pt-8">
-        <div key={activeTab} className="pop-in">
-          {activeTab === 'cgpa' && (
-            <CgpaView
-              courses={courses}
-              setCourses={setCourses}
-              settings={settings}
-              setSettings={setSettings}
-              forceOpenUcam={ucamModalTrigger}
-              onResetUcamTrigger={() => setUcamModalTrigger(false)}
-            />
-          )}
-          {activeTab === 'advisor' && (
-            <AdvisorView courses={courses} settings={settings} />
-          )}
-          {activeTab === 'routine' && <RoutineView courses={courses} />}
-          {activeTab === 'tuition' && (
-            <TuitionView courses={courses} settings={settings} defaultDept={settings.dept} />
-          )}
-          {activeTab === 'commute' && <CommuteView />}
-          {activeTab === 'coverpage' && <CoverPageView />}
-        </div>
-      </main>
+      <div className="lg:pl-[232px]">
+        <main className="mx-auto w-full max-w-[1180px] px-4 pb-24 pt-5 sm:px-6 lg:px-8 lg:pb-12 lg:pt-8">
+          <div key={activeTab} className="pop-in">
+            {activeTab === 'cgpa' && (
+              <CgpaView
+                courses={courses}
+                setCourses={setCourses}
+                settings={settings}
+                setSettings={setSettings}
+                forceOpenUcam={ucamModalTrigger}
+                onResetUcamTrigger={() => setUcamModalTrigger(false)}
+              />
+            )}
+            {activeTab === 'advisor' && (
+              <AdvisorView courses={courses} settings={settings} />
+            )}
+            {activeTab === 'routine' && <RoutineView courses={courses} />}
+            {activeTab === 'tuition' && (
+              <TuitionView courses={courses} settings={settings} defaultDept={settings.dept} />
+            )}
+            {activeTab === 'commute' && <CommuteView />}
+            {activeTab === 'coverpage' && <CoverPageView />}
+          </div>
+        </main>
+      </div>
 
       <MobileTabBar active={activeTab} onChange={setActiveTab} />
 

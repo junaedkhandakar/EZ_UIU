@@ -1,13 +1,10 @@
 import React, { useState } from 'react';
 import Modal from '../ui/Modal';
 import Button from '../ui/Button';
+import Chip from '../ui/Chip';
+import Input, { Field } from '../ui/Input';
 import { COURSE_CATALOG } from '../../data/courseCatalog';
 import { LETTER_GRADES, GRADE_POINTS, formatTrimester } from '../../utils/cgpaUtils';
-
-const inputCls =
-  'w-full rounded-xl border border-line bg-surface2/70 px-3.5 py-2.5 text-[13px] text-ink placeholder-ink-3 transition-colors hover:border-line-strong focus:outline-none focus:ring-2 focus:ring-accent/40';
-
-const labelCls = 'mb-1.5 block text-[11px] font-semibold uppercase tracking-[0.07em] text-ink-3';
 
 export function AddCourseModal({ isOpen, onClose, onAddCourse, defaultTerm = '251' }) {
   const [trimester, setTrimester] = useState(defaultTerm);
@@ -64,31 +61,30 @@ export function AddCourseModal({ isOpen, onClose, onAddCourse, defaultTerm = '25
     >
       <form onSubmit={handleSubmit} className="flex flex-col gap-4">
         <div className="grid grid-cols-[110px_1fr] gap-3">
-          <div>
-            <label className={labelCls}>Term</label>
-            <input
+          <Field label="Term" hint={formatTrimester(trimester)}>
+            <Input
               type="text"
               required
               value={trimester}
               onChange={(e) => setTrimester(e.target.value)}
               placeholder="251"
-              className={`${inputCls} num font-mono font-semibold uppercase`}
+              className="num font-mono font-semibold uppercase"
             />
-            <p className="mt-1.5 text-[10.5px] text-ink-3">{formatTrimester(trimester)}</p>
-          </div>
+          </Field>
           <div className="relative">
-            <label className={labelCls}>Course code</label>
-            <input
-              type="text"
-              required
-              value={courseId}
-              onChange={(e) => handleCodeChange(e.target.value)}
-              placeholder="CSE 1115"
-              className={`${inputCls} font-bold uppercase`}
-              autoComplete="off"
-            />
+            <Field label="Course code">
+              <Input
+                type="text"
+                required
+                value={courseId}
+                onChange={(e) => handleCodeChange(e.target.value)}
+                placeholder="CSE 1115"
+                className="font-bold uppercase"
+                autoComplete="off"
+              />
+            </Field>
             {suggestions.length > 0 && (
-              <div className="absolute inset-x-0 top-full z-20 mt-1.5 overflow-hidden rounded-xl border border-line bg-surface shadow-pop fade-in">
+              <div className="fade-in absolute inset-x-0 top-full z-20 mt-1.5 overflow-hidden rounded-xl border border-line bg-surface shadow-pop">
                 {suggestions.map((s) => (
                   <button
                     type="button"
@@ -110,21 +106,18 @@ export function AddCourseModal({ isOpen, onClose, onAddCourse, defaultTerm = '25
           </div>
         </div>
 
-        <div>
-          <label className={labelCls}>Course title</label>
-          <input
+        <Field label="Course title">
+          <Input
             type="text"
             value={courseName}
             onChange={(e) => setCourseName(e.target.value)}
             placeholder="Object Oriented Programming"
-            className={inputCls}
           />
-        </div>
+        </Field>
 
         <div className="grid grid-cols-2 gap-3">
-          <div>
-            <label className={labelCls}>Credits</label>
-            <input
+          <Field label="Credits">
+            <Input
               type="number"
               step="1"
               min="1"
@@ -132,39 +125,26 @@ export function AddCourseModal({ isOpen, onClose, onAddCourse, defaultTerm = '25
               required
               value={credit}
               onChange={(e) => setCredit(e.target.value)}
-              className={`${inputCls} num font-mono font-semibold`}
+              className="num font-mono font-semibold"
             />
-          </div>
-          <div>
-            <label className={labelCls}>Grade — blank if running</label>
+          </Field>
+          <Field label="Grade — blank if running">
             <div className="flex flex-wrap gap-1.5">
-              <button
-                type="button"
-                onClick={() => setGrade('')}
-                className={`h-[38px] rounded-xl border px-3 text-xs font-bold transition-[color,background-color,border-color,transform] duration-150 ease-out active:scale-[0.96] ${
-                  grade === ''
-                    ? 'border-accent bg-accentSoft text-accent'
-                    : 'border-line bg-surface2/70 text-ink-3 hover:text-ink'
-                }`}
-              >
+              <Chip active={grade === ''} onClick={() => setGrade('')}>
                 Running
-              </button>
+              </Chip>
               {LETTER_GRADES.map((g) => (
-                <button
+                <Chip
                   key={g}
-                  type="button"
+                  active={grade === g}
                   onClick={() => setGrade(g)}
-                  className={`num h-[38px] w-9 rounded-xl border text-xs font-bold transition-[color,background-color,border-color,transform] duration-150 ease-out active:scale-[0.96] ${
-                    grade === g
-                      ? 'border-accent bg-accentSoft text-accent'
-                      : 'border-line bg-surface2/70 text-ink-2 hover:text-ink'
-                  }`}
+                  className="num w-9 justify-center px-0"
                 >
                   {g}
-                </button>
+                </Chip>
               ))}
             </div>
-          </div>
+          </Field>
         </div>
 
         <div className="mt-1 flex justify-end gap-2 border-t border-line pt-4">

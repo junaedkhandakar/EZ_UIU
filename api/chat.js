@@ -1,14 +1,15 @@
 /**
- * Vercel Serverless Function: OpenRouter AI Academic Advisor Proxy
+ * Vercel Serverless Function: hosted-model Academic Advisor proxy.
  *
- * The proxy keeps the API key on the server, tries each candidate model in
- * turn until one answers, and never returns a key or an auth header to the
- * browser.
+ * This runs entirely on the server. The proxy keeps the API key server-side,
+ * tries each candidate model in turn until one answers, and never returns a
+ * key, an auth header, the provider name or the selected model to the
+ * browser — students never pick or see an engine.
  *
  * The free-model catalogue rotates often, so the cascade is not a fixed list.
- * Each request asks OpenRouter which models are currently marked :free and
- * tries them in a stable order, with a hardcoded fallback list for the case
- * where the catalogue call fails.
+ * Each request asks the upstream catalogue which models are currently
+ * marked :free and tries them in a stable order, with a hardcoded fallback
+ * list for the case where the catalogue call fails.
  */
 
 const FALLBACK_FREE_MODELS = [
@@ -96,17 +97,17 @@ export default async function handler(req, res) {
 
   // Health / environment check endpoint.
   if (req.method === 'GET') {
-    let models = FALLBACK_FREE_MODELS;
+    // The engine and model are picked automatically, so this endpoint only
+    // reports readiness. It deliberately does not disclose the provider or
+    // the model catalogue to the browser.
+    let models = [];
     if (effectiveKey) {
       models = await getFreeModels(effectiveKey);
     }
     return res.status(200).json({
       status: 'ok',
-      runtime: 'vercel-serverless',
-      provider: 'openrouter',
-      hasOpenRouterKey: Boolean(effectiveKey),
+      hasHostedKey: Boolean(effectiveKey),
       freeModelCount: models.length,
-      freeModels: models.slice(0, 20),
     });
   }
 
@@ -216,8 +217,6 @@ export default async function handler(req, res) {
         },
         latencyMs: Date.now() - startTime,
         isServerless: true,
-        model: data?.model || candidateModel,
-        autoSwitched: isAutoFree,
       });
     } catch (err) {
       lastError = err.message || 'Network error';

@@ -33,7 +33,7 @@ class PromptCache {
 
   generateKey({ prompt, model, provider, cgpa, completedCredits, major }) {
     const cleanPrompt = (prompt || '').trim().toLowerCase();
-    return `${provider || 'openrouter'}::${model || 'default'}::${cgpa || 0}::${completedCredits || 0}::${major || ''}::${cleanPrompt}`;
+    return `${provider || 'auto'}::${model || 'default'}::${cgpa || 0}::${completedCredits || 0}::${major || ''}::${cleanPrompt}`;
   }
 
   get(params) {

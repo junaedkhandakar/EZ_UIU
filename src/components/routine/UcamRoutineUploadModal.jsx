@@ -16,10 +16,14 @@ import {
   X,
   Play,
   RotateCcw,
+  ClipboardPaste,
 } from 'lucide-react';
 import Modal from '../ui/Modal';
 import Button from '../ui/Button';
-import Surface from '../ui/Surface';
+import Segmented from '../ui/Segmented';
+import Badge from '../ui/Badge';
+import { Textarea } from '../ui/Input';
+import { type } from '../ui/tokens';
 import {
   extractTextFromPdf,
   parseUcamRoutineText,
@@ -157,33 +161,19 @@ export default function UcamRoutineUploadModal({
       <div className="space-y-4">
         {/* Input Mode Selector Bar */}
         <div className="flex flex-wrap items-center justify-between gap-2 border-b border-line pb-3">
-          <div className="flex gap-1.5">
-            <button
-              onClick={() => setActiveTab('pdf')}
-              className={`rounded-xl px-3.5 py-1.5 text-xs font-bold transition-colors ${
-                activeTab === 'pdf'
-                  ? 'bg-accent text-white shadow-sm'
-                  : 'bg-surface2 text-ink-3 hover:text-ink'
-              }`}
-            >
-              Upload PDF File
-            </button>
-            <button
-              onClick={() => setActiveTab('text')}
-              className={`rounded-xl px-3.5 py-1.5 text-xs font-bold transition-colors ${
-                activeTab === 'text'
-                  ? 'bg-accent text-white shadow-sm'
-                  : 'bg-surface2 text-ink-3 hover:text-ink'
-              }`}
-            >
-              Paste Routine Text / OCR
-            </button>
-          </div>
+          <Segmented
+            value={activeTab}
+            onChange={setActiveTab}
+            options={[
+              { value: 'pdf', label: 'Upload PDF file', icon: FileUp },
+              { value: 'text', label: 'Paste routine text / OCR', icon: ClipboardPaste },
+            ]}
+          />
         </div>
 
         {/* Tab 1: PDF Dropzone */}
         {activeTab === 'pdf' && (
-          <div className="rounded-2xl border-2 border-dashed border-line-strong hover:border-accent bg-surface2/30 p-8 text-center transition-colors">
+          <div className="rounded-xl border-2 border-dashed border-line-strong hover:border-accent bg-surface2/30 p-8 text-center transition-colors">
             <input
               type="file"
               id="ucam-pdf-upload"
@@ -195,7 +185,7 @@ export default function UcamRoutineUploadModal({
               htmlFor="ucam-pdf-upload"
               className="flex flex-col items-center justify-center cursor-pointer"
             >
-              <div className="h-12 w-12 rounded-2xl bg-accentSoft text-accent flex items-center justify-center mb-3 shadow-sm">
+              <div className="h-12 w-12 rounded-xl bg-accentSoft text-accent flex items-center justify-center mb-3 shadow-sm">
                 <FileUp className="h-6 w-6" />
               </div>
               <h4 className="text-sm font-bold text-ink">
@@ -220,13 +210,13 @@ export default function UcamRoutineUploadModal({
         {/* Tab 2: Text / OCR Paste */}
         {activeTab === 'text' && (
           <div className="space-y-3">
-            <textarea
-              rows={6}
-              value={pasteText}
-              onChange={(e) => setPasteText(e.target.value)}
-              placeholder="Paste raw text or OCR from your UCAM Class Routine here... (e.g. Formal Code, Day, Room, Time Slot, Section)"
-              className="w-full rounded-2xl border border-line bg-surface p-3.5 font-mono text-xs text-ink placeholder-ink-3 outline-none focus:border-accent focus:ring-2 focus:ring-accent/20"
-            />
+              <Textarea
+                rows={6}
+                value={pasteText}
+                onChange={(e) => setPasteText(e.target.value)}
+                placeholder="Paste raw text or OCR from your UCAM Class Routine here… (e.g. Formal Code, Day, Room, Time Slot, Section)"
+                className="font-mono text-xs"
+              />
             <div className="flex justify-end">
               <Button
                 variant="primary"
@@ -252,29 +242,28 @@ export default function UcamRoutineUploadModal({
         {parsedResult && (
           <div className="space-y-4 pt-2 border-t border-line fade-in">
             {/* Student & Term Metadata Header Strip */}
-            <div className="rounded-2xl border border-accent/30 bg-accentSoft p-4 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+            <div className="flex flex-col items-stretch justify-between gap-3 rounded-xl border border-accent/30 bg-accentSoft p-4 sm:flex-row sm:items-center">
               <div>
                 <div className="flex items-center gap-2">
-                  <span className="text-sm font-bold text-ink flex items-center gap-1.5">
+                  <span className={`${type.cardTitle} flex items-center gap-1.5`}>
                     <User className="h-4 w-4 text-accent" />
                     {parsedResult.studentName}
                   </span>
-                  <span className="font-mono text-xs font-bold rounded-md bg-surface border border-line px-2 py-0.5 text-accent">
+                  <span className="rounded-md border border-line bg-surface px-2 py-0.5 font-mono text-xs font-bold text-accent">
                     {parsedResult.studentId}
                   </span>
                 </div>
-                <div className="mt-1 text-xs text-ink-2 font-medium">
-                  Session: <b>{parsedResult.session}</b> · Matched: <b>{parsedResult.matchedCalendar?.label || parsedResult.matchedCalendar?.title}</b>
+                <div className="mt-1 text-xs font-medium text-ink-2">
+                  Session: <b>{parsedResult.session}</b> · Matched:{' '}
+                  <b>{parsedResult.matchedCalendar?.label || parsedResult.matchedCalendar?.title}</b>
                 </div>
               </div>
 
-              <div className="flex items-center gap-2 shrink-0">
-                <span className="rounded-xl border border-line bg-surface px-3 py-1.5 text-xs font-bold text-ink">
-                  {parsedResult.courses.length} Courses
-                </span>
-                <span className="rounded-xl border border-line bg-surface px-3 py-1.5 text-xs font-bold text-accent font-mono">
-                  {parsedResult.totalCredits} Credits
-                </span>
+              <div className="flex shrink-0 items-center gap-2">
+                <Badge tone="neutral">{parsedResult.courses.length} courses</Badge>
+                <Badge tone="accent" className="font-mono">
+                  {parsedResult.totalCredits} credits
+                </Badge>
               </div>
             </div>
 
@@ -282,7 +271,7 @@ export default function UcamRoutineUploadModal({
             {parsedResult.termSynthesis && (
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
                 <div className="rounded-xl border border-line bg-surface p-3 text-center">
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-ink-3">
+                  <span className="text-[10.5px] font-semibold uppercase tracking-[0.08em] text-ink-3">
                     Classes Begin
                   </span>
                   <div className="font-mono text-sm font-bold text-ink mt-0.5">
@@ -290,7 +279,7 @@ export default function UcamRoutineUploadModal({
                   </div>
                 </div>
                 <div className="rounded-xl border border-line bg-surface p-3 text-center">
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-ink-3">
+                  <span className="text-[10.5px] font-semibold uppercase tracking-[0.08em] text-ink-3">
                     Mid-Term Exam Period
                   </span>
                   <div className="font-mono text-xs font-bold text-warn mt-0.5">
@@ -298,7 +287,7 @@ export default function UcamRoutineUploadModal({
                   </div>
                 </div>
                 <div className="rounded-xl border border-line bg-surface p-3 text-center">
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-ink-3">
+                  <span className="text-[10.5px] font-semibold uppercase tracking-[0.08em] text-ink-3">
                     Final Exam Period
                   </span>
                   <div className="font-mono text-xs font-bold text-ok mt-0.5">
@@ -309,7 +298,7 @@ export default function UcamRoutineUploadModal({
             )}
 
             {/* Parsed Class Sections Table */}
-            <div className="overflow-hidden rounded-2xl border border-line bg-surface shadow-sm">
+            <div className="overflow-hidden rounded-xl border border-line bg-surface shadow-sm">
               <div className="px-4 py-2.5 border-b border-line text-xs font-bold text-ink flex items-center justify-between">
                 <span>Enrolled Course Sections ({parsedResult.courses.length})</span>
                 <span className="text-ok font-semibold flex items-center gap-1">

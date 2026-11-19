@@ -1,10 +1,12 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { motion } from 'motion/react';
-import { Download, AlertTriangle, FileUp, X } from 'lucide-react';
+import { Download, AlertTriangle, FileUp, X, CalendarDays, Clock } from 'lucide-react';
 import Button from '../ui/Button';
 import Surface from '../ui/Surface';
 import Select from '../ui/Select';
 import Empty from '../ui/Empty';
+import Badge from '../ui/Badge';
+import { type } from '../ui/tokens';
 import Timetable from './Timetable';
 import UcamRoutineUploadModal from './UcamRoutineUploadModal';
 import FydpNotice from '../fydp/FydpNotice';
@@ -191,7 +193,7 @@ export function RoutineView({ courses = [] }) {
     <Select
       value={calId}
       onChange={(e) => setCalId(e.target.value)}
-      className="min-w-[240px] sm:w-[360px]"
+      className="w-full sm:w-[340px]"
     >
       {CALENDARS_DATA.map((c) => (
         <option key={c.id} value={c.id}>
@@ -203,11 +205,11 @@ export function RoutineView({ courses = [] }) {
 
   return (
     <div className="flex flex-col gap-5">
-      {/* header */}
-      <div className="flex flex-wrap items-end justify-between gap-3">
-        <div>
-          <h1 className="text-xl font-bold tracking-tight text-ink sm:text-2xl">Class Routine</h1>
-          <p className="mt-0.5 text-xs text-ink-3">
+      {/* Header */}
+      <header className="flex flex-wrap items-end justify-between gap-3">
+        <div className="min-w-0">
+          <h1 className={type.pageTitle}>Class routine</h1>
+          <p className={`${type.small} mt-1`}>
             <span className="font-semibold text-ink-2">
               {activeCalendar?.label || activeCalendar?.title || 'UIU Academic Calendar'}
             </span>{' '}
@@ -234,7 +236,7 @@ export function RoutineView({ courses = [] }) {
           </Button>
           {uploadButton}
         </div>
-      </div>
+      </header>
 
       {missingFydpStages.length > 0 && !fydpDecision && (
         <FydpNotice
@@ -266,21 +268,22 @@ export function RoutineView({ courses = [] }) {
         />
       ) : (
         <>
-          {/* imported routine summary */}
-          <Surface className="p-4 sm:p-5">
-            <div className="flex flex-wrap items-center justify-between gap-2">
+          {/* Imported routine summary */}
+          <Surface>
+            <div className="flex flex-wrap items-center justify-between gap-3">
               <div>
-                <h3 className="text-[15px] font-bold tracking-tight text-ink">Your Routine</h3>
-                <p className="mt-0.5 text-xs text-ink-3">
+                <h3 className={type.sectionTitle}>Your routine</h3>
+                <p className={`${type.small} mt-0.5`}>
                   <span className="num font-bold text-ink-2">{activeSections.length}</span> courses ·{' '}
                   <span className="num font-bold text-ink-2">{totalCredits}</span> credits ·
                   registered this term
                 </p>
               </div>
-              <Button variant="secondary" icon={FileUp} onClick={openUpload}>
+              <Button variant="secondary" size="sm" icon={FileUp} onClick={openUpload}>
                 Replace PDF
               </Button>
             </div>
+
             <ul className="mt-3 divide-y divide-line/60">
               {activeSections.map((sec) => {
                 const fydpStage = matchFydpStage(sec.code);
@@ -288,22 +291,30 @@ export function RoutineView({ courses = [] }) {
                 return (
                   <li
                     key={sec.id}
-                    className="flex flex-wrap items-baseline gap-x-3 gap-y-1 py-2.5"
+                    className="flex flex-wrap items-center gap-x-3 gap-y-1 py-2.5"
                   >
-                    <span className="font-mono text-[13px] font-bold text-accent">{sec.code}</span>
-                    <span className="num shrink-0 rounded-md bg-surface2 px-1.5 py-0.5 text-[10px] font-bold text-ink-3">
+                    <span className="font-mono text-[12.5px] font-bold text-accent">{sec.code}</span>
+                    <Badge tone="neutral">
                       {fydpStage ? fydpStage.label : `Sec ${sec.section}`} · {sec.credit || 0} cr
-                    </span>
+                    </Badge>
                     <span className="min-w-[10rem] flex-1 text-[13px] text-ink">{sec.title}</span>
-                    <span className="text-[11px] text-ink-3">
-                      {hasMeetings ? sectionSummary(sec) : 'No fixed class times'}
+                    <span className="flex items-center gap-1.5 text-[11px] text-ink-3">
+                      {hasMeetings ? (
+                        <>
+                          <Clock className="h-3 w-3" />
+                          {sectionSummary(sec)}
+                        </>
+                      ) : (
+                        'No fixed class times'
+                      )}
                     </span>
                     {fydpStage && (
                       <button
                         type="button"
                         onClick={() => handleFydpRemove(sec.code)}
-                        className="rounded-md p-1 text-ink-3 transition-colors hover:text-bad"
+                        className="rounded-md p-1 text-ink-3 transition-colors hover:bg-bad/10 hover:text-bad"
                         title={`Remove ${sec.code} from your routine`}
+                        aria-label={`Remove ${sec.code}`}
                       >
                         <X className="h-3.5 w-3.5" />
                       </button>
@@ -314,18 +325,19 @@ export function RoutineView({ courses = [] }) {
             </ul>
           </Surface>
 
-          {/* clash banner */}
+          {/* Clash banner */}
           <ClashBanner sections={activeSections} />
 
-          {/* timetable */}
+          {/* Timetable */}
           <Timetable sections={activeSections} />
 
-          {/* legend */}
-          <div className="flex flex-wrap gap-1.5">
+          {/* Legend */}
+          <div className="flex flex-wrap items-center gap-1.5">
+            <span className={`${type.eyebrow} mr-1`}>Course legend</span>
             {activeSections.map((s) => (
               <motion.span
                 key={s.id}
-                whileHover={{ scale: 1.05 }}
+                whileHover={{ scale: 1.04 }}
                 className="flex items-center gap-1.5 rounded-lg border border-line bg-surface px-2.5 py-1.5 text-[11px] font-semibold text-ink-2 shadow-card"
               >
                 <span
@@ -371,12 +383,12 @@ function ClashBanner({ sections }) {
     <motion.div
       initial={{ opacity: 0, scale: 0.98 }}
       animate={{ opacity: 1, scale: 1 }}
-      className="flex items-start gap-2.5 rounded-2xl border border-bad/30 bg-bad/[0.08] p-4"
+      className="flex items-start gap-2.5 rounded-xl border border-bad/30 bg-bad/[0.08] p-4"
     >
       <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-bad" strokeWidth={2.2} />
-      <p className="text-xs leading-relaxed text-bad">
-        <b>{clashes.length} section clash(es):</b> {clashes.join(' · ')} — these classes overlap in
-        your uploaded routine.
+      <p className="text-[12px] leading-relaxed text-bad">
+        <b>{clashes.length} section clash{clashes.length > 1 ? 'es' : ''}:</b> {clashes.join(' · ')} —
+        these classes overlap in your uploaded routine.
       </p>
     </motion.div>
   );

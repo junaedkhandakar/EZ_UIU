@@ -5,8 +5,9 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vite build && node -e \"const fs=require('fs'); fs.rmSync('assets',{recursive:true,force:true}); fs.cpSync('dist/assets','assets',{recursive:true}); fs.copyFileSync('dist/app.html','dist/index.html'); fs.copyFileSync('dist/app.html','index.html');\"",
+    "build": "vite build && node -e \"const fs=require('fs'); fs.rmSync('assets',{recursive:true,force:true}); fs.cpSync('dist/assets','assets',{recursive:true});\"",
     "preview": "vite preview",
+    "verify:engines": "node --experimental-loader ./scripts/extension-loader.mjs scripts/verify-engines.mjs",
     "fetch-calendar": "node scripts/fetch-calendar.mjs",
     "check-calendar": "node scripts/fetch-calendar.mjs --check"
   },

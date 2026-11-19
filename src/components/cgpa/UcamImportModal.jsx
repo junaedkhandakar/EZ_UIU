@@ -1,6 +1,9 @@
 import React, { useState } from 'react';
 import Modal from '../ui/Modal';
 import Button from '../ui/Button';
+import Segmented from '../ui/Segmented';
+import { Textarea } from '../ui/Input';
+import { type } from '../ui/tokens';
 import { parseUcamSource } from '../../utils/cgpaUtils';
 import { CheckCircle2, AlertCircle, ClipboardPaste } from 'lucide-react';
 
@@ -45,8 +48,8 @@ export function UcamImportModal({ isOpen, onClose, onImportSuccess }) {
       width="max-w-xl"
     >
       <div className="flex flex-col gap-4">
-        <div className="rounded-2xl border border-line bg-surface2/60 p-4">
-          <p className="text-xs font-bold text-ink">How to copy from UCam</p>
+        <div className="rounded-xl border border-line bg-surface2/60 p-4">
+          <p className={type.cardTitle}>How to copy from UCam</p>
           <ol className="mt-2 list-decimal space-y-1 pl-4 text-xs leading-relaxed text-ink-2">
             <li>
               Log into <b>ucam.uiu.ac.bd</b> and open <b>Grade Sheet</b> / <b>Registered Courses</b>.
@@ -60,13 +63,13 @@ export function UcamImportModal({ isOpen, onClose, onImportSuccess }) {
         </div>
 
         <div className="relative">
-          <ClipboardPaste className="pointer-events-none absolute left-3.5 top-3 h-4 w-4 text-ink-3" />
-          <textarea
+          <ClipboardPaste className="pointer-events-none absolute left-3.5 top-3.5 h-4 w-4 text-ink-3" />
+          <Textarea
             rows={7}
             value={content}
             onChange={(e) => handleChange(e.target.value)}
             placeholder="Paste UCam HTML source or table text here…"
-            className="w-full resize-none rounded-2xl border border-line bg-surface2/60 py-3 pl-10 pr-3.5 font-mono text-[11.5px] leading-relaxed text-ink placeholder-ink-3 transition-colors hover:border-line-strong focus:outline-none focus:ring-2 focus:ring-accent/40"
+            className="pl-10 font-mono text-[11.5px]"
           />
         </div>
 
@@ -83,31 +86,22 @@ export function UcamImportModal({ isOpen, onClose, onImportSuccess }) {
         {/* Merge vs Replace Mode */}
         <div className="flex items-center justify-between gap-3 rounded-xl border border-line bg-surface p-3 text-xs">
           <div>
-            <div className="font-semibold text-ink">Merge Mode</div>
+            <div className="font-semibold text-ink">Import mode</div>
             <div className="text-[11px] text-ink-3">
-              {importMode === 'merge' ? 'Preserve existing terms & update new results' : 'Clear and overwrite full transcript'}
+              {importMode === 'merge'
+                ? 'Preserve existing terms & update new results'
+                : 'Clear and overwrite the full transcript'}
             </div>
           </div>
-          <div className="flex gap-1 rounded-lg border border-line bg-surface2 p-0.5">
-            <button
-              type="button"
-              onClick={() => setImportMode('merge')}
-              className={`rounded px-2.5 py-1 text-[11px] font-semibold transition-colors ${
-                importMode === 'merge' ? 'bg-surface text-accent shadow-sm' : 'text-ink-3 hover:text-ink'
-              }`}
-            >
-              Merge & Update
-            </button>
-            <button
-              type="button"
-              onClick={() => setImportMode('replace')}
-              className={`rounded px-2.5 py-1 text-[11px] font-semibold transition-colors ${
-                importMode === 'replace' ? 'bg-surface text-accent shadow-sm' : 'text-ink-3 hover:text-ink'
-              }`}
-            >
-              Replace All
-            </button>
-          </div>
+          <Segmented
+            size="sm"
+            value={importMode}
+            onChange={setImportMode}
+            options={[
+              { value: 'merge', label: 'Merge & update' },
+              { value: 'replace', label: 'Replace all' },
+            ]}
+          />
         </div>
 
         {error && (

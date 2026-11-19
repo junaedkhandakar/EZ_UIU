@@ -1,7 +1,6 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import {
-  CheckCircle2,
   AlertTriangle,
   BookOpen,
   Calendar,
@@ -19,7 +18,6 @@ import {
   GitBranch,
   Bot,
   Globe,
-  Settings2,
   Search,
   FileText,
   Copy,
@@ -29,12 +27,17 @@ import {
 import Tabs from '../ui/Tabs';
 import Button from '../ui/Button';
 import Surface from '../ui/Surface';
+import StatCard from '../ui/StatCard';
+import Badge from '../ui/Badge';
+import Chip from '../ui/Chip';
+import Input, { Field } from '../ui/Input';
+import Empty from '../ui/Empty';
+import { type } from '../ui/tokens';
 import Select from '../ui/Select';
 import Modal from '../ui/Modal';
 import ChatText from './ChatText';
 import { getSavedRoutine } from '../../utils/routineStore';
 import {
-  AI_PROVIDERS,
   generateRecommendedBasket,
   generateFullDegreeRoadmap,
   auditCustomSchedule,
@@ -44,7 +47,6 @@ import {
   generateFollowUpSuggestions,
   queryUniversalAIAdvisor,
   getPassedCoursesSet,
-  checkVercelServerlessStatus,
   normalizeCode,
 } from '../../utils/advisorEngine';
 import { UIU_KNOWLEDGE_DOCUMENTS } from '../../data/uiuKnowledgeBase';
@@ -75,46 +77,18 @@ export default function AdvisorView({
     return routine[0]?.code || 'CSE 1111';
   });
 
-  // AI provider & model selection
-  const [selectedProvider, setSelectedProvider] = useState(() => {
-    try {
-      return localStorage.getItem('ez_ai_provider') || 'openrouter';
-    } catch {
-      return 'openrouter';
-    }
-  });
-
-  const [providerModels, setProviderModels] = useState(() => {
-    try {
-      const saved = localStorage.getItem('ez_ai_models');
-      if (saved) return JSON.parse(saved);
-    } catch {}
-    return {
-      openrouter: 'auto-free',
-    };
-  });
-
-  const [isAiSettingsOpen, setIsAiSettingsOpen] = useState(false);
   const [expandedSources, setExpandedSources] = useState({});
   const [copiedIndex, setCopiedIndex] = useState(null);
   const [isKbOpen, setIsKbOpen] = useState(false);
   const [kbQuery, setKbQuery] = useState('');
   const [kbCategory, setKbCategory] = useState('ALL');
   const [expandedKbDoc, setExpandedKbDoc] = useState(null);
-  const [vercelStatus, setVercelStatus] = useState(null);
-
-  useEffect(() => {
-    checkVercelServerlessStatus().then((res) => {
-      if (res?.status === 'ok') setVercelStatus(res);
-    });
-  }, []);
 
   const [chatInput, setChatInput] = useState('');
   const [isThinking, setIsThinking] = useState(false);
   const [chatMessages, setChatMessages] = useState([
     {
       role: 'ai',
-      provider: 'UIU Knowledge Base',
       text: 'Ask anything about UIU regulations — FYDP eligibility, retakes, merit waivers, probation, tuition, exam slots or major tracks. Every answer cites the official policy.',
       followUps: [
         'When can I start FYDP / Thesis?',
@@ -148,14 +122,6 @@ export default function AdvisorView({
     return ['ALL', ...Array.from(cats)];
   }, []);
 
-  const saveProvider = (provId) => {
-    setSelectedProvider(provId);
-    try {
-      localStorage.setItem('ez_ai_provider', provId);
-      showToast(`AI Provider switched to ${AI_PROVIDERS[provId]?.name}`, 'info');
-    } catch {}
-  };
-
   const handleCopyAdvice = (text, idx) => {
     try {
       navigator.clipboard.writeText(text);
@@ -171,7 +137,6 @@ export default function AdvisorView({
     setChatMessages([
       {
         role: 'ai',
-        provider: 'UIU Knowledge Base',
         text: "Conversation reset. Ask me anything about UIU courses, FYDP, retakes, or scholarships!",
         followUps: [
           'When can I start FYDP / Thesis?',
@@ -183,22 +148,6 @@ export default function AdvisorView({
     ]);
     showToast('Conversation reset', 'info');
   };
-
-  const saveModelForProvider = (provId, modelId) => {
-    const updated = { ...providerModels, [provId]: modelId };
-    setProviderModels(updated);
-    try {
-      localStorage.setItem('ez_ai_models', JSON.stringify(updated));
-    } catch {}
-  };
-
-  const activeProviderConfig = AI_PROVIDERS[selectedProvider] || AI_PROVIDERS.openrouter;
-
-  const activeModelName = (() => {
-    const id = providerModels[selectedProvider] || activeProviderConfig.defaultModel;
-    const found = activeProviderConfig.models?.find((m) => m.id === id);
-    return found ? found.name : id;
-  })();
 
   const metrics = useMemo(() => {
     return calculateAcademicMetrics(getEffectiveCourses(courses));
@@ -281,12 +230,8 @@ export default function AdvisorView({
     setChatInput('');
     setIsThinking(true);
 
-    const model = providerModels[selectedProvider] || activeProviderConfig.defaultModel;
-
     try {
       const response = await queryUniversalAIAdvisor({
-        provider: selectedProvider,
-        model,
         prompt: query,
         studentContext: {
           cgpa: currentCgpa,
@@ -305,17 +250,10 @@ export default function AdvisorView({
 
       const followUps = generateFollowUpSuggestions(query, replyText);
 
-      const actualModel = typeof response === 'object' && response.model ? response.model : model;
-      const modelLabel =
-        actualModel === 'auto-free'
-          ? 'Auto'
-          : actualModel.split('/').pop().replace(':free', '');
-
       setChatMessages((prev) => [
         ...prev,
         {
           role: 'ai',
-          provider: `${activeProviderConfig.name} (${modelLabel})`,
           text: replyText,
           retrievedSources: sources || [],
           usage,
@@ -338,7 +276,6 @@ export default function AdvisorView({
         ...prev,
         {
           role: 'ai',
-          provider: 'UIU Regulations Engine',
           text: fallback,
           retrievedSources: [],
           followUps,
@@ -363,153 +300,52 @@ export default function AdvisorView({
       {/* Header */}
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <h1 className="text-xl font-bold tracking-tight text-ink sm:text-2xl">
-            AI Academic Advisor
-          </h1>
-          <p className="mt-0.5 text-xs text-ink-3">
+          <h1 className={type.pageTitle}>AI Academic Advisor</h1>
+          <p className={`${type.small} mt-0.5`}>
             Course recommendations, prerequisite chains, and verified UIU policies
           </p>
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
           {/* Knowledge Base Browser Button */}
-          <button
-            onClick={() => setIsKbOpen(true)}
-            className="flex items-center gap-1.5 rounded-xl border border-line bg-surface px-3 py-1.5 text-xs font-semibold text-ink-2 shadow-card transition-colors hover:border-accent hover:text-accent"
-            title="Browse UIU statutes and official policies"
-          >
-            <BookOpen className="h-3.5 w-3.5 text-accent" />
+          <Button variant="quiet" size="sm" icon={BookOpen} onClick={() => setIsKbOpen(true)}>
             <span className="hidden sm:inline">UIU Statutes</span>
-            <span className="rounded bg-surface2 px-1.5 py-0.5 text-[9.5px] font-bold text-ink-3">
+            <span className="num rounded-md bg-surface2 px-1.5 py-0.5 text-[10px] font-bold text-ink-3">
               {UIU_KNOWLEDGE_DOCUMENTS.length}
             </span>
-          </button>
+          </Button>
 
-          {/* AI Settings Button */}
-          <button
-            onClick={() => setIsAiSettingsOpen(!isAiSettingsOpen)}
-            className={`flex items-center gap-2 rounded-xl border px-3 py-1.5 text-xs font-semibold shadow-card transition-colors ${
-              isAiSettingsOpen
-                ? 'border-accent bg-accentSoft text-accent'
-                : 'border-line bg-surface text-ink-2 hover:border-accent'
-            }`}
-            title="AI settings"
+          <StatCard
+            label="CGPA"
+            bodyClassName="num font-mono text-sm font-bold text-accent"
+            className="px-3 py-1.5"
           >
-            <Globe className="h-3.5 w-3.5 text-accent" />
-            <span className="font-bold">{activeProviderConfig.name}</span>
-            <span className="rounded bg-surface2 px-1.5 py-0.5 text-[9.5px] font-medium text-ink-3">
-              {activeModelName}
-            </span>
-            <Settings2 className="h-3 w-3 opacity-60" />
-          </button>
-
-          <div className="flex items-center gap-2 rounded-xl border border-line bg-surface px-3 py-1.5 shadow-card">
-            <span className="text-[11px] font-semibold uppercase tracking-wider text-ink-3">CGPA</span>
-            <span className="num font-mono text-sm font-bold text-accent">{currentCgpa.toFixed(2)}</span>
-          </div>
-          <div className="flex items-center gap-2 rounded-xl border border-line bg-surface px-3 py-1.5 shadow-card">
-            <span className="text-[11px] font-semibold uppercase tracking-wider text-ink-3">Passed</span>
-            <span className="num font-mono text-sm font-bold text-ink">{completedCredits} cr</span>
-          </div>
+            {currentCgpa.toFixed(2)}
+          </StatCard>
+          <StatCard
+            label="Passed"
+            bodyClassName="num font-mono text-sm font-bold text-ink"
+            className="px-3 py-1.5"
+          >
+            {completedCredits} cr
+          </StatCard>
         </div>
       </div>
 
-      {/* AI Settings Drawer */}
-      {isAiSettingsOpen && (
-        <Surface className="p-5 border-accent/30 bg-surface shadow-pop fade-in">
-          <div className="flex items-start justify-between border-b border-line pb-3">
+      {courses.length === 0 && (
+        <Surface tone="accent" className="flex flex-col items-start gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex items-start gap-3">
+            <div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-accentSoft text-accent">
+              <Upload className="h-4 w-4" />
+            </div>
             <div>
-              <h3 className="text-sm font-bold text-ink flex items-center gap-2">
-                <Globe className="h-4 w-4 text-accent" />
-                AI Settings
-              </h3>
-              <p className="text-xs text-ink-3 mt-0.5">
-                Choose which model answers your questions. If a model is unavailable, the built-in
-                UIU regulations reference answers instead.
+              <h3 className={type.cardTitle}>No transcript connected</h3>
+              <p className={`${type.small} mt-0.5`}>
+                Recommendations currently show freshman entry (0 completed credits). Import your UCam
+                report in the CGPA tab to personalise your course basket, prerequisite status, and
+                graduation timeline.
               </p>
             </div>
-            <button
-              onClick={() => setIsAiSettingsOpen(false)}
-              className="rounded-lg p-1.5 text-ink-3 hover:text-ink"
-            >
-              <X className="h-4 w-4" />
-            </button>
-          </div>
-
-          {/* Provider Grid */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-4">
-            {Object.values(AI_PROVIDERS).map((prov) => {
-              const isSelected = selectedProvider === prov.id;
-              return (
-                <button
-                  key={prov.id}
-                  onClick={() => saveProvider(prov.id)}
-                  className={`flex flex-col items-start p-3 rounded-xl border text-left transition-all ${
-                    isSelected
-                      ? 'border-accent bg-accentSoft shadow-sm ring-2 ring-accent/20'
-                      : 'border-line bg-surface2/50 hover:bg-surface2 hover:border-line-strong'
-                  }`}
-                >
-                  <div className="flex items-center justify-between w-full">
-                    <span className="font-bold text-xs text-ink">{prov.name}</span>
-                    {isSelected && <Check className="h-3.5 w-3.5 text-accent" />}
-                  </div>
-                  <span className="text-[10px] font-semibold text-accent mt-0.5">{prov.badge}</span>
-                  <p className="text-[10.5px] text-ink-3 mt-1.5 line-clamp-2 leading-snug">
-                    {prov.description}
-                  </p>
-                </button>
-              );
-            })}
-          </div>
-
-          {/* Active Provider Configuration Bar */}
-          <div className="mt-4 rounded-xl border border-line bg-surface2/40 p-4">
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
-              <div className="flex-1">
-                <span className="text-xs font-bold text-ink">
-                  {activeProviderConfig.name}
-                </span>
-
-                <p className="text-xs text-ok mt-2 flex items-center gap-1.5 font-medium">
-                  <CheckCircle2 className="h-3.5 w-3.5 text-ok shrink-0" />
-                  Ready to use — no setup needed.
-                </p>
-              </div>
-
-              {/* Model Selector if Provider has choices */}
-              {activeProviderConfig.models?.length > 1 && (
-                <div className="shrink-0 w-full md:w-64">
-                  <label className="block text-[10.5px] font-semibold uppercase tracking-wider text-ink-3 mb-1">
-                    Model
-                  </label>
-                  <Select
-                    value={providerModels[selectedProvider] || activeProviderConfig.defaultModel}
-                    onChange={(e) => saveModelForProvider(selectedProvider, e.target.value)}
-                  >
-                    {activeProviderConfig.models.map((m) => (
-                      <option key={m.id} value={m.id}>
-                        {m.name}
-                      </option>
-                    ))}
-                  </Select>
-                </div>
-              )}
-            </div>
-          </div>
-        </Surface>
-      )}
-
-      {courses.length === 0 && (
-        <Surface className="p-4 sm:p-5 border-accent/40 bg-accentSoft/30 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-sm">
-          <div>
-            <h3 className="text-sm font-bold text-ink flex items-center gap-2">
-              <Upload className="h-4 w-4 text-accent" />
-              No transcript connected
-            </h3>
-            <p className="text-xs text-ink-3 mt-0.5">
-              Advising recommendations currently show freshman entry (0 completed credits). Import your UCAM report in the CGPA tab to personalize your course basket, prerequisite status, and graduation timeline.
-            </p>
           </div>
         </Surface>
       )}
@@ -521,26 +357,26 @@ export default function AdvisorView({
         <div className="grid grid-cols-1 gap-4 lg:grid-cols-12 pop-in">
           {/* Controls & Diagnostics */}
           <div className="flex flex-col gap-4 lg:col-span-5">
-            <Surface className="p-5">
-              <h3 className="text-[15px] font-bold tracking-tight text-ink">Advising Controls</h3>
+            <Surface>
+              <h3 className={type.sectionTitle}>Advising Controls</h3>
 
               <div className="mt-4 space-y-4">
                 <div>
-                  <div className="flex items-center justify-between text-xs mb-1.5">
-                    <span className="font-semibold uppercase tracking-wider text-ink-3">
-                      Target Trimester Load
-                    </span>
-                    <span className="num font-bold text-accent">{targetCredits} Credits</span>
+                  <div className={`mb-1.5 flex items-center justify-between ${type.eyebrow}`}>
+                    <span>Target trimester load</span>
+                    <span className="num font-bold text-accent">{targetCredits} credits</span>
                   </div>
                   <div className="grid grid-cols-6 gap-1.5">
                     {[10, 11, 12, 13, 14, 15].map((cr) => (
                       <button
                         key={cr}
+                        type="button"
                         onClick={() => setTargetCredits(cr)}
+                        aria-pressed={targetCredits === cr}
                         className={`rounded-xl border py-2 text-xs font-bold transition-colors duration-150 ${
                           targetCredits === cr
                             ? 'border-accent bg-accentSoft text-accent'
-                            : 'border-line bg-surface2/60 text-ink-3 hover:text-ink'
+                            : 'border-line bg-surface text-ink-3 hover:border-line-strong hover:text-ink'
                         }`}
                       >
                         {cr} cr
@@ -549,10 +385,7 @@ export default function AdvisorView({
                   </div>
                 </div>
 
-                <div>
-                  <label className="mb-1.5 block text-[11px] font-semibold uppercase tracking-wider text-ink-3">
-                    Target Major Concentration
-                  </label>
+                <Field label="Target major concentration">
                   <Select value={selectedMajor} onChange={(e) => setSelectedMajor(e.target.value)}>
                     <option value="">No Specialization (General CSE)</option>
                     {Object.keys(MAJOR_TRACKS).map((track) => (
@@ -561,112 +394,109 @@ export default function AdvisorView({
                       </option>
                     ))}
                   </Select>
-                </div>
+                </Field>
               </div>
 
               {/* Basket Diagnostics */}
-              <div className="mt-5 border-t border-line pt-4 space-y-2.5">
-                <div className="flex items-center justify-between text-xs">
-                  <span className="text-ink-2">Workload Assessment:</span>
-                  <span className={`font-bold ${courses.length === 0 ? 'text-ink-3' : basketAnalysis.workloadColor}`}>
-                    {courses.length === 0 ? '—' : basketAnalysis.workloadGrade}
-                  </span>
-                </div>
-                <div className="flex items-center justify-between text-xs">
-                  <span className="text-ink-2">Eligible Unlocked Courses:</span>
-                  <span className="num font-bold text-ink">
-                    {courses.length === 0 ? '0 courses' : `${basketAnalysis.eligibleCount} courses`}
-                  </span>
-                </div>
-                <div className="flex items-center justify-between text-xs">
-                  <span className="text-ink-2">Final Exam Slot Conflicts:</span>
-                  <span className="num font-bold text-ok">
-                    {courses.length === 0
-                      ? '—'
-                      : basketAnalysis.examConflicts.length === 0
-                      ? '0 Clashes (Safe)'
-                      : `${basketAnalysis.examConflicts.length} Clashes`}
-                  </span>
-                </div>
-                {courses.length > 0 && basketAnalysis.tightExams?.length > 0 && (
-                  <div className="text-[11px] text-warn flex items-center gap-1.5">
-                    <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
-                    <span>{basketAnalysis.tightExams[0].desc}</span>
+              <div className="mt-5 border-t border-line pt-4">
+                <div className="space-y-2.5">
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="text-ink-2">Workload assessment</span>
+                    <span
+                      className={`font-bold ${
+                        courses.length === 0 ? 'text-ink-3' : basketAnalysis.workloadColor
+                      }`}
+                    >
+                      {courses.length === 0 ? '—' : basketAnalysis.workloadGrade}
+                    </span>
                   </div>
-                )}
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="text-ink-2">Eligible unlocked courses</span>
+                    <span className="num font-bold text-ink">
+                      {courses.length === 0 ? '0 courses' : `${basketAnalysis.eligibleCount} courses`}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="text-ink-2">Final exam slot conflicts</span>
+                    <span className="num font-bold text-ok">
+                      {courses.length === 0
+                        ? '—'
+                        : basketAnalysis.examConflicts.length === 0
+                          ? '0 clashes (safe)'
+                          : `${basketAnalysis.examConflicts.length} clashes`}
+                    </span>
+                  </div>
+                  {courses.length > 0 && basketAnalysis.tightExams?.length > 0 && (
+                    <div className="flex items-center gap-1.5 text-[11px] text-warn">
+                      <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
+                      <span>{basketAnalysis.tightExams[0].desc}</span>
+                    </div>
+                  )}
+                </div>
               </div>
-
             </Surface>
           </div>
 
           {/* Recommended Course Cards */}
           <div className="flex flex-col gap-3 lg:col-span-7">
             <div className="flex items-center justify-between px-1">
-              <h3 className="text-[15px] font-bold tracking-tight text-ink">
-                Recommended Course Basket
+              <h3 className={type.sectionTitle}>
+                Recommended course basket
                 <span className="num ml-2 rounded-md bg-accentSoft px-2 py-0.5 text-xs font-bold text-accent">
-                  {basketAnalysis.totalCredits} Credits
+                  {basketAnalysis.totalCredits} credits
                 </span>
               </h3>
-              <span className="text-xs text-ink-3">
+              <span className={`${type.small} hidden sm:block`}>
                 Ranked by prerequisite bottleneck impact
               </span>
             </div>
 
             {courses.length === 0 ? (
-              <Surface className="p-8 text-center flex flex-col items-center justify-center border-accent/30 bg-accentSoft/20">
-                <GraduationCap className="h-8 w-8 text-accent mb-2" />
-                <p className="text-sm font-bold text-ink">No academic transcript connected</p>
-                <p className="mt-1 text-xs text-ink-3 max-w-sm">
-                  Import your UCAM grade report in the CGPA tab to calculate your personalized next-term course recommendations and prerequisite paths.
-                </p>
-              </Surface>
+              <Empty
+                icon={GraduationCap}
+                title="No academic transcript connected"
+                sub="Import your UCam grade report in the CGPA tab to calculate your personalized next-term course recommendations and prerequisite paths."
+              />
             ) : basketAnalysis.basket.length === 0 ? (
-              <Surface className="p-8 text-center">
-                <p className="text-sm font-semibold text-ink-2">No remaining eligible courses</p>
-                <p className="mt-1 text-xs text-ink-3">
-                  You have completed or are currently taking every required prerequisite.
-                </p>
-              </Surface>
+              <Empty
+                title="No remaining eligible courses"
+                sub="You have completed or are currently taking every required prerequisite."
+                compact
+              />
             ) : (
               <div className="space-y-3">
                 {basketAnalysis.basket.map((c, idx) => (
-                  <Surface hover key={c.course_code} className="p-4">
+                  <Surface hover key={c.course_code} pad="sm">
                     <div className="flex items-start justify-between gap-3">
                       <div className="min-w-0 flex-1">
-                        <div className="flex items-center gap-2">
+                        <div className="flex flex-wrap items-center gap-2">
                           <span className="font-mono text-base font-extrabold text-accent">
                             {c.course_code}
                           </span>
-                          <span className="rounded-md border border-line bg-surface2 px-1.5 py-0.5 text-[10px] font-bold text-ink-2">
-                            {c.credit} cr
-                          </span>
-                          <span
-                            className={`rounded-md border px-1.5 py-0.5 text-[10px] font-bold ${
+                          <Badge tone="neutral">{c.credit} cr</Badge>
+                          <Badge
+                            tone={
                               c.difficulty === 'Hard'
-                                ? 'border-bad/30 bg-bad/10 text-bad'
+                                ? 'bad'
                                 : c.difficulty === 'Medium'
-                                  ? 'border-warn/30 bg-warn/10 text-warn'
-                                  : 'border-ok/30 bg-ok/10 text-ok'
-                            }`}
+                                  ? 'warn'
+                                  : 'ok'
+                            }
                           >
                             {c.difficulty || 'Medium'}
-                          </span>
+                          </Badge>
                         </div>
                         <div className="mt-1 text-[13.5px] font-bold text-ink">{c.course_name}</div>
 
                         {/* Reason badges */}
                         <div className="mt-2.5 flex flex-wrap items-center gap-1.5">
                           {c.reasons?.map((r, rIdx) => (
-                            <span
-                              key={rIdx}
-                              className="rounded-lg border border-line bg-surface2/60 px-2 py-0.5 text-[10.5px] font-semibold text-ink-2"
-                            >
+                            <Badge key={rIdx} tone="quiet">
                               {r}
-                            </span>
+                            </Badge>
                           ))}
                           {c.exam_day && (
-                            <span className="rounded-lg border border-line bg-surface2/40 px-2 py-0.5 text-[10.5px] font-medium text-ink-3">
+                            <span className="text-[10.5px] font-medium text-ink-3">
                               Exam: {c.exam_day} ({c.exam_slot || 'T1'})
                             </span>
                           )}
@@ -674,9 +504,7 @@ export default function AdvisorView({
                       </div>
 
                       <div className="shrink-0 text-right">
-                        <span className="text-[10px] font-bold uppercase tracking-wider text-ink-3">
-                          Priority #{idx + 1}
-                        </span>
+                        <span className={type.eyebrow}>Priority #{idx + 1}</span>
                       </div>
                     </div>
                   </Surface>
@@ -691,13 +519,11 @@ export default function AdvisorView({
       {activeTab === 'audit' && (
         <div className="grid grid-cols-1 gap-4 lg:grid-cols-12 pop-in">
           <div className="flex flex-col gap-4 lg:col-span-5">
-            <Surface className="p-5">
-              <h3 className="text-[15px] font-bold tracking-tight text-ink">
-                Schedule Stress-Tester
-              </h3>
-              <p className="text-xs text-ink-3 mt-1">
-                Select courses you plan to take together. The auditor verifies prerequisites, final exam
-                clashes, and cumulative difficulty.
+            <Surface>
+              <h3 className={type.sectionTitle}>Schedule stress-tester</h3>
+              <p className={`${type.small} mt-1`}>
+                Select courses you plan to take together. The auditor verifies prerequisites, final
+                exam clashes, and cumulative difficulty.
               </p>
 
               {/* Add Course Dropdown */}
@@ -732,30 +558,26 @@ export default function AdvisorView({
 
               {/* Selected Courses Chips */}
               <div className="mt-4 space-y-2">
-                <div className="text-[11px] font-bold uppercase tracking-wider text-ink-3">
-                  Courses Selected for Audit ({auditSelectedCodes.length}):
+                <div className={type.eyebrow}>
+                  Courses selected for audit ({auditSelectedCodes.length})
                 </div>
                 {auditSelectedCodes.length === 0 ? (
-                  <p className="text-xs text-ink-3 py-1">
+                  <p className={`${type.small} py-1`}>
                     No courses added yet. Pick a course above to audit exam slots and prerequisites.
                   </p>
                 ) : (
                   <div className="flex flex-wrap gap-1.5">
                     {auditSelectedCodes.map((code) => (
-                      <span
+                      <Chip
                         key={code}
-                        className="flex items-center gap-1.5 rounded-xl border border-line bg-surface2 px-2.5 py-1 text-xs font-bold text-ink"
+                        active
+                        size="sm"
+                        onRemove={() =>
+                          setAuditSelectedCodes(auditSelectedCodes.filter((c) => c !== code))
+                        }
                       >
                         {code}
-                        <button
-                          onClick={() =>
-                            setAuditSelectedCodes(auditSelectedCodes.filter((c) => c !== code))
-                          }
-                          className="text-ink-3 hover:text-bad"
-                        >
-                          <X className="h-3 w-3" />
-                        </button>
-                      </span>
+                      </Chip>
                     ))}
                   </div>
                 )}
@@ -763,40 +585,33 @@ export default function AdvisorView({
 
               {/* Quick Actions */}
               <div className="mt-5 border-t border-line pt-4">
-                <span className="text-[11px] font-bold uppercase tracking-wider text-ink-3">
-                  Quick Actions:
-                </span>
+                <span className={type.eyebrow}>Quick actions</span>
                 <div className="mt-2 flex flex-wrap gap-1.5">
                   {basketAnalysis.basket.length > 0 && (
-                    <button
-                      type="button"
+                    <Chip
+                      active
+                      size="sm"
                       onClick={() =>
                         setAuditSelectedCodes(basketAnalysis.basket.map((c) => c.course_code))
                       }
-                      className="rounded-lg border border-accent/40 bg-accentSoft/60 px-2.5 py-1 text-[11px] font-bold text-accent hover:border-accent"
                     >
-                      Audit Recommended Basket ({basketAnalysis.basket.length} courses)
-                    </button>
+                      Audit recommended basket ({basketAnalysis.basket.length})
+                    </Chip>
                   )}
                   {getSavedRoutine().length > 0 && (
-                    <button
-                      type="button"
+                    <Chip
+                      size="sm"
                       onClick={() =>
                         setAuditSelectedCodes(getSavedRoutine().map((c) => c.code))
                       }
-                      className="rounded-lg border border-line bg-surface2/60 px-2.5 py-1 text-[11px] font-medium text-ink-2 hover:text-ink"
                     >
-                      Audit Saved Routine ({getSavedRoutine().length} courses)
-                    </button>
+                      Audit saved routine ({getSavedRoutine().length})
+                    </Chip>
                   )}
                   {auditSelectedCodes.length > 0 && (
-                    <button
-                      type="button"
-                      onClick={() => setAuditSelectedCodes([])}
-                      className="rounded-lg border border-line bg-surface2/60 px-2.5 py-1 text-[11px] font-medium text-ink-3 hover:text-bad"
-                    >
-                      Clear Selection
-                    </button>
+                    <Chip size="sm" onClick={() => setAuditSelectedCodes([])}>
+                      Clear selection
+                    </Chip>
                   )}
                 </div>
               </div>
@@ -805,49 +620,40 @@ export default function AdvisorView({
 
           {/* Audit Results Panel */}
           <div className="flex flex-col gap-4 lg:col-span-7">
-            <Surface className="p-5">
+            <Surface pad="lg">
               <div className="flex items-center justify-between border-b border-line pb-3">
-                <h3 className="text-[15px] font-bold text-ink flex items-center gap-2">
+                <h3 className={`${type.sectionTitle} flex items-center gap-2`}>
                   <ShieldCheck className="h-4 w-4 text-accent" />
-                  Audit Verdict
+                  Audit verdict
                 </h3>
-                <span
-                  className={`rounded-full px-3 py-1 text-xs font-bold ${
-                    customAudit.isValid
-                      ? 'bg-ok/15 text-ok border border-ok/30'
-                      : 'bg-bad/15 text-bad border border-bad/30'
-                  }`}
-                >
-                  {customAudit.isValid ? 'Approved (Safe to Register)' : 'Issues Detected'}
-                </span>
+                <Badge tone={customAudit.isValid ? 'ok' : 'bad'}>
+                  {customAudit.isValid ? 'Approved (safe to register)' : 'Issues detected'}
+                </Badge>
               </div>
 
               {/* Summary Stats */}
-              <div className="grid grid-cols-3 gap-3 my-4">
-                <div className="rounded-xl border border-line bg-surface2/40 p-3 text-center">
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-ink-3">
-                    Total Credits
-                  </span>
-                  <div className="num mt-1 text-lg font-extrabold text-ink">
-                    {customAudit.totalCredits} cr
-                  </div>
-                </div>
-                <div className="rounded-xl border border-line bg-surface2/40 p-3 text-center">
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-ink-3">
-                    Hard Courses
-                  </span>
-                  <div className="num mt-1 text-lg font-extrabold text-warn">
-                    {customAudit.hardCount}
-                  </div>
-                </div>
-                <div className="rounded-xl border border-line bg-surface2/40 p-3 text-center">
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-ink-3">
-                    Exam Clashes
-                  </span>
-                  <div className="num mt-1 text-lg font-extrabold text-ok">
-                    {customAudit.examConflicts.length}
-                  </div>
-                </div>
+              <div className="my-4 grid grid-cols-3 gap-3">
+                <StatCard
+                  label="Total credits"
+                  bodyClassName="num text-lg font-extrabold text-ink"
+                  className="text-center"
+                >
+                  {customAudit.totalCredits} cr
+                </StatCard>
+                <StatCard
+                  label="Hard courses"
+                  bodyClassName="num text-lg font-extrabold text-warn"
+                  className="text-center"
+                >
+                  {customAudit.hardCount}
+                </StatCard>
+                <StatCard
+                  label="Exam clashes"
+                  bodyClassName="num text-lg font-extrabold text-ok"
+                  className="text-center"
+                >
+                  {customAudit.examConflicts.length}
+                </StatCard>
               </div>
 
               {/* Blocked or Warning Messages */}
@@ -855,7 +661,7 @@ export default function AdvisorView({
                 <div className="mb-4 space-y-2">
                   <h4 className="text-xs font-bold text-bad flex items-center gap-1.5">
                     <AlertTriangle className="h-4 w-4" />
-                    Prerequisite Issues:
+                    Prerequisite issues
                   </h4>
                   {customAudit.blockedCourses.map((b) => (
                     <div
@@ -873,7 +679,7 @@ export default function AdvisorView({
                 <div className="mb-4 space-y-2">
                   <h4 className="text-xs font-bold text-bad flex items-center gap-1.5">
                     <AlertTriangle className="h-4 w-4" />
-                    Final Exam Collision:
+                    Final exam collision
                   </h4>
                   {customAudit.examConflicts.map((c, idx) => (
                     <div
@@ -888,7 +694,7 @@ export default function AdvisorView({
 
               {/* Approved Courses List */}
               <div className="space-y-2">
-                <h4 className="text-xs font-bold text-ink-2">Valid Courses:</h4>
+                <h4 className="text-xs font-bold text-ink-2">Valid courses</h4>
                 {customAudit.validCourses.map((c) => (
                   <div
                     key={c.course_code}
@@ -915,51 +721,46 @@ export default function AdvisorView({
       {activeTab === 'tree' && (
         <div className="grid grid-cols-1 gap-4 lg:grid-cols-12 pop-in">
           <div className="flex flex-col gap-4 lg:col-span-5">
-            <Surface className="p-5">
-              <h3 className="text-[15px] font-bold tracking-tight text-ink flex items-center gap-2">
+            <Surface>
+              <h3 className={`${type.sectionTitle} flex items-center gap-2`}>
                 <GitBranch className="h-4 w-4 text-accent" />
-                Course Prerequisite Explorer
+                Course prerequisite explorer
               </h3>
-              <p className="text-xs text-ink-3 mt-1">
+              <p className={`${type.small} mt-1`}>
                 Select any course to trace its complete upstream prerequisite chain and see what is
                 already passed vs. still missing.
               </p>
 
               <div className="mt-4">
-                <label className="mb-1.5 block text-[11px] font-semibold uppercase tracking-wider text-ink-3">
-                  Target Course
-                </label>
-                <Select
-                  value={selectedTreeCourse}
-                  onChange={(e) => setSelectedTreeCourse(e.target.value)}
-                >
-                  {ALL_COURSES.map((c) => (
-                    <option key={c.course_code} value={c.course_code}>
-                      {c.course_code} · {c.course_name}
-                    </option>
-                  ))}
-                </Select>
+                <Field label="Target course">
+                  <Select
+                    value={selectedTreeCourse}
+                    onChange={(e) => setSelectedTreeCourse(e.target.value)}
+                  >
+                    {ALL_COURSES.map((c) => (
+                      <option key={c.course_code} value={c.course_code}>
+                        {c.course_code} · {c.course_name}
+                      </option>
+                    ))}
+                  </Select>
+                </Field>
               </div>
 
               {/* Quick Jump Buttons */}
               <div className="mt-4">
-                <span className="text-[11px] font-bold uppercase tracking-wider text-ink-3">
-                  High-Impact Capstones to Explore:
-                </span>
+                <span className={type.eyebrow}>High-impact capstones to explore</span>
                 <div className="mt-2 flex flex-wrap gap-1.5">
                   {['CSE 4889', 'CSE 4611', 'CSE 4783', 'CSE 4587', 'CSE 3811', 'CSE 3411'].map(
                     (code) => (
-                      <button
+                      <Chip
                         key={code}
+                        active={selectedTreeCourse === code}
+                        size="sm"
                         onClick={() => setSelectedTreeCourse(code)}
-                        className={`rounded-lg border px-2 py-1 text-xs font-mono font-bold transition-colors duration-150 ${
-                          selectedTreeCourse === code
-                            ? 'border-accent bg-accentSoft text-accent'
-                            : 'border-line bg-surface2 text-ink-2 hover:text-ink'
-                        }`}
+                        className="font-mono"
                       >
                         {code}
-                      </button>
+                      </Chip>
                     )
                   )}
                 </div>
@@ -969,7 +770,7 @@ export default function AdvisorView({
 
           {/* Tree Visualization Card */}
           <div className="flex flex-col gap-4 lg:col-span-7">
-            <Surface className="p-5">
+            <Surface>
               {prereqTree && (
                 <div>
                   <div className="flex items-start justify-between border-b border-line pb-4">
@@ -978,36 +779,34 @@ export default function AdvisorView({
                         <span className="font-mono text-lg font-extrabold text-accent">
                           {prereqTree.target.course_code}
                         </span>
-                        <span className="rounded-md border border-line bg-surface2 px-1.5 py-0.5 text-xs font-bold text-ink">
-                          {prereqTree.target.credit} cr
-                        </span>
+                        <Badge tone="neutral">{prereqTree.target.credit} cr</Badge>
                       </div>
                       <h3 className="text-base font-bold text-ink mt-0.5">
                         {prereqTree.target.course_name}
                       </h3>
                     </div>
 
-                    <span
-                      className={`rounded-full px-3 py-1 text-xs font-bold ${
+                    <Badge
+                      tone={
                         prereqTree.isTargetPassed
-                          ? 'bg-ok/15 text-ok border border-ok/30'
+                          ? 'ok'
                           : prereqTree.arePrereqsMet
-                            ? 'bg-accentSoft text-accent border border-accent/30'
-                            : 'bg-bad/15 text-bad border border-bad/30'
-                      }`}
+                            ? 'accent'
+                            : 'bad'
+                      }
                     >
                       {prereqTree.isTargetPassed
-                        ? 'Passed Already'
+                        ? 'Passed already'
                         : prereqTree.arePrereqsMet
-                          ? 'Unlocked & Ready to Take'
-                          : 'Locked by Prerequisites'}
-                    </span>
+                          ? 'Unlocked and ready to take'
+                          : 'Locked by prerequisites'}
+                    </Badge>
                   </div>
 
                   {/* Chain List */}
                   <div className="mt-5 space-y-3">
-                    <h4 className="text-xs font-bold uppercase tracking-wider text-ink-3">
-                      Required Upstream Chain ({prereqTree.prerequisitesList.length} prerequisite courses):
+                    <h4 className={type.eyebrow}>
+                      Required upstream chain ({prereqTree.prerequisitesList.length} prerequisite courses)
                     </h4>
 
                     {prereqTree.prerequisitesList.length === 0 ? (
@@ -1069,65 +868,54 @@ export default function AdvisorView({
         <div className="flex flex-col gap-4 pop-in">
           {/* Degree Velocity KPI Cards */}
           <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
-            <Surface hover className="p-4 sm:p-5">
-              <span className="text-[10.5px] font-semibold uppercase tracking-wider text-ink-3">
-                Completed Credits
-              </span>
-              <div className="num mt-2 text-2xl sm:text-3xl font-extrabold text-ink">
-                {timeline.safeCompleted}
-                <span className="text-xs text-ink-3 font-normal"> / {timeline.totalDegreeCredits} cr</span>
-              </div>
-              <div className="mt-1 text-xs text-ink-3">
-                {((timeline.safeCompleted / timeline.totalDegreeCredits) * 100).toFixed(1)}% Completed
-              </div>
-            </Surface>
+            <StatCard
+              label="Completed credits"
+              sub={`${((timeline.safeCompleted / timeline.totalDegreeCredits) * 100).toFixed(1)}% completed`}
+              bodyClassName="num text-2xl font-extrabold text-ink sm:text-3xl"
+            >
+              {timeline.safeCompleted}
+              <span className="text-xs font-normal text-ink-3"> / {timeline.totalDegreeCredits} cr</span>
+            </StatCard>
 
-            <Surface hover className="p-4 sm:p-5">
-              <span className="text-[10.5px] font-semibold uppercase tracking-wider text-ink-3">
-                Remaining Credits
-              </span>
-              <div className="num mt-2 text-2xl sm:text-3xl font-extrabold text-accent">
-                {timeline.remainingCredits}
-                <span className="text-xs text-ink-3 font-normal"> cr</span>
-              </div>
-              <div className="mt-1 text-xs text-ink-3">Across remaining trimesters</div>
-            </Surface>
+            <StatCard
+              label="Remaining credits"
+              sub="Across remaining trimesters"
+              tone="accent"
+              bodyClassName="num text-2xl font-extrabold text-accent sm:text-3xl"
+            >
+              {timeline.remainingCredits}
+              <span className="text-xs font-normal text-ink-3"> cr</span>
+            </StatCard>
 
-            <Surface hover className="p-4 sm:p-5">
-              <span className="text-[10.5px] font-semibold uppercase tracking-wider text-ink-3">
-                Pacing Requirement
-              </span>
-              <div className="num mt-2 text-2xl sm:text-3xl font-extrabold text-ink">
-                {timeline.creditsPerTermNeeded}
-                <span className="text-xs text-ink-3 font-normal"> cr/term</span>
-              </div>
-              <div className={`mt-1 text-xs font-semibold ${timeline.paceColor}`}>
-                {timeline.paceLabel}
-              </div>
-            </Surface>
+            <StatCard
+              label="Pacing requirement"
+              sub={timeline.paceLabel}
+              bodyClassName="num text-2xl font-extrabold text-ink sm:text-3xl"
+            >
+              {timeline.creditsPerTermNeeded}
+              <span className="text-xs font-normal text-ink-3"> cr/term</span>
+            </StatCard>
 
-            <Surface hover className="p-4 sm:p-5">
-              <span className="text-[10.5px] font-semibold uppercase tracking-wider text-ink-3">
-                FYDP / Thesis Status
-              </span>
-              <div className="num mt-2 text-2xl sm:text-3xl font-extrabold text-ink">
-                {timeline.fydpEligible ? (
-                  <span className="text-ok text-xl">Eligible</span>
-                ) : (
-                  <span>{timeline.creditsToFydp} cr</span>
-                )}
-              </div>
-              <div className="mt-1 text-xs text-ink-3">
-                {timeline.fydpEligible
+            <StatCard
+              label="FYDP / thesis status"
+              sub={
+                timeline.fydpEligible
                   ? 'Ready for CSE 4000A'
-                  : `Credits left to reach ${timeline.fydpRequiredCredits} cr`}
-              </div>
-            </Surface>
+                  : `Credits left to reach ${timeline.fydpRequiredCredits} cr`
+              }
+              bodyClassName="num text-2xl font-extrabold text-ink sm:text-3xl"
+            >
+              {timeline.fydpEligible ? (
+                <span className="text-xl text-ok">Eligible</span>
+              ) : (
+                <span>{timeline.creditsToFydp} cr</span>
+              )}
+            </StatCard>
           </div>
 
           {/* FYDP Milestone Card */}
-          <Surface className="p-5">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <Surface>
+            <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
               <div>
                 <div className="flex items-center gap-2">
                   <GraduationCap className="h-5 w-5 text-accent" />
@@ -1135,7 +923,7 @@ export default function AdvisorView({
                     Final Year Design Project (FYDP I / CSE 4000A) Gatekeeper
                   </h3>
                 </div>
-                <p className="mt-1 text-xs text-ink-2 max-w-2xl">
+                <p className="mt-1 max-w-2xl text-xs text-ink-2">
                   The UIU CSE FYDP Handbook requires at least{' '}
                   {timeline.fydpRequiredCredits} completed credits before enrollment in FYDP I.
                   {timeline.fydpEligible
@@ -1153,17 +941,15 @@ export default function AdvisorView({
                 </a>
               </div>
 
-              <div className="shrink-0 w-full sm:w-64">
-                <div className="flex justify-between text-xs font-semibold mb-1.5">
-                  <span className="text-ink-3">
-                    Progress to {timeline.fydpRequiredCredits} cr
-                  </span>
+              <div className="w-full shrink-0 sm:w-64">
+                <div className={`mb-1.5 flex justify-between text-xs font-semibold ${type.eyebrow}`}>
+                  <span>Progress to {timeline.fydpRequiredCredits} cr</span>
                   <span className="num text-accent">
                     {Math.min(timeline.fydpRequiredCredits, timeline.safeCompleted)} /{' '}
                     {timeline.fydpRequiredCredits} cr
                   </span>
                 </div>
-                <div className="h-2.5 rounded-full bg-surface2 overflow-hidden">
+                <div className="h-2.5 overflow-hidden rounded-full bg-surface2">
                   <div
                     className="h-full bg-gradient-to-r from-accent to-accent2 transition-[width] duration-700"
                     style={{
@@ -1181,51 +967,45 @@ export default function AdvisorView({
           {/* Multi-Term Semester Roadmap Grid */}
           <div className="mt-2 space-y-3">
             <div className="flex items-center justify-between">
-              <h3 className="text-[15px] font-bold tracking-tight text-ink">
-                Multi-Trimester Degree Plan
-              </h3>
-              <span className="text-xs text-ink-3">
+              <h3 className={type.sectionTitle}>Multi-trimester degree plan</h3>
+              <span className={type.small}>
                 Calculated up to Trimester 12 under {targetCredits} cr/term
               </span>
             </div>
 
             {courses.length === 0 ? (
-              <Surface className="p-8 text-center flex flex-col items-center justify-center border-accent/30 bg-accentSoft/20">
-                <GraduationCap className="h-8 w-8 text-accent mb-2" />
-                <p className="text-sm font-bold text-ink">No academic transcript connected</p>
-                <p className="mt-1 text-xs text-ink-3 max-w-sm">
-                  Connect your completed transcript in the CGPA tab to calculate your personalized degree roadmap and milestone timeline.
-                </p>
-              </Surface>
+              <Empty
+                icon={GraduationCap}
+                title="No academic transcript connected"
+                sub="Connect your completed transcript in the CGPA tab to calculate your personalized degree roadmap and milestone timeline."
+              />
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+              <div className="grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-3">
                 {fullDegreeRoadmap.map((sem) => (
-                <Surface hover key={sem.trimesterNum} className="p-4">
-                  <div className="flex items-center justify-between border-b border-line pb-2 mb-3">
-                    <span className="font-bold text-accent text-sm">{sem.title}</span>
-                    <span className="num font-bold text-xs rounded-md bg-surface2 px-2 py-0.5 text-ink-2">
-                      {sem.credits} Credits
-                    </span>
-                  </div>
-                  <div className="space-y-1.5">
-                    {sem.courses.map((c) => (
-                      <div
-                        key={c.course_code}
-                        className="flex items-center justify-between text-xs rounded-lg p-1.5 hover:bg-surface2/60"
-                      >
-                        <div className="truncate min-w-0 mr-2">
-                          <span className="font-mono font-bold text-accent mr-1.5">
-                            {c.course_code}
-                          </span>
-                          <span className="text-ink truncate">{c.course_name}</span>
+                  <Surface hover key={sem.trimesterNum} pad="sm">
+                    <div className="mb-3 flex items-center justify-between border-b border-line pb-2">
+                      <span className="text-sm font-bold text-accent">{sem.title}</span>
+                      <Badge tone="neutral">{sem.credits} cr</Badge>
+                    </div>
+                    <div className="space-y-1.5">
+                      {sem.courses.map((c) => (
+                        <div
+                          key={c.course_code}
+                          className="flex items-center justify-between rounded-lg p-1.5 text-xs hover:bg-surface2/60"
+                        >
+                          <div className="min-w-0 truncate mr-2">
+                            <span className="mr-1.5 font-mono font-bold text-accent">
+                              {c.course_code}
+                            </span>
+                            <span className="truncate text-ink">{c.course_name}</span>
+                          </div>
+                          <span className="shrink-0 font-mono text-ink-3">{c.credit} cr</span>
                         </div>
-                        <span className="text-ink-3 shrink-0 font-mono">{c.credit} cr</span>
-                      </div>
-                    ))}
-                  </div>
-                </Surface>
-              ))}
-            </div>
+                      ))}
+                    </div>
+                  </Surface>
+                ))}
+              </div>
             )}
           </div>
         </div>
@@ -1256,14 +1036,12 @@ export default function AdvisorView({
                         : 'bg-surface2 text-ink-3 border border-line'
                     }`}
                   >
-                    {completedCount} / {requiredCount} Electives
+                    {completedCount} / {requiredCount} electives
                   </span>
                 </div>
 
                 <div className="mt-4 space-y-2">
-                  <div className="text-[11px] font-bold uppercase tracking-wider text-ink-3">
-                    Elective Courses in this Track:
-                  </div>
+                  <div className={type.eyebrow}>Elective courses in this track</div>
                   {track.courses.map((c) => {
                     const isPassed = passedCodes.has(normalizeCode(c.course_code));
                     return (
@@ -1329,26 +1107,14 @@ export default function AdvisorView({
               'How to recover from probation?',
               'What are the installment deadlines?',
             ].map((chip) => (
-              <button
-                key={chip}
-                onClick={() => handleSendQuery(chip)}
-                className="rounded-xl border border-line bg-surface px-3 py-1.5 text-xs font-semibold text-ink-2 shadow-sm transition-[color,background-color,border-color,transform] duration-150 ease-out hover:border-accent hover:text-accent active:scale-[0.96]"
-              >
+              <Chip key={chip} size="sm" onClick={() => handleSendQuery(chip)}>
                 {chip}
-              </button>
+              </Chip>
             ))}
           </div>
 
-          {/* Active Model Indicator Header */}
+          {/* Chat utilities header */}
           <div className="flex flex-wrap items-center justify-between gap-2 px-2 text-xs text-ink-3">
-            <div className="flex flex-wrap items-center gap-2">
-              <span className="flex items-center gap-1.5">
-                <Bot className="h-3.5 w-3.5 text-accent" />
-                <b className="text-ink font-semibold">{activeProviderConfig.name}</b>
-                <span className="text-[11px] text-ink-3">· {activeModelName}</span>
-              </span>
-            </div>
-
             <div className="flex items-center gap-3">
               <button
                 onClick={() => setIsKbOpen(true)}
@@ -1363,17 +1129,11 @@ export default function AdvisorView({
               >
                 <Trash2 className="h-3 w-3" /> Clear
               </button>
-              <button
-                onClick={() => setIsAiSettingsOpen(true)}
-                className="text-[11px] text-ink-2 hover:text-ink flex items-center gap-1 font-semibold"
-              >
-                Settings <Settings2 className="h-3 w-3" />
-              </button>
             </div>
           </div>
 
           {/* Chat Messages Log */}
-          <Surface className="p-4 sm:p-5 min-h-[340px] max-h-[500px] overflow-y-auto overscroll-contain space-y-4">
+          <Surface className="min-h-[340px] max-h-[500px] space-y-4 overflow-y-auto overscroll-contain">
             {chatMessages.map((msg, i) => (
               <div
                 key={i}
@@ -1385,9 +1145,9 @@ export default function AdvisorView({
                   </div>
                 )}
                 <div
-                  className={`rounded-2xl px-4 py-3 text-[13.5px] leading-relaxed max-w-[85%] ${
+                  className={`max-w-[85%] rounded-xl px-4 py-3 text-[13.5px] leading-relaxed ${
                     msg.role === 'user'
-                      ? 'bg-accent text-white font-medium'
+                      ? 'bg-accent font-medium text-white'
                       : 'border border-line bg-surface2/60 text-ink shadow-sm'
                   }`}
                 >
@@ -1395,11 +1155,6 @@ export default function AdvisorView({
                   {msg.role === 'ai' && (
                     <div className="flex items-center justify-between gap-2 border-b border-line/40 pb-1.5 mb-2">
                       <div className="flex flex-wrap items-center gap-1.5">
-                        {msg.provider && (
-                          <span className="text-[10px] font-bold uppercase tracking-wider text-ink-3">
-                            {msg.provider}
-                          </span>
-                        )}
                         {msg.latencyMs != null && !msg.isClientCached && (
                           <span className="text-[9.5px] text-ink-3 font-mono opacity-80">
                             {(msg.latencyMs / 1000).toFixed(1)}s
@@ -1428,13 +1183,9 @@ export default function AdvisorView({
                     <div className="mt-3 border-t border-line/60 pt-2 flex flex-wrap items-center gap-1">
                       <span className="text-[10px] text-ink-3 font-semibold mr-1">Follow-up:</span>
                       {msg.followUps.map((fu, fuIdx) => (
-                        <button
-                          key={fuIdx}
-                          onClick={() => handleSendQuery(fu)}
-                          className="rounded-lg border border-line bg-surface/90 px-2 py-0.5 text-[10.5px] font-medium text-ink-2 hover:border-accent hover:text-accent hover:bg-accentSoft transition-colors"
-                        >
+                        <Chip key={fuIdx} size="sm" onClick={() => handleSendQuery(fu)}>
                           {fu}
-                        </button>
+                        </Chip>
                       ))}
                     </div>
                   )}
@@ -1468,13 +1219,13 @@ export default function AdvisorView({
                             >
                               <div className="flex flex-wrap items-start justify-between gap-2">
                                 <div className="font-bold text-ink text-[12px]">{src.title}</div>
-                                <span
-                                  className="inline-flex items-center gap-1 rounded-md border border-ok/30 bg-ok/10 px-1.5 py-0.5 text-[9.5px] font-bold uppercase tracking-wide text-ok"
+                                <Badge
+                                  tone="ok"
+                                  icon={ShieldCheck}
                                   title={`Checked against the official source on ${src.verified}`}
                                 >
-                                  <ShieldCheck className="h-2.5 w-2.5" />
                                   Verified {src.verified}
-                                </span>
+                                </Badge>
                               </div>
                               <div className="text-[10.5px] text-ink-3 mt-0.5">
                                 {src.source} · {src.category}
@@ -1507,7 +1258,7 @@ export default function AdvisorView({
                 <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl border border-line bg-surface2 text-ink-2">
                   <Bot className="h-4 w-4" />
                 </div>
-                <div className="flex items-center rounded-2xl border border-line bg-surface2/60 px-4 py-3 text-xs text-ink-3">
+                <div className="flex items-center rounded-xl border border-line bg-surface2/60 px-4 py-3 text-xs text-ink-3">
                   <span className="animate-pulse">Checking UIU regulations…</span>
                 </div>
               </div>
@@ -1516,13 +1267,14 @@ export default function AdvisorView({
 
           {/* Chat Input Bar */}
           <div className="flex items-center gap-2">
-            <input
+            <Input
               type="text"
               value={chatInput}
               onChange={(e) => setChatInput(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && handleSendQuery()}
-              placeholder="Ask anything about UIU prerequisites, waivers, electives, or FYDP..."
-              className="h-11 flex-1 rounded-xl border border-line bg-surface px-4 text-sm text-ink placeholder-ink-3 shadow-card outline-none focus:border-accent focus:ring-2 focus:ring-accent/30"
+              placeholder="Ask anything about UIU prerequisites, waivers, electives, or FYDP…"
+              className="h-11 flex-1 px-4 text-sm"
+              wrapperClassName="flex-1"
             />
             <Button
               variant="primary"
@@ -1548,39 +1300,27 @@ export default function AdvisorView({
         <div className="space-y-4">
           {/* Search Bar & Category Filter */}
           <div className="space-y-3">
-            <div className="relative">
-              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-ink-3" />
-              <input
-                type="text"
-                value={kbQuery}
-                onChange={(e) => setKbQuery(e.target.value)}
-                placeholder="Search statutes, exam rules, waivers, FYDP…"
-                className="h-10 w-full rounded-xl border border-line bg-surface2/60 pl-10 pr-4 text-xs text-ink placeholder-ink-3 outline-none focus:border-accent focus:ring-2 focus:ring-accent/20"
-              />
-              {kbQuery && (
-                <button
-                  onClick={() => setKbQuery('')}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 rounded-md p-1 text-ink-3 hover:text-ink"
-                >
-                  <X className="h-3.5 w-3.5" />
-                </button>
-              )}
-            </div>
+            <Input
+              type="text"
+              value={kbQuery}
+              onChange={(e) => setKbQuery(e.target.value)}
+              placeholder="Search statutes, exam rules, waivers, FYDP…"
+              icon={Search}
+              onClear={() => setKbQuery('')}
+              wrapperClassName="w-full"
+            />
 
             {/* Category Filter Chips */}
             <div className="flex flex-wrap gap-1.5">
               {kbCategories.map((cat) => (
-                <button
+                <Chip
                   key={cat}
+                  size="sm"
+                  active={kbCategory === cat}
                   onClick={() => setKbCategory(cat)}
-                  className={`rounded-lg px-2.5 py-1 text-[11px] font-semibold transition-colors ${
-                    kbCategory === cat
-                      ? 'bg-accentSoft text-accent border border-accent/40 font-bold'
-                      : 'bg-surface2 text-ink-3 hover:text-ink border border-line'
-                  }`}
                 >
-                  {cat === 'ALL' ? `All Policies (${UIU_KNOWLEDGE_DOCUMENTS.length})` : cat}
-                </button>
+                  {cat === 'ALL' ? `All policies (${UIU_KNOWLEDGE_DOCUMENTS.length})` : cat}
+                </Chip>
               ))}
             </div>
           </div>
@@ -1588,32 +1328,28 @@ export default function AdvisorView({
           {/* Documents List */}
           <div className="space-y-3 max-h-[60vh] overflow-y-auto overscroll-contain pr-1">
             {filteredKbDocs.length === 0 ? (
-              <div className="rounded-2xl border border-line bg-surface2/30 p-8 text-center">
-                <FileText className="mx-auto h-8 w-8 text-ink-3 opacity-60" />
-                <p className="mt-2 text-xs font-semibold text-ink-2">No matching policy clauses found</p>
-                <p className="text-[11px] text-ink-3">Try adjusting your search terms or selecting 'All Policies'</p>
-              </div>
+              <Empty
+                icon={FileText}
+                title="No matching policy clauses"
+                sub="Try different search terms, or switch back to all policies."
+                compact
+              />
             ) : (
               filteredKbDocs.map((doc) => {
                 const isExpanded = expandedKbDoc === doc.id;
                 return (
-                  <div
-                    key={doc.id}
-                    className="rounded-2xl border border-line bg-surface p-4 shadow-sm transition-all hover:border-line-strong"
-                  >
+                  <Surface key={doc.id} pad="sm">
                     <div className="flex items-start justify-between gap-3">
                       <div>
                         <div className="flex flex-wrap items-center gap-2">
-                          <span className="rounded-md bg-accentSoft text-accent px-2 py-0.5 text-[10px] font-bold">
-                            {doc.category}
-                          </span>
-                          <span
-                            className="inline-flex items-center gap-1 rounded-md border border-ok/30 bg-ok/10 px-1.5 py-0.5 text-[9.5px] font-bold uppercase tracking-wide text-ok"
+                          <Badge tone="accent">{doc.category}</Badge>
+                          <Badge
+                            tone="ok"
+                            icon={ShieldCheck}
                             title={`Checked against the official source on ${doc.verified}`}
                           >
-                            <ShieldCheck className="h-2.5 w-2.5" />
                             Verified {doc.verified}
-                          </span>
+                          </Badge>
                           <span className="text-[10.5px] text-ink-3 font-mono">
                             Authority: {doc.source}
                           </span>
@@ -1633,16 +1369,14 @@ export default function AdvisorView({
                         )}
                       </div>
 
-                      <button
+                      <Button
+                        variant={isExpanded ? 'secondary' : 'quiet'}
+                        size="sm"
+                        className="shrink-0"
                         onClick={() => setExpandedKbDoc(isExpanded ? null : doc.id)}
-                        className={`rounded-xl border px-3 py-1.5 text-xs font-bold shrink-0 transition-colors ${
-                          isExpanded
-                            ? 'border-accent bg-accentSoft text-accent'
-                            : 'border-line bg-surface2 text-ink-2 hover:text-ink'
-                        }`}
                       >
-                        {isExpanded ? 'Hide Full Clause' : 'View Full Clause'}
-                      </button>
+                        {isExpanded ? 'Hide clause' : 'View clause'}
+                      </Button>
                     </div>
 
                     {isExpanded && (
@@ -1651,8 +1385,8 @@ export default function AdvisorView({
                           {doc.content}
                         </div>
                         <div className="mt-2.5 flex flex-wrap gap-1">
-                          <span className="text-[10px] text-ink-3 uppercase tracking-wider font-semibold mr-1 self-center">
-                            Indexed Keywords:
+                          <span className="text-[10.5px] text-ink-3 uppercase tracking-[0.08em] font-semibold mr-1 self-center">
+                            Indexed keywords
                           </span>
                           {doc.keywords.map((k) => (
                             <span
@@ -1665,7 +1399,7 @@ export default function AdvisorView({
                         </div>
                       </div>
                     )}
-                  </div>
+                  </Surface>
                 );
               })
             )}

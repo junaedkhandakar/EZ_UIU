@@ -1,6 +1,7 @@
 import React, { useMemo, useState } from 'react';
-import { motion } from 'motion/react';
-import { TrendingUp, AlertCircle, Award } from 'lucide-react';
+import { TrendingUp, AlertCircle, Award, LineChart } from 'lucide-react';
+import Empty from '../ui/Empty';
+import { type } from '../ui/tokens';
 
 /**
  * Fritsch-Carlson Monotone Cubic Spline Interpolation.
@@ -8,7 +9,8 @@ import { TrendingUp, AlertCircle, Award } from 'lucide-react';
  */
 function smoothMonotonePath(pts) {
   if (pts.length < 2) return '';
-  if (pts.length === 2) return `M ${pts[0][0].toFixed(2)},${pts[0][1].toFixed(2)} L ${pts[1][0].toFixed(2)},${pts[1][1].toFixed(2)}`;
+  if (pts.length === 2)
+    return `M ${pts[0][0].toFixed(2)},${pts[0][1].toFixed(2)} L ${pts[1][0].toFixed(2)},${pts[1][1].toFixed(2)}`;
 
   const n = pts.length;
   const dX = [];
@@ -74,9 +76,9 @@ export default function GradeChart({ history = [] }) {
 
   const layout = useMemo(() => {
     const n = history.length;
-    const W = Math.max(580, n * 105);
-    const H = 260;
-    const m = { top: 36, right: 32, bottom: 36, left: 38 };
+    const W = Math.max(560, n * 100);
+    const H = 240;
+    const m = { top: 30, right: 30, bottom: 32, left: 36 };
     const iw = W - m.left - m.right;
     const ih = H - m.top - m.bottom;
     const x = (i) => (n === 1 ? m.left + iw / 2 : m.left + (i / (n - 1)) * iw);
@@ -97,75 +99,81 @@ export default function GradeChart({ history = [] }) {
 
   if (!history.length) {
     return (
-      <div className="flex h-[240px] items-center justify-center rounded-xl border border-dashed border-line text-sm text-ink-3">
-        Grade a few courses to see your progression graph.
-      </div>
+      <Empty
+        icon={LineChart}
+        title="No graded terms yet"
+        sub="Grade a few courses and your cumulative progression will be charted here."
+        compact
+      />
     );
   }
 
-  const { W, H, m, ih, x, y, cumPts, termPts, cumLine, termLine, area } = layout;
+  const { W, H, m, ih, cumPts, termPts, cumLine, termLine, area } = layout;
   const last = history[history.length - 1];
+  const best = Math.max(...history.map((h) => h.gpa));
+  const worst = Math.min(...history.map((h) => h.gpa));
 
   return (
-    <div className="relative flex flex-col gap-3">
-      {/* Chart Top Controls & Clean Legend */}
-      <div className="flex items-center justify-between text-xs px-1">
-        <div className="flex items-center gap-4">
-          <span className="flex items-center gap-1.5 font-bold text-accent">
-            <span className="h-2 w-2 rounded-full bg-accent" />
+    <div className="flex flex-col gap-3">
+      {/* Legend + threshold toggle */}
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <div className="flex items-center gap-4 text-[11.5px]">
+          <span className="flex items-center gap-1.5 font-semibold text-ink">
+            <span className="h-[3px] w-4 rounded-full bg-accent" />
             Cumulative CGPA
           </span>
           <span className="flex items-center gap-1.5 font-medium text-ink-3">
-            <span className="h-0.5 w-3.5 rounded-full bg-ink-3/80" />
+            <span className="h-[3px] w-4 rounded-full bg-ink-3/70" />
             Term GPA
           </span>
         </div>
 
         <button
           onClick={() => setShowHonorsThresholds(!showHonorsThresholds)}
-          className={`flex items-center gap-1.5 rounded-lg border px-2.5 py-1 text-xs font-semibold transition-colors ${
+          aria-pressed={showHonorsThresholds}
+          className={`flex items-center gap-1.5 rounded-lg border px-2.5 py-1 text-[11.5px] font-semibold transition-colors ${
             showHonorsThresholds
               ? 'border-accent/40 bg-accentSoft text-accent'
               : 'border-line bg-surface2 text-ink-3 hover:text-ink'
           }`}
         >
           <Award className="h-3.5 w-3.5" />
-          Published Thresholds {showHonorsThresholds ? 'ON' : 'OFF'}
+          Thresholds {showHonorsThresholds ? 'on' : 'off'}
         </button>
       </div>
 
-      <div className="relative overflow-x-auto rounded-xl">
+      <div className="relative overflow-x-auto rounded-xl border border-line bg-surface2/30 p-2">
         <svg
           viewBox={`0 0 ${W} ${H}`}
-          className="w-full min-w-[580px]"
+          className="w-full min-w-[560px]"
           onMouseLeave={() => setHover(null)}
           role="img"
           aria-label="CGPA progression chart"
         >
           <defs>
             <linearGradient id="cgAreaGrad" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor="var(--accent)" stopOpacity="0.22" />
+              <stop offset="0%" stopColor="var(--accent)" stopOpacity="0.2" />
               <stop offset="85%" stopColor="var(--accent)" stopOpacity="0.02" />
               <stop offset="100%" stopColor="var(--accent)" stopOpacity="0" />
             </linearGradient>
           </defs>
 
-          {/* Standard Gridlines (1.0, 2.0, 3.0, 4.0) */}
+          {/* Gridlines (1.0, 2.0, 3.0, 4.0) */}
           {[1.0, 2.0, 3.0, 4.0].map((v) => (
             <g key={v}>
               <line
                 x1={m.left}
                 x2={W - m.right}
-                y1={y(v)}
-                y2={y(v)}
+                y1={layout.y(v)}
+                y2={layout.y(v)}
                 stroke="var(--border)"
-                strokeDasharray="4 6"
+                strokeDasharray="3 6"
               />
               <text
                 x={m.left - 8}
-                y={y(v) + 3.5}
+                y={layout.y(v) + 3.5}
                 textAnchor="end"
-                className="num fill-[var(--text-3)] text-[10.5px] font-medium"
+                className="num fill-[var(--text-3)] text-[10px] font-medium"
               >
                 {v.toFixed(1)}
               </text>
@@ -174,41 +182,40 @@ export default function GradeChart({ history = [] }) {
 
           {/* Published UIU thresholds: probation 2.00, merit scholarship 3.50 */}
           {showHonorsThresholds && (
-            <>
-              {/* Merit Scholarship GPA 3.50 — UIU Scholarship Policy item 04 */}
-              <line
-                x1={m.left}
-                x2={W - m.right}
-                y1={y(3.5)}
-                y2={y(3.5)}
-                stroke="#38bdf8"
-                strokeOpacity="0.5"
-                strokeDasharray="3 4"
-              />
-              <text
-                x={W - m.right - 95}
-                y={y(3.5) - 5}
-                textAnchor="end"
-                className="fill-sky-400 text-[9px] font-bold tracking-wider"
-              >
-                MERIT SCHOLARSHIP 3.50
-              </text>
-            </>
+            <line
+              x1={m.left}
+              x2={W - m.right}
+              y1={layout.y(3.5)}
+              y2={layout.y(3.5)}
+              stroke="var(--accent)"
+              strokeOpacity="0.4"
+              strokeDasharray="3 4"
+            />
+          )}
+          {showHonorsThresholds && (
+            <text
+              x={W - m.right - 4}
+              y={layout.y(3.5) - 6}
+              textAnchor="end"
+              className="fill-[var(--accent)] text-[9px] font-bold tracking-wider"
+            >
+              MERIT 3.50
+            </text>
           )}
 
           {/* Probation Threshold 2.00 */}
           <line
             x1={m.left}
             x2={W - m.right}
-            y1={y(2.0)}
-            y2={y(2.0)}
+            y1={layout.y(2.0)}
+            y2={layout.y(2.0)}
             stroke="var(--bad)"
-            strokeOpacity="0.6"
+            strokeOpacity="0.55"
             strokeDasharray="4 4"
           />
           <text
-            x={W - m.right}
-            y={y(2.0) - 5}
+            x={W - m.right - 4}
+            y={layout.y(2.0) - 6}
             textAnchor="end"
             className="fill-[var(--bad)] text-[9px] font-bold tracking-wider"
           >
@@ -218,23 +225,23 @@ export default function GradeChart({ history = [] }) {
           {/* Shaded Area Below CGPA Curve */}
           {area && <path d={area} fill="url(#cgAreaGrad)" pointerEvents="none" />}
 
-          {/* Term GPA Line (Grey/Neutral) */}
+          {/* Term GPA Line */}
           <path
             d={termLine}
             fill="none"
             stroke="var(--text-3)"
-            strokeWidth="1.8"
-            strokeOpacity="0.65"
+            strokeWidth="1.6"
+            strokeOpacity="0.6"
             strokeLinecap="round"
             strokeLinejoin="round"
           />
 
-          {/* Cumulative CGPA Line (Accent Solid Line - Clamped Monotone) */}
+          {/* Cumulative CGPA Line */}
           <path
             d={cumLine}
             fill="none"
             stroke="var(--accent)"
-            strokeWidth="3.2"
+            strokeWidth="2.8"
             strokeLinecap="round"
             strokeLinejoin="round"
           />
@@ -245,10 +252,10 @@ export default function GradeChart({ history = [] }) {
               key={`term-${i}`}
               cx={p[0]}
               cy={p[1]}
-              r="3.5"
+              r="3"
               fill="var(--surface)"
               stroke="var(--text-3)"
-              strokeWidth="1.8"
+              strokeWidth="1.6"
             />
           ))}
 
@@ -258,9 +265,8 @@ export default function GradeChart({ history = [] }) {
             const isHovered = hover === i;
             return (
               <g key={`cgpa-${i}`}>
-                {/* Column Hover Hit Area */}
                 <rect
-                  x={p[0] - (W / history.length) / 2}
+                  x={p[0] - W / history.length / 2}
                   y={m.top}
                   width={W / history.length}
                   height={ih}
@@ -268,25 +274,21 @@ export default function GradeChart({ history = [] }) {
                   className="cursor-pointer"
                   onMouseEnter={() => setHover(i)}
                 />
-
-                {/* Point */}
                 <circle
                   cx={p[0]}
                   cy={p[1]}
-                  r={isHovered ? 6 : 4.5}
+                  r={isHovered ? 5.5 : 4}
                   fill="var(--surface)"
                   stroke="var(--accent)"
-                  strokeWidth="2.5"
-                  className="transition-all duration-150 pointer-events-none"
+                  strokeWidth="2.2"
+                  className="pointer-events-none transition-all duration-150"
                 />
-
-                {/* X-Axis Trimester Label */}
                 <text
                   x={p[0]}
-                  y={H - 12}
+                  y={H - 10}
                   textAnchor="middle"
-                  className={`num text-[11px] font-mono transition-colors ${
-                    isHovered ? 'fill-accent font-bold' : 'fill-[var(--text-2)] font-semibold'
+                  className={`num text-[10.5px] transition-colors ${
+                    isHovered ? 'fill-accent font-bold' : 'fill-[var(--text-3)] font-semibold'
                   }`}
                 >
                   {h.trimester}
@@ -310,33 +312,29 @@ export default function GradeChart({ history = [] }) {
           )}
         </svg>
 
-        {/* Hover Tooltip Overlay */}
+        {/* Hover Tooltip */}
         {hover !== null && (
           <div
-            className="pointer-events-none absolute z-30 min-w-[170px] -translate-x-1/2 rounded-xl border border-line bg-surface p-3 shadow-lg"
+            className="pointer-events-none absolute z-30 min-w-[168px] -translate-x-1/2 rounded-lg border border-line bg-surface p-2.5 shadow-pop"
             style={{
               left: Math.max(90, Math.min(W - 90, cumPts[hover][0])),
-              top: 14,
+              top: 16,
             }}
           >
-            <div className="flex items-center justify-between border-b border-line pb-1.5 text-xs">
-              <span className="font-bold text-accent font-mono">
+            <div className="flex items-center justify-between gap-3 border-b border-line pb-1.5 text-[11.5px]">
+              <span className="num font-mono font-bold text-accent">
                 TERM {history[hover].trimester}
               </span>
-              <span className="text-[10px] text-ink-3">
-                {history[hover].termCredits} credits
-              </span>
+              <span className="num text-[10.5px] text-ink-3">{history[hover].credits} cr</span>
             </div>
-            <div className="mt-2 space-y-1 text-xs">
-              <div className="flex justify-between">
-                <span className="text-ink-3">Term GPA:</span>
-                <span className="font-bold text-ink font-mono">
-                  {history[hover].gpa.toFixed(2)}
-                </span>
+            <div className="mt-2 space-y-1 text-[11.5px]">
+              <div className="flex justify-between gap-4">
+                <span className="text-ink-3">Term GPA</span>
+                <span className="num font-bold text-ink">{history[hover].gpa.toFixed(2)}</span>
               </div>
-              <div className="flex justify-between">
-                <span className="text-ink-3">Cumulative CGPA:</span>
-                <span className="font-bold text-accent font-mono">
+              <div className="flex justify-between gap-4">
+                <span className="text-ink-3">Cumulative</span>
+                <span className="num font-bold text-accent">
                   {history[hover].cumulativeCGPA.toFixed(2)}
                 </span>
               </div>
@@ -345,14 +343,20 @@ export default function GradeChart({ history = [] }) {
         )}
       </div>
 
-      {/* Summary Footer */}
-      <div className="flex flex-wrap items-center justify-between gap-2 border-t border-line/60 pt-2.5 text-xs text-ink-3 px-1">
-        <div className="flex gap-4">
-          <span>Highest GPA: <b className="text-ink font-mono">{Math.max(...history.map((h) => h.gpa)).toFixed(2)}</b></span>
-          <span>Lowest GPA: <b className="text-ink font-mono">{Math.min(...history.map((h) => h.gpa)).toFixed(2)}</b></span>
-          <span>Current CGPA: <b className="text-accent font-mono">{last?.cumulativeCGPA.toFixed(2)}</b></span>
+      {/* Summary footer */}
+      <div className="flex flex-wrap items-center justify-between gap-2 border-t border-line/60 pt-2.5 text-[11.5px]">
+        <div className="flex flex-wrap gap-x-5 gap-y-1 text-ink-3">
+          <span>
+            Highest <b className="num font-bold text-ink">{best.toFixed(2)}</b>
+          </span>
+          <span>
+            Lowest <b className="num font-bold text-ink">{worst.toFixed(2)}</b>
+          </span>
+          <span>
+            Current <b className="num font-bold text-accent">{last?.cumulativeCGPA.toFixed(2)}</b>
+          </span>
         </div>
-        <span className="text-[11px]">Hover over graph points for term breakdown</span>
+        <span className="text-ink-3/80">Hover a point for the term breakdown</span>
       </div>
     </div>
   );

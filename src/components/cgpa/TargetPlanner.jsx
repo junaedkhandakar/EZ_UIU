@@ -1,5 +1,10 @@
 import React, { useState, useMemo } from 'react';
 import CountUp from '../ui/CountUp';
+import Surface from '../ui/Surface';
+import Chip from '../ui/Chip';
+import Badge from '../ui/Badge';
+import Input, { Field } from '../ui/Input';
+import { type } from '../ui/tokens';
 import { calculateAcademicMetrics } from '../../utils/cgpaUtils';
 import { Target, CheckCircle2, AlertTriangle, XCircle, Zap } from 'lucide-react';
 
@@ -9,6 +14,14 @@ const PRESETS = [
   { label: '3.80 · Magna', value: 3.8 },
   { label: '3.90 · Summa', value: 3.9 },
 ];
+
+const STATUS = {
+  ok: { Icon: CheckCircle2, label: 'Achievable', tone: 'ok' },
+  ahead: { Icon: Zap, label: 'Ahead of pace', tone: 'accent' },
+  hard: { Icon: AlertTriangle, label: 'Ambitious', tone: 'warn' },
+  impossible: { Icon: XCircle, label: 'Unreachable', tone: 'bad' },
+  done: { Icon: CheckCircle2, label: 'Completed', tone: 'ok' },
+};
 
 export function TargetPlanner({ courses = [], totalDegreeCredits = 138 }) {
   const [target, setTarget] = useState(3.5);
@@ -30,7 +43,7 @@ export function TargetPlanner({ courses = [], totalDegreeCredits = 138 }) {
       return {
         required,
         status: 'impossible',
-        message: `Unreachable without retakes — straight 4.00s caps you at ${max.toFixed(2)}. Retake low-grade courses to raise the ceiling.`,
+        message: `Unreachable without retakes — straight 4.00s cap you at ${max.toFixed(2)}. Retake low-grade courses to raise the ceiling.`,
       };
     }
     if (required >= 3.75) {
@@ -42,24 +55,19 @@ export function TargetPlanner({ courses = [], totalDegreeCredits = 138 }) {
     return { required, status: 'ok', message: 'Realistic with consistent performance.' };
   }, [target, degreeCredits, metrics, remaining]);
 
-  const statusStyle = {
-    ok: { cls: 'text-ok border-ok/25 bg-ok/10', Icon: CheckCircle2, label: 'Achievable' },
-    ahead: { cls: 'text-ok border-ok/25 bg-ok/10', Icon: Zap, label: 'Ahead of pace' },
-    hard: { cls: 'text-warn border-warn/25 bg-warn/10', Icon: AlertTriangle, label: 'Ambitious' },
-    impossible: { cls: 'text-bad border-bad/25 bg-bad/10', Icon: XCircle, label: 'Unreachable' },
-    done: { cls: 'text-ok border-ok/25 bg-ok/10', Icon: CheckCircle2, label: 'Completed' },
-  }[calc.status] || { cls: 'text-ink-2 border-line bg-surface2', Icon: Target, label: '' };
+  const status = STATUS[calc.status] || { Icon: Target, label: '', tone: 'accent' };
 
   return (
     <div className="grid grid-cols-1 gap-4 lg:grid-cols-12">
       {/* Controls */}
-      <div className="rounded-2xl border border-line bg-surface p-5 shadow-card lg:col-span-7">
+      <Surface pad="lg" className="lg:col-span-7">
         <div className="flex items-baseline justify-between">
-          <h3 className="text-[15px] font-bold tracking-tight text-ink">Graduation target</h3>
-          <span className="num text-3xl font-extrabold tracking-tight text-accent">
+          <h3 className={type.sectionTitle}>Graduation target</h3>
+          <span className="num text-[30px] font-bold leading-none tracking-[-0.02em] text-accent">
             {target.toFixed(2)}
           </span>
         </div>
+
         <input
           type="range"
           min="2"
@@ -67,83 +75,74 @@ export function TargetPlanner({ courses = [], totalDegreeCredits = 138 }) {
           step="0.01"
           value={target}
           onChange={(e) => setTarget(parseFloat(e.target.value))}
+          aria-label="Target CGPA"
           className="mt-4 w-full cursor-pointer"
         />
-        <div className="num mt-1 flex justify-between text-[10px] font-semibold text-ink-3">
+        <div className={`num mt-1.5 flex justify-between ${type.eyebrow}`}>
           <span>2.00</span>
           <span>4.00</span>
         </div>
 
         <div className="mt-4 flex flex-wrap gap-1.5">
           {PRESETS.map((p) => (
-            <button
+            <Chip
               key={p.value}
+              active={Math.abs(target - p.value) < 0.005}
               onClick={() => setTarget(p.value)}
-              className={`rounded-lg border px-2.5 py-1.5 text-[11px] font-semibold transition-[color,background-color,border-color,transform] duration-150 ease-out active:scale-[0.96] ${
-                Math.abs(target - p.value) < 0.005
-                  ? 'border-accent bg-accent text-white'
-                  : 'border-line bg-surface2/70 text-ink-2 hover:text-ink'
-              }`}
             >
               {p.label}
-            </button>
+            </Chip>
           ))}
         </div>
 
         <div className="mt-5 border-t border-line pt-4">
-          <label className="mb-1.5 block text-[11px] font-semibold uppercase tracking-[0.07em] text-ink-3">
-            Degree credits required
-          </label>
-          <input
-            type="number"
-            value={degreeCredits}
-            onChange={(e) => setDegreeCredits(parseFloat(e.target.value) || 138)}
-            className="num w-32 rounded-xl border border-line bg-surface2/70 px-3.5 py-2.5 font-mono text-[13px] font-semibold text-ink transition-colors hover:border-line-strong focus:outline-none focus:ring-2 focus:ring-accent/40"
-          />
-          <p className="mt-2 text-[10.5px] text-ink-3">
-            BSCSE / BBA 138 · B. Pharm 165 · BSCSE (old) 140
-          </p>
+          <Field
+            label="Degree credits required"
+            hint="BSCSE / BBA 138 · B. Pharm 165 · BSCSE (old) 140"
+          >
+            <Input
+              type="number"
+              value={degreeCredits}
+              onChange={(e) => setDegreeCredits(parseFloat(e.target.value) || 138)}
+              className="num w-32 font-mono font-semibold"
+            />
+          </Field>
         </div>
-      </div>
+      </Surface>
 
       {/* Result */}
-      <div className="rounded-2xl border border-line bg-surface p-5 shadow-card lg:col-span-5">
-        <h3 className="text-[15px] font-bold tracking-tight text-ink">Required pace</h3>
+      <Surface pad="lg" className="lg:col-span-5">
+        <h3 className={type.sectionTitle}>Required pace</h3>
 
-        <div className="mt-4 rounded-2xl border border-accent/25 bg-accentSoft p-4 text-center">
-          <div className="text-[10.5px] font-semibold uppercase tracking-[0.09em] text-accent">
-            Needed GPA per trimester
+        <div className="mt-4 rounded-xl border border-accent/25 bg-accentSoft/60 p-4 text-center">
+          <div className={type.eyebrow}>Needed GPA per trimester</div>
+          <div className="num mt-2 text-[38px] font-bold leading-none tracking-[-0.02em] text-accent">
+            {calc.status === 'impossible' ? (
+              '4.00+'
+            ) : (
+              <CountUp value={Math.max(0, calc.required)} />
+            )}
           </div>
-          <div className="num mt-1.5 text-[40px] font-extrabold leading-none tracking-tight text-accent">
-            {calc.status === 'impossible' ? '4.00+' : <CountUp value={Math.max(0, calc.required)} />}
-          </div>
-          <div className="mt-2">
-            <span
-              className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[10.5px] font-bold ${statusStyle.cls}`}
-            >
-              <statusStyle.Icon className="h-3 w-3" />
-              {statusStyle.label}
-            </span>
+          <div className="mt-3">
+            <Badge tone={status.tone} icon={status.Icon}>
+              {status.label}
+            </Badge>
           </div>
         </div>
 
         <div className="num mt-4 grid grid-cols-2 gap-3 text-center">
-          <div className="rounded-xl border border-line bg-surface2/50 p-3">
-            <div className="text-[10px] font-semibold uppercase tracking-[0.08em] text-ink-3">
-              Earned
-            </div>
-            <div className="mt-1 text-lg font-bold text-ink">{earned}</div>
+          <div className="rounded-lg border border-line bg-surface2/50 p-3">
+            <div className={type.eyebrow}>Earned</div>
+            <div className="num mt-1 text-[19px] font-bold leading-none text-ink">{earned}</div>
           </div>
-          <div className="rounded-xl border border-line bg-surface2/50 p-3">
-            <div className="text-[10px] font-semibold uppercase tracking-[0.08em] text-ink-3">
-              Remaining
-            </div>
-            <div className="mt-1 text-lg font-bold text-ink">{remaining}</div>
+          <div className="rounded-lg border border-line bg-surface2/50 p-3">
+            <div className={type.eyebrow}>Remaining</div>
+            <div className="num mt-1 text-[19px] font-bold leading-none text-ink">{remaining}</div>
           </div>
         </div>
 
-        <p className="mt-4 text-xs leading-relaxed text-ink-2">{calc.message}</p>
-      </div>
+        <p className={`${type.body} mt-4`}>{calc.message}</p>
+      </Surface>
     </div>
   );
 }

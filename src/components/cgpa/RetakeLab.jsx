@@ -1,14 +1,17 @@
 import React, { useState, useMemo } from 'react';
-import Button from '../ui/Button';
 import { SelectSm } from '../ui/Select';
 import Empty from '../ui/Empty';
 import CountUp from '../ui/CountUp';
+import StatCard from '../ui/StatCard';
+import Badge from '../ui/Badge';
+import Button from '../ui/Button';
+import { type } from '../ui/tokens';
 import {
   GRADE_POINTS,
   LETTER_GRADES,
   calculateAcademicMetrics,
 } from '../../utils/cgpaUtils';
-import { Sparkles, RotateCcw, ArrowRight, ArrowUpRight, Minus } from 'lucide-react';
+import { Sparkles, RotateCcw, ArrowRight, ArrowUpRight, Minus, Check } from 'lucide-react';
 
 const ELIGIBLE = ['F', 'D', 'D+', 'C-', 'C', 'C+'];
 
@@ -55,74 +58,81 @@ export function RetakeLab({ courses = [], effectiveCourses = [] }) {
       .sort((a, b) => b.roiScore - a.roiScore);
   }, [candidates, current]);
 
+  const toggle = (id, grade) =>
+    setSelections((p) => {
+      const n = { ...p };
+      if (!grade || n[id] === grade) delete n[id];
+      else n[id] = grade;
+      return n;
+    });
+
   return (
     <div className="flex flex-col gap-4">
       {/* Comparison strip */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-        <div className="rounded-2xl border border-line bg-surface p-5 shadow-card">
-          <div className="text-[10.5px] font-semibold uppercase tracking-[0.09em] text-ink-3">
-            Current CGPA
-          </div>
-          <div className="num mt-2 text-[32px] font-bold leading-none tracking-tight text-ink">
-            <CountUp value={current.cgpa} />
-          </div>
-          <div className="mt-1.5 text-xs text-ink-3">
-            across <span className="num">{current.credits}</span> CGPA credits
-          </div>
-        </div>
+        <StatCard
+          label="Current CGPA"
+          sub={
+            <>
+              across <span className="num">{current.credits}</span> CGPA credits
+            </>
+          }
+          bodyClassName="num text-[32px] font-bold leading-none tracking-[-0.02em] text-ink"
+        >
+          <CountUp value={current.cgpa} />
+        </StatCard>
 
-        <div className="relative rounded-2xl border border-accent/30 bg-accentSoft p-5 shadow-card">
-          <div className="flex items-center gap-1.5 text-[10.5px] font-semibold uppercase tracking-[0.09em] text-accent">
-            <Sparkles className="h-3 w-3" />
-            Projected
-          </div>
-          <div className="num mt-2 text-[32px] font-bold leading-none tracking-tight text-accent">
-            <CountUp value={simulated.cgpa} />
-          </div>
-          <div className="mt-1.5 text-xs text-ink-2">
-            {activeCount > 0
+        <StatCard
+          label="Projected"
+          icon={Sparkles}
+          tone="accent"
+          sub={
+            activeCount > 0
               ? `${activeCount} retake${activeCount > 1 ? 's' : ''} simulated`
-              : 'Select retakes below to simulate'}
-          </div>
-        </div>
+              : 'Select retakes below to simulate'
+          }
+          bodyClassName="num text-[32px] font-bold leading-none tracking-[-0.02em] text-accent"
+        >
+          <CountUp value={simulated.cgpa} />
+        </StatCard>
 
-        <div className="rounded-2xl border border-line bg-surface p-5 shadow-card">
-          <div className="text-[10.5px] font-semibold uppercase tracking-[0.09em] text-ink-3">
-            Impact
-          </div>
-          <div
-            className={`num mt-2 flex items-center gap-1.5 text-[32px] font-bold leading-none tracking-tight ${
-              delta > 0.001 ? 'text-ok' : delta < -0.001 ? 'text-bad' : 'text-ink-3'
-            }`}
-          >
-            {delta > 0.001 ? (
-              <ArrowUpRight className="h-6 w-6" strokeWidth={2.4} />
-            ) : (
-              <Minus className="h-6 w-6" strokeWidth={2.4} />
-            )}
-            <CountUp value={Math.abs(delta)} />
-          </div>
-          <div className="mt-1.5 text-xs text-ink-3">
-            {delta > 0.001 ? 'CGPA gain from retakes' : 'no gain yet'}
-          </div>
-        </div>
+        <StatCard
+          label="Impact"
+          tone={delta > 0.001 ? 'ok' : 'default'}
+          sub={delta > 0.001 ? 'CGPA gain from retakes' : 'no gain yet'}
+          bodyClassName={`num flex items-center gap-1.5 text-[32px] font-bold leading-none tracking-[-0.02em] ${
+            delta > 0.001 ? 'text-ok' : 'text-ink-3'
+          }`}
+        >
+          {delta > 0.001 ? (
+            <ArrowUpRight className="h-6 w-6" strokeWidth={2.4} />
+          ) : (
+            <Minus className="h-6 w-6" strokeWidth={2.4} />
+          )}
+          <CountUp value={Math.abs(delta)} />
+        </StatCard>
       </div>
 
       {/* AI Retake ROI & Financial Efficiency Banner */}
       {roiRanking.length > 0 && (
-        <div className="rounded-2xl border border-accent/30 bg-accentSoft p-4 shadow-sm flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+        <div className="flex flex-col items-stretch justify-between gap-3 rounded-xl border border-accent/30 bg-accentSoft/50 p-4 sm:flex-row sm:items-center">
           <div className="flex-1">
-            <div className="flex items-center gap-1.5 text-xs font-bold text-accent">
+            <div className="flex items-center gap-1.5 text-[12.5px] font-bold text-accent">
               <Sparkles className="h-3.5 w-3.5" />
-              Highest Academic & Financial Return (UIU 50% Waiver)
+              Highest academic &amp; financial return (UIU 50% waiver)
             </div>
-            <p className="mt-1 text-xs text-ink leading-relaxed">
-              Retaking <b>{roiRanking[0].courseId}</b> ({roiRanking[0].courseName}) yields a{' '}
-              <b className="text-ok font-mono">+{roiRanking[0].jump.toFixed(2)} CGPA</b> boost for only{' '}
-              <b className="font-mono">৳{roiRanking[0].costWithWaiver.toLocaleString()}</b> with UIU's 50% discount!
+            <p className={`${type.small} mt-1 text-ink-2`}>
+              Retaking <b className="text-ink">{roiRanking[0].courseId}</b> (
+              {roiRanking[0].courseName}) yields a{' '}
+              <b className="num font-bold text-ok">+{roiRanking[0].jump.toFixed(2)} CGPA</b> boost for
+              only <b className="num font-bold text-ink">৳{roiRanking[0].costWithWaiver.toLocaleString()}</b>{' '}
+              with UIU's 50% discount.
             </p>
           </div>
-          <button
+          <Button
+            variant="secondary"
+            size="sm"
+            className="shrink-0"
             onClick={() =>
               setSelections((prev) => ({
                 ...prev,
@@ -130,10 +140,9 @@ export function RetakeLab({ courses = [], effectiveCourses = [] }) {
                 ...(roiRanking[1] ? { [roiRanking[1].id]: 'A' } : {}),
               }))
             }
-            className="rounded-xl border border-accent bg-surface px-3 py-1.5 text-xs font-bold text-accent hover:bg-accent hover:text-white transition-colors shrink-0 shadow-sm"
           >
-            Select Top 2 High-ROI Retakes
-          </button>
+            Select top 2 high-ROI retakes
+          </Button>
         </div>
       )}
 
@@ -144,15 +153,15 @@ export function RetakeLab({ courses = [], effectiveCourses = [] }) {
           sub="Nothing eligible here — only F, D, D+, C-, C and C+ grades benefit from a retake under UIU rules."
         />
       ) : (
-        <div className="overflow-hidden rounded-2xl border border-line bg-surface shadow-card">
-          <div className="flex items-center justify-between gap-3 border-b border-line px-4 py-3">
-            <p className="text-[13px] font-bold text-ink">
+        <div className="overflow-hidden rounded-xl border border-line bg-surface shadow-card">
+          <div className="flex flex-wrap items-center justify-between gap-2 border-b border-line px-4 py-2.5">
+            <p className={type.cardTitle}>
               Retake candidates
-              <span className="num ml-2 rounded-md bg-surface2 px-1.5 py-0.5 text-[10px] font-bold text-ink-3">
+              <span className="num ml-2 rounded bg-surface2 px-1.5 py-[2px] text-[10.5px] font-bold text-ink-3">
                 {candidates.length}
               </span>
             </p>
-            <div className="flex gap-2">
+            <div className="flex items-center gap-1">
               <Button
                 variant="ghost"
                 size="sm"
@@ -171,76 +180,68 @@ export function RetakeLab({ courses = [], effectiveCourses = [] }) {
             {candidates.map((c) => {
               const on = selections[c.id];
               const gained =
-                on &&
-                (GRADE_POINTS[on] - GRADE_POINTS[c.grade]) * c.credit;
+                on && (GRADE_POINTS[on] - GRADE_POINTS[c.grade]) * c.credit;
               return (
                 <li
                   key={c.id}
-                  className={`flex flex-wrap items-center gap-3 px-4 py-3 transition-colors ${
-                    on ? 'bg-accentSoft' : 'hover:bg-surface2/40'
+                  className={`flex flex-wrap items-center gap-3 px-4 py-2.5 transition-colors ${
+                    on ? 'bg-accentSoft/50' : 'hover:bg-surface2/40'
                   }`}
                 >
                   {/* toggle */}
                   <button
-                    onClick={() =>
-                      setSelections((p) => {
-                        const n = { ...p };
-                        if (n[c.id]) delete n[c.id];
-                        else n[c.id] = 'A';
-                        return n;
-                      })
-                    }
-                    className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-md border transition-[border-color,transform] duration-150 ease-out active:scale-[0.96] ${
+                    onClick={() => toggle(c.id, 'A')}
+                    className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-md border transition-[border-color,background-color] duration-150 ${
                       on ? 'border-accent bg-accent' : 'border-line-strong bg-surface2 hover:border-ink-3'
                     }`}
                     aria-label={`Toggle retake for ${c.courseId}`}
+                    aria-pressed={Boolean(on)}
                   >
                     {on && (
-                      <svg viewBox="0 0 12 12" className="h-3 w-3 text-white" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+                      <svg
+                        viewBox="0 0 12 12"
+                        className="h-3 w-3 text-white"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2.4"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      >
                         <path d="M2.5 6.5l2.5 2.5 4.5-5.5" />
                       </svg>
                     )}
                   </button>
 
                   <div className="min-w-[150px] flex-1">
-                    <div className="truncate text-[13px] font-bold text-ink">{c.courseId}</div>
+                    <div className="truncate text-[13px] font-semibold text-ink">{c.courseId}</div>
                     <div className="truncate text-[11px] text-ink-3">
                       {c.courseName} · <span className="num">{c.trimester}</span> ·{' '}
                       <span className="num">{c.credit} cr</span>
                     </div>
                   </div>
 
-                  <span className="num rounded-lg border border-bad/25 bg-bad/10 px-2 py-1 text-[11px] font-bold text-bad">
+                  <Badge tone="bad" className="num">
                     {c.grade}
-                  </span>
+                  </Badge>
                   <ArrowRight className="h-3.5 w-3.5 shrink-0 text-ink-3" />
                   <SelectSm
                     value={on || ''}
-                    onChange={(e) =>
-                      setSelections((p) => {
-                        const n = { ...p };
-                        if (e.target.value) n[c.id] = e.target.value;
-                        else delete n[c.id];
-                        return n;
-                      })
-                    }
-                    className="w-[92px]"
+                    onChange={(e) => toggle(c.id, e.target.value)}
+                    className="w-[104px]"
                   >
                     <option value="">Target…</option>
-                    {LETTER_GRADES.filter((g) => GRADE_POINTS[g] > GRADE_POINTS[c.grade]).map(
-                      (g) => (
-                        <option key={g} value={g}>
-                          {g}
-                        </option>
-                      )
-                    )}
+                    {LETTER_GRADES.filter((g) => GRADE_POINTS[g] > GRADE_POINTS[c.grade]).map((g) => (
+                      <option key={g} value={g}>
+                        {g}
+                      </option>
+                    ))}
                   </SelectSm>
                   <span
                     className={`num w-[74px] text-right text-[11px] font-bold ${
                       gained > 0 ? 'text-ok' : 'text-ink-3'
                     }`}
                   >
-                    {gained > 0 ? `+${(GRADE_POINTS[on] - GRADE_POINTS[c.grade]) * c.credit} pts` : ''}
+                    {gained > 0 ? `+${gained.toFixed(0)} pts` : ''}
                   </span>
                 </li>
               );
@@ -249,10 +250,10 @@ export function RetakeLab({ courses = [], effectiveCourses = [] }) {
         </div>
       )}
 
-      <p className="rounded-2xl border border-line bg-surface2/50 px-4 py-3 text-xs leading-relaxed text-ink-2">
-        <b className="text-ink">UIU retake rule:</b> when you repeat a course, the <i>new grade
-        replaces</i> the old one in CGPA — the old attempt stays on the transcript but is excluded
-        from calculation. This simulation mirrors that replacement exactly.
+      <p className="rounded-xl border border-line bg-surface2/50 px-4 py-3 text-[12px] leading-relaxed text-ink-2">
+        <b className="text-ink">UIU retake rule:</b> when you repeat a course, the{' '}
+        <i>new grade replaces</i> the old one in CGPA — the old attempt stays on the transcript but is
+        excluded from calculation. This simulation mirrors that replacement exactly.
       </p>
     </div>
   );
