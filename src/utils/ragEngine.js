@@ -149,11 +149,59 @@ export function tokenizeQuery(text = '') {
 const INTENT_RULES = [
   {
     intent: 'grading',
-    terms: ['grade', 'grading', 'marks', 'percentage', 'gpa', 'cgpa', 'letter grade', 'grade point', 'earned credit'],
+    terms: [
+      'grade',
+      'grading',
+      'marks',
+      'percentage',
+      'gpa',
+      'cgpa',
+      'cg',
+      'letter grade',
+      'grade point',
+      'earned credit',
+      'improve my cgpa',
+      'raise my cgpa',
+      'boost my cgpa',
+      'my cgpa is low',
+      'my cg is low',
+      'low cgpa',
+      'how do i improve',
+      'how can i improve',
+    ],
   },
   {
     intent: 'probation',
-    terms: ['probation', 'dismissal', 'dismissed', 'suspended', 'low cgpa', 'warning letter', 'third probation'],
+    terms: [
+      'probation',
+      'dismissal',
+      'dismissed',
+      'suspended',
+      'low cgpa',
+      'warning letter',
+      'third probation',
+      'recover from probation',
+      'come out of probation',
+      'get off probation',
+      'remove probation',
+      'clear probation',
+      'on probation',
+      'probation status',
+      'poor academic standing',
+      'academic standing',
+      'admission cancel',
+      'cancel admission',
+      'admission cancelled',
+      'admission canceled',
+      'cancel my admission',
+      'revoke admission',
+      'boot',
+      'booting',
+      'kicked out',
+      'kick out',
+      'removed from the university',
+      'removed from uiu',
+    ],
   },
   {
     intent: 'waiver',
@@ -169,7 +217,28 @@ const INTENT_RULES = [
   },
   {
     intent: 'curriculum',
-    terms: ['curriculum', 'course plan', 'credit requirement', 'total credit', 'how many credit', 'degree requirement', 'specialization', 'major', 'track', 'elective'],
+    terms: [
+      'curriculum',
+      'course plan',
+      'credit requirement',
+      'total credit',
+      'how many credit',
+      'degree requirement',
+      'specialization',
+      'major',
+      'track',
+      'elective',
+      'what can i take',
+      'what should i take',
+      'which course should i take',
+      'which courses should i take',
+      'what courses can i take',
+      'course recommendation',
+      'recommend me a course',
+      'suggest a course',
+      'next course',
+      'next trimester course',
+    ],
   },
   {
     intent: 'exam',
@@ -177,7 +246,23 @@ const INTENT_RULES = [
   },
   {
     intent: 'registration',
-    terms: ['register', 'registration', 'advising', 'ucam', 'add drop', 'drop date', 'late registration', 'fine', 'minimum credit'],
+    terms: [
+      'register',
+      'registration',
+      'advising',
+      'ucam',
+      'add drop',
+      'drop date',
+      'late registration',
+      'fine',
+      'minimum credit',
+      'credit load',
+      'how many credit should i take',
+      'how many courses should i take',
+      'course load',
+      'semester load',
+      'trimester load',
+    ],
   },
   {
     intent: 'attendance',
@@ -185,7 +270,24 @@ const INTENT_RULES = [
   },
   {
     intent: 'retake',
-    terms: ['retake', 'repeat', 'improve my grade', 'backlog', 'resit', 'r mark', 'grade replacement'],
+    terms: [
+      'retake',
+      'repeat',
+      'improve my grade',
+      'backlog',
+      'resit',
+      'r mark',
+      'grade replacement',
+      'fail a course',
+      'failed a course',
+      'failing a course',
+      'failed course',
+      'f grade',
+      'got an f',
+      'did i fail',
+      'failing',
+      'fail',
+    ],
   },
   {
     intent: 'withdrawal',
@@ -246,7 +348,7 @@ export function detectIntent(query = '') {
   for (const rule of INTENT_RULES) {
     let score = 0;
     for (const term of rule.terms) {
-      if (q.includes(term)) score += term.includes(' ') ? 3 : 2;
+      if (matchesTerm(q, term)) score += term.includes(' ') ? 3 : 2;
     }
     if (score > 0) scores.set(rule.intent, score);
   }
@@ -258,6 +360,30 @@ export function detectIntent(query = '') {
       if (b.specificity !== a.specificity) return b.specificity - a.specificity;
       return b.score - a.score;
     });
+}
+
+/**
+ * Does the query contain the term as a whole phrase?
+ *
+ * Plain `includes` fails on the way students actually phrase things:
+ * "admission can be cancelled" does not contain the substring "admission
+ * cancel", because "can be" sits in between. Matching on word boundaries
+ * instead lets the words be adjacent in any order within a short window.
+ */
+function matchesTerm(query, term) {
+  if (!term) return false;
+  if (!term.includes(' ')) {
+    return new RegExp(`\\b${escapeRegExp(term)}\\w*\\b`, 'i').test(query);
+  }
+
+  const words = term.split(' ').map((w) => escapeRegExp(w) + '\\w*');
+  // Allow up to two intervening words between the terms of a phrase.
+  const pattern = words.join('(?:\\s+\\w+){0,2}\\s+');
+  return new RegExp(`\\b${pattern}\\b`, 'i').test(query);
+}
+
+function escapeRegExp(text) {
+  return text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
 /* ------------------------------------------------------------------ *
@@ -637,10 +763,29 @@ export function searchKnowledgeBase(query = '', category = 'ALL') {
  */
 export function buildRagAugmentedPrompt({ query, studentContext = {}, retrievedDocs = [] }) {
   if (!retrievedDocs.length) {
-    return `Student Question:
+    return `OFFICIAL UIU CLAUSES RETRIEVED FOR THIS QUESTION
+====================
+
+(none matched)
+
+====================
+
+STUDENT ACADEMIC RECORD
+- CGPA: ${studentContext.cgpa ?? 'not imported'}
+- Completed credits: ${studentContext.completedCredits ?? 0}
+- Completed course codes: ${(studentContext.completedCourseCodes || []).join(', ') || 'none imported'}
+- Selected specialization: ${studentContext.selectedMajor || 'General CSE'}
+
+STUDENT QUESTION
 "${query}"
 
-No matching clause was found in the verified UIU knowledge base. Say that the official UIU documents do not cover this question and point the student to the relevant department office. Do not guess a rule, a fee, a deadline or a number.`;
+ANSWERING RULES
+1. No matching clause was found in the verified UIU knowledge base, so you have no official UIU rule to quote for this question.
+2. Do NOT invent a rule, number, fee, deadline, credit load or office name. Do not guess from general university knowledge.
+3. Still be an advisor: say in one short paragraph what the official UIU documents do and do not cover for this question, name the UIU office that decides it (Office of the Controller of Examinations, Department of Computer Science and Engineering, Office of Academic Affairs, or Financial Aid and Scholarship Office — whichever genuinely handles it), and tell the student exactly what to ask them or bring to them.
+4. If the student's own record makes the question answerable, do that part using the academic record above and say which part you could not confirm.
+5. No preamble, no filler, no emoji, no jokes, no exclamation marks.
+6. Markdown only: bold, lists, tables. Never HTML.`;
   }
 
   const contextBlocks = retrievedDocs
@@ -671,10 +816,15 @@ STUDENT QUESTION
 "${query}"
 
 ANSWERING RULES
-1. Use only the retrieved clauses for policy facts. Never state a rule, number, fee, deadline or threshold that is not in them.
-2. Name the source document when you state a rule, minimum, deadline or fee.
-3. If the student asks about their own eligibility, check their academic record above against the clauses and state the gap explicitly.
-4. If the clauses do not cover the question, say so plainly and name the office that decides it. Do not guess.
-5. No preamble, no filler, no emoji, no jokes, no exclamation marks.
-6. Markdown only: bold, lists, tables. Never HTML.`;
+1. You are the student's ACADEMIC ADVISOR, not a search engine and not a prerequisite tree. The student has a real problem and wants a course of action. Give them one.
+2. Use only the retrieved clauses for policy facts. Never state a rule, number, fee, deadline or threshold that is not in them. If you cannot ground it, do not say it.
+3. Name the source document when you state a rule, minimum, deadline or fee.
+4. Check the student's academic record above before answering. If the question is about their own situation ("my CGPA is low", "what can I take", "how do I recover"), state their actual situation first, then the rule that applies to it, then what they should do next.
+5. Lead with the ACTION. Open with what the student should do or understand, then support it with the policy. Do not open with a restatement of the question, and do not open with a preamble.
+6. Be specific and concrete. Give the actual minimum, the actual credit count, the actual number of notices or attempts, the actual office, the actual sequence of steps — not "it depends on your situation" or "consult your advisor for details".
+7. Never answer with a course prerequisite tree or a list of course codes unless the student asked which courses to take. If they did ask, name the specific courses and why.
+8. If the clauses do not cover part of the question, answer the part they do cover, then name the office that decides the rest. Do not refuse the whole question because one part is uncovered.
+9. Do not tell the student to "meet with an advisor" as the answer. You are their advisor. Give the guidance, and name an office only when a human decision is genuinely required.
+10. No hype, no encouragement padding, no emoji, no jokes, no exclamation marks, no "Great question", no "Let's dive in", no "You're not alone in this", no summary of your own answer.
+11. Markdown only: bold, lists, tables. Never HTML.`;
 }

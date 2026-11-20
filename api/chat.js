@@ -182,10 +182,29 @@ export default async function handler(req, res) {
     augmentedPrompt = '',
   } = req.body || {};
 
-  const cleanPrompt = (prompt || augmentedPrompt || '').trim().slice(0, 4500);
-  if (!cleanPrompt) {
+  const rawQuestion = (prompt || '').trim();
+  const groundedPrompt = (augmentedPrompt || '').trim();
+
+  if (!rawQuestion && !groundedPrompt) {
     return res.status(400).json({ error: 'Prompt is required' });
   }
+
+  /**
+   * The user message the model actually receives.
+   *
+   * This must be the GROUNDED prompt, not the bare question. The grounded
+   * prompt carries the retrieved UIU policy clauses and the student's own
+   * academic record; the bare question carries neither. Sending only the
+   * question makes the model answer from general knowledge instead of the
+   * official UIU policy, which is how an ungrounded advisor starts inventing
+   * credit loads, offices and deadlines that UIU never published.
+   *
+   * The raw question is appended so the model always knows which question it
+   * is answering, even if the grounded prompt was built from a follow-up.
+   */
+  const cleanPrompt = groundedPrompt
+    ? `${groundedPrompt.slice(0, 4000)}\n\n---\n\nQUESTION TO ANSWER: ${rawQuestion || groundedPrompt}`.slice(0, 4500)
+    : rawQuestion.slice(0, 4500);
 
   if (!effectiveKey) {
     return res.status(500).json({
