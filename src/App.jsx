@@ -8,6 +8,7 @@ import CgpaView from './components/cgpa/CgpaView';
 import TuitionView from './components/tuition/TuitionView';
 import RoutineView from './components/routine/RoutineView';
 import AdvisorView from './components/advisor/AdvisorView';
+import AcademicToolsView from './components/advisor/AcademicToolsView';
 import CommuteView from './components/commute/CommuteView';
 import CoverPageView from './components/coverpage/CoverPageView';
 import CommandPalette from './components/ui/CommandPalette';
@@ -83,10 +84,11 @@ export function AppContent() {
       if (!isInput) {
         if (e.key === '1') setActiveTab('cgpa');
         else if (e.key === '2') setActiveTab('advisor');
-        else if (e.key === '3') setActiveTab('routine');
-        else if (e.key === '4') setActiveTab('tuition');
-        else if (e.key === '5') setActiveTab('commute');
-        else if (e.key === '6') setActiveTab('coverpage');
+        else if (e.key === '3') setActiveTab('tools');
+        else if (e.key === '4') setActiveTab('routine');
+        else if (e.key === '5') setActiveTab('tuition');
+        else if (e.key === '6') setActiveTab('commute');
+        else if (e.key === '7') setActiveTab('coverpage');
         else if (e.key === '/') {
           e.preventDefault();
           setCommandPaletteOpen(true);
@@ -128,6 +130,9 @@ export function AppContent() {
           )}
           {activeTab === 'advisor' && (
             <AdvisorView courses={courses} settings={settings} />
+          )}
+          {activeTab === 'tools' && (
+            <AcademicToolsView courses={courses} settings={settings} />
           )}
           {activeTab === 'routine' && <RoutineView courses={courses} />}
           {activeTab === 'tuition' && (

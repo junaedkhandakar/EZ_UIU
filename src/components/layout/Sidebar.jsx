@@ -11,12 +11,14 @@ import {
   Compass,
   Bus,
   FileCheck2,
+  Wrench,
 } from 'lucide-react';
 import { useTheme } from '../../context/ThemeContext';
 
 export const NAV = [
   { id: 'cgpa', label: 'CGPA & Standing', icon: Gauge },
   { id: 'advisor', label: 'AI Advisor', icon: Compass },
+  { id: 'tools', label: 'Academic Tools', icon: Wrench },
   { id: 'routine', label: 'Class Routine', icon: CalendarRange },
   { id: 'tuition', label: 'Tuition & Fees', icon: Receipt },
   { id: 'commute', label: 'Shuttle & Commute', icon: Bus },

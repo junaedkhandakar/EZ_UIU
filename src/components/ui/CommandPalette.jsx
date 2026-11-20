@@ -16,6 +16,7 @@ import {
   X,
   Bus,
   FileCheck2,
+  Wrench,
 } from 'lucide-react';
 import { COURSE_CATALOG } from '../../data/courseCatalog';
 import { useTheme } from '../../context/ThemeContext';
@@ -88,11 +89,23 @@ export default function CommandPalette({
         id: 'nav-advisor',
         type: 'action',
         category: 'Navigation',
-        title: 'Go to AI Academic Advisor',
-        desc: 'Optimal course baskets, prerequisite solver & graduation roadmap',
+        title: 'Go to AI Advisor',
+        desc: 'Ask about your degree and get an answer from the official UIU policy',
         icon: Sparkles,
         action: () => {
           setActiveTab('advisor');
+          onClose();
+        },
+      },
+      {
+        id: 'nav-tools',
+        type: 'action',
+        category: 'Navigation',
+        title: 'Go to Academic Tools',
+        desc: 'Course basket, schedule auditor, prerequisites, degree plan & tracks',
+        icon: Wrench,
+        action: () => {
+          setActiveTab('tools');
           onClose();
         },
       },
